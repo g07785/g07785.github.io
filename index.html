@@ -528,7 +528,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
     <div class="about">
       <div class="reveal">
         <p>Seit August 2022 bin ich <b>Fachreferent</b> bei der Deutschen Bahn. Mein Fokus liegt auf <b>SAP-Stammdaten und Konfiguration</b>, <b>BW</b> und <b>Monitoring</b>: Ich sorge dafür, dass Jobs, IDocs und Schnittstellen zuverlässig laufen, auch dann, wenn keiner hinschaut.</p>
-        <p>Im Projekt <b>Focused Insights</b> habe ich die Überwachung von BW- und S&amp;K-Jobs mit aufgebaut. Ich habe Testfälle für die <b>Testautomatisierung</b> nach Releases entwickelt und bearbeite Incidents im 1st Level. Für S&amp;K, allgemeine ISI-Themen und Focused Insights bin ich auch 2nd Level, was darüber hinausgeht, leite ich ans Application Management (AM) weiter. Dazu kommen Berechtigungen und Customizing.</p>
+        <p>Im Projekt <b>Focused Insights</b> habe ich die Überwachung von BW- und S&amp;K-Jobs mit aufgebaut. Ich habe Testfälle für die <b>Testautomatisierung</b> nach Releases entwickelt und bearbeite Incidents im 1st Level. Für S&amp;K, allgemeine ISI-Themen und Focused Insights bin ich auch 2nd Level. Dazu kommen Berechtigungen und Customizing.</p>
         <p>Angefangen habe ich als <b>Bankkaufmann</b>. Daher kommt mein Blick für Kunden, Zahlen und saubere Prozesse. Heute verbinde ich das mit Technik und zuletzt besonders mit <b>generativer KI</b> und KI-Agenten.</p>
       </div>
       <div class="reveal">
@@ -549,9 +549,9 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 
 <section id="monitor" class="alt">
   <div class="wrap">
-    <div class="sec-head reveal"><div class="num">02 / Live-Demo</div><h2>Ein Tag im Monitoring</h2><p class="lead">So sieht mein Job ungefähr aus: Alles läuft, bis es nicht mehr läuft. Löse einen Incident aus und schau zu, was passiert: Bei S&amp;K, ISI-Themen und Focused Insights löse ich ihn selbst im 2nd Level, alles andere geht nach der Erstanalyse ans AM.</p></div>
+    <div class="sec-head reveal"><div class="num">02 / Live-Demo</div><h2>Ein Tag im Monitoring</h2><p class="lead">So sieht mein Job ungefähr aus: Alles läuft, bis es nicht mehr läuft. Löse einen Incident aus und schau zu, was passiert: Bei S&amp;K, ISI-Themen und Focused Insights löse ich ihn selbst im 2nd Level, alles andere geht nach der Erstanalyse an den 3rd Level.</p></div>
     <div class="mon reveal">
-      <div class="mon-top"><span class="lamp" id="lamp"><i></i><span id="lampTxt">Alle Systeme grün</span></span><span class="kpis"><span>Verarbeitet: <b id="kProc">0</b></span><span>Selbst gelöst: <b id="kSolved">0</b></span><span>An AM: <b id="kAm">0</b></span><span>Ø Lösungszeit: <b id="kMttr">–</b></span></span></div>
+      <div class="mon-top"><span class="lamp" id="lamp"><i></i><span id="lampTxt">Alle Systeme grün</span></span><span class="kpis"><span>Verarbeitet: <b id="kProc">0</b></span><span>Selbst gelöst: <b id="kSolved">0</b></span><span>Weitergeleitet: <b id="kAm">0</b></span><span>Ø Lösungszeit: <b id="kMttr">–</b></span></span></div>
       <div class="jobs" id="jobs"></div>
       <div class="mon-log" id="monLog" aria-live="polite"></div>
       <div class="mon-actions"><button class="btn" id="incBtn">⚡ Incident auslösen</button><button class="btn" id="chaosBtn">🌪️ Chaos-Modus</button><small>Demo mit simulierten Daten, keine echten Systeme</small></div>
@@ -571,7 +571,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
         <h3>Fachreferent S&amp;K/BW <span class="tag">aktuell</span></h3>
         <div class="org">Deutsche Bahn · Vollzeit · Remote</div>
         <ul><li>Qualitätssicherung und Monitoring für S&amp;K, Mobile, MM, BW und Schnittstellen (Jobs, IDocs)</li><li>Projekt Focused Insights: Überwachung für BW- und S&amp;K-Jobs eingeführt</li><li>Projekt Testautomatisierung: Testfälle nach Releases konstruiert</li></ul>
-        <details><summary>Mehr Aufgaben</summary><ul><li>Incidents im 1st Level, für S&amp;K, allgemeine ISI-Themen und Focused Insights auch im 2nd Level, mit Weiterleitung ans Application Management (AM)</li><li>Berechtigungsverwaltung SAP/DEBI</li><li>Customizing SAP S&amp;K</li></ul></details>
+        <details><summary>Mehr Aufgaben</summary><ul><li>Incidents im 1st Level, für S&amp;K, allgemeine ISI-Themen und Focused Insights auch im 2nd Level</li><li>Berechtigungsverwaltung SAP/DEBI</li><li>Customizing SAP S&amp;K</li></ul></details>
       </div></div>
       <div class="phase">Abschnitt: SAP &amp; IT</div>
       <div class="stop reveal"><div class="card"><div class="when">02/2022 – 06/2022</div><h3>AMS-Berater</h3><div class="org">abat</div><ul><li>Application Management Services im SAP-Umfeld</li></ul></div></div>
@@ -835,8 +835,8 @@ async function incident(j){ j=j||jobs.filter(x=>x.state==='ok')[Math.floor(Math.
     $('#kSolved').textContent=solved; $('#kMttr').textContent=(times.reduce((a,b)=>a+b,0)/times.length).toFixed(1).replace('.',',')+' s';
     log(`${id} · gelöst ✓ in ${dt.toFixed(1).replace('.',',')} s, keine Weiterleitung nötig`,'g'); }
   else { log(`${id} · Roman übernimmt (1st Level): Erstanalyse …`,'y'); j.state='fix'; j.el.classList.remove('err'); j.el.classList.add('fix');
-    await wait(1000); log(`${id} · Ticket dokumentiert und ans Application Management (AM) weitergeleitet →`,'y'); am++; $('#kAm').textContent=am;
-    await wait(1300); j.state='ok'; j.el.classList.remove('fix'); setLamp(); log(`${id} · AM meldet: behoben ✓ Danke für die saubere Übergabe!`,'g'); } }
+    await wait(1000); log(`${id} · Ticket dokumentiert und an den 3rd Level weitergeleitet →`,'y'); am++; $('#kAm').textContent=am;
+    await wait(1300); j.state='ok'; j.el.classList.remove('fix'); setLamp(); log(`${id} · 3rd Level meldet: behoben ✓ Danke für die saubere Übergabe!`,'g'); } }
 $('#incBtn').onclick=()=>incident();
 $('#chaosBtn').onclick=async()=>{ if(busy) return; busy=true; log('Chaos-Modus: Mehrere Störungen gleichzeitig!','e'); await Promise.all(jobs.slice().sort(()=>Math.random()-.5).slice(0,4).map((j,i)=>wait(i*250).then(()=>incident(j)))); log('Chaos überstanden. Kaffee? ☕','g'); toast('Alles wieder grün. So sieht ein guter Tag aus. ✅'); busy=false; };
 
@@ -912,7 +912,7 @@ $('#repair').onclick=async()=>{ const lg=$('#repairLog'), steps=['Ticket INC'+Ma
   const layer=$('#crash'), t=layer._train; if(t){ t.animate([{opacity:1},{opacity:0}],{duration:400,fill:'forwards'}).onfinish=()=>t.remove(); }
   fallen.forEach((el,i)=>{ if(el._anim){ el._anim.playbackRate=1.6; el._anim.reverse(); el._anim.onfinish=()=>{ el._anim.cancel(); el._anim=null; }; } });
   await wait(1400); lg.textContent='Störung behoben ✓ Weiterfahrt frei.'; await wait(900);
-  $('#stoer').classList.remove('show'); $('#repair').disabled=false; smokeRun=false; crashing=false; fallen=[]; toast('✅ Incident gelöst. Ganz ohne Weiterleitung ans AM.'); };
+  $('#stoer').classList.remove('show'); $('#repair').disabled=false; smokeRun=false; crashing=false; fallen=[]; toast('✅ Incident gelöst. Ganz ohne Weiterleitung.'); };
 
 /* ---------- Geheimcode: Tastatur, Wischen, Gamepad ---------- */
 const code=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a']; let kp=0;
@@ -947,7 +947,7 @@ $('#fab').onclick=()=>toggleTerm(true); $('#openTerm2').onclick=()=>toggleTerm(t
 const cmds={
  help:()=>say('Befehle:\n  whoami     – wer ist Roman?\n  job        – aktuelle Rolle\n  skills     – Kenntnisse nach Bereich\n  certs      – Weiterbildungen\n  sap        – SAP-Status prüfen\n  incident   – Incident in der Live-Demo auslösen\n  meteor     – ☄️\n  zug        – 🚆 (Vorsicht!)\n  spiel      – ISI Teamspiel spielen\n  kontakt    – Kontaktmöglichkeiten\n  hinweis    – KI-Transparenzhinweis\n  theme      – Hell/Dunkel wechseln\n  clear      – Bildschirm leeren\n  exit       – schließen'),
  whoami:()=>say('Roman Wagner – Fachreferent, SAP-Stammdaten & Konfiguration, BW, Monitoring. Gelernter Bankkaufmann, KI-Enthusiast. Nördlingen, Bayern.'),
- job:()=>say('Deutsche Bahn · Fachreferent bei der Deutschen Bahn · seit 08/2022 · remote\n→ SAP-Stammdaten · Konfiguration · BW · Monitoring · Focused Insights\n→ 1st Level, für S&K, ISI-Themen & Focused Insights auch 2nd Level, Weiterleitung ans AM'),
+ job:()=>say('Deutsche Bahn · Fachreferent bei der Deutschen Bahn · seit 08/2022 · remote\n→ SAP-Stammdaten · Konfiguration · BW · Monitoring · Focused Insights\n→ 1st Level, für S&K, ISI-Themen & Focused Insights auch 2nd Level'),
  skills:()=>cats.forEach(c=>say(`[${c}] `+skills[c].map(s=>s.split('|')[0]).join(', '))),
  certs:()=>certs.forEach(c=>say('✓ '+c[0])),
  sap:()=>['Verbinde mit Monitoring…','Prüfe Jobs…   OK','Prüfe IDocs…  OK','Prüfe BW-Ladeketten… OK','Status: alles grün ✅ (Demo, keine echten Systeme)'].forEach((s,i)=>setTimeout(()=>say(s),i*450)),
