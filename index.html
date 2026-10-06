@@ -406,6 +406,12 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 .legal-body h4{margin:14px 0 4px;font-size:15px}
 .legal-body p,.legal-body ul{margin:0 0 8px}
 .legal-body a{color:inherit;text-decoration:underline}
+.sw-adm-t{cursor:default;user-select:none;-webkit-tap-highlight-color:transparent}
+.sw-info .admc{font:700 12.5px var(--mono);background:#3f1d1d;color:#fecaca;border:1px solid #ef4444;border-radius:999px;padding:5px 11px;cursor:pointer}
+.adm-row{display:flex;gap:8px;margin:6px 0 10px;flex-wrap:wrap}
+.adm-row input{width:110px;font:600 15px Inter,sans-serif;background:#0a0d16;border:1px solid #2f3650;color:#fff;border-radius:10px;padding:8px 10px}
+.adm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:6px;margin:6px 0 4px}
+.adm-grid .btn{justify-content:center;font-size:13px;padding:9px 10px}
 
 /* terminal */
 #term{position:fixed;right:20px;bottom:20px;width:min(520px,calc(100vw - 32px));height:340px;background:var(--term);color:var(--termtx);border-radius:14px;box-shadow:0 20px 60px -10px rgba(0,0,0,.5);z-index:200;display:none;flex-direction:column;font:13px var(--mono);overflow:hidden;border:1px solid #232838}
@@ -614,7 +620,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 
 <section id="spiel">
   <div class="wrap">
-    <div class="sec-head reveal"><div class="num">07 / Spiel</div><h2>ISI Teamspiel 🚦</h2><p class="lead">Halte das Netz von Hamburg bis München am Laufen: Tippe auf Störungen, um dein Team hinzuschicken. Stell Spezialisten ein und bilde sie aus, erschließ neue Regionen und trotze Sturm, Hitze und Frost. Sammle Sterne für Skins und Erfolge und schalte Schritt für Schritt das SAP-System <b>ISI</b> frei.</p></div>
+    <div class="sec-head reveal"><div class="num">07 / Spiel</div><h2>ISI Teamspiel <span id="swAdm" class="sw-adm-t">🚦</span></h2><p class="lead">Halte das Netz von Hamburg bis München am Laufen: Tippe auf Störungen, um dein Team hinzuschicken. Stell Spezialisten ein und bilde sie aus, erschließ neue Regionen und trotze Sturm, Hitze und Frost. Sammle Sterne für Skins und Erfolge und schalte Schritt für Schritt das SAP-System <b>ISI</b> frei.</p></div>
     <div class="sw-layout"><div class="sw reveal" id="sw">
       <div class="sw-hud">
         <div class="sw-rank"><span class="sw-lvl" id="swLvl">1</span><div><div class="sw-rank-top"><b id="swRank">Azubi</b><button type="button" class="sw-me" id="swMe" title="Namen ändern">👤 <span id="swMeName">Name</span> ✏️</button></div><div class="sw-xp"><i id="swXp"></i></div></div></div>
@@ -624,7 +630,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
         <div class="sw-stat"><span>Sterne</span><b id="swStars">0 ⭐</b></div>
         <div class="sw-stat"><span>Team frei</span><b id="swCrews">1/1</b></div>
       </div>
-      <div class="sw-info" aria-live="polite"><span class="soc" id="swSoc">🤝 0 Social</span><span id="swWx">☀️ Sonnig</span><span id="swEv" hidden></span><span class="mis" id="swMis" hidden></span><span class="sel" id="swSel" hidden></span><button type="button" class="tk" id="swTk" hidden></button><button type="button" class="tm" id="swTm" hidden></button><span class="mor" id="swMor" hidden></span><button type="button" class="dnl" id="swHero" hidden></button></div>
+      <div class="sw-info" aria-live="polite"><span class="soc" id="swSoc">🤝 0 Social</span><span id="swWx">☀️ Sonnig</span><span id="swEv" hidden></span><span class="mis" id="swMis" hidden></span><span class="sel" id="swSel" hidden></span><button type="button" class="tk" id="swTk" hidden></button><button type="button" class="tm" id="swTm" hidden></button><span class="mor" id="swMor" hidden></span><button type="button" class="admc" id="swAdmChip" hidden>🛠️ Admin</button><button type="button" class="dnl" id="swHero" hidden></button></div>
       <div class="sw-stage">
         <canvas id="swCanvas" width="1000" height="600" aria-label="Spielfeld: Bahnnetz mit Zügen und Störungen"></canvas>
         <div class="sw-overlay show" id="swOverlay"></div>
@@ -1390,11 +1396,11 @@ function autoDispatch(){
 
 function step(dt){
   if (G.hero && G.t - G.hero.t0 >= 1.8) heroArrive();
-  if (G.sapq && !G.sapAsked && G.t >= G.T/2){ G.sapAsked = true; askSap(); return; }
+  if (G.sapq && !G.sapAsked && (G.t >= G.T/2 || G.sapNow)){ G.sapAsked = true; askSap(); return; }
   G.t += dt;
   if (G.wx2 && G.t >= G.T/2){ G.wx = G.wx2; G.wx2 = null; log(`🌦️ Wetterumschwung: ${WX[G.wx].ic} ${WX[G.wx].n}`,'y'); toast(`🌦️ Wetterumschwung: ${WX[G.wx].ic} ${WX[G.wx].n}! ${WX[G.wx].d}`); }
   G.nextFault -= dt;
-  if (G.nextFault <= 0){ spawnFault(); G.nextFault = (-Math.log(1-Math.random())) * G.d.every * (U.isi3 ? 1.33 : 1) * (G.sapTook ? .3 : 1); }
+  if (G.nextFault <= 0){ if (!ADMNOF) spawnFault(); G.nextFault = (-Math.log(1-Math.random())) * G.d.every * (U.isi3 ? 1.33 : 1) * (G.sapTook ? .3 : 1); }
   G.faults.slice().forEach(f=>{ const ft = FT[f.type];
     if (f.st==='fc'){ f.fc -= dt; if (f.fc<=0){ f.st='on'; log(`Störung eingetreten: ${label(f)}`,'e'); activate(f); } return; }
     f.age += dt;
@@ -1756,7 +1762,7 @@ const setT = (sel,v) => { if (hc[sel]!==v){ hc[sel]=v; const el = $(sel); if (el
 const setH = (sel,v) => { const k = sel+'#h'; if (hc[k]!==v){ hc[k]=v; const el = $(sel); if (el) el.hidden = v; } };
 function hud(){
   setT('#swLvl', String(S.lvl)); setT('#swRank', rank(S.lvl) + (S.pres ? ` · 🏅${S.pres}` : '')); $('#swXp').style.width = Math.min(100,S.xp/xpNeed(S.lvl)*100)+'%';
-  setT('#swMeName', S.player || 'Name');
+  setT('#swMeName', S.player || 'Name'); setH('#swAdmChip', !ADM);
   setT('#swMoney', fmt(S.money)+' €'); setT('#swStars', fmt(S.stars)+' ⭐'); setT('#swSoc', `🤝 ${S.soc} Social`);
   const rest = G ? Math.max(0, G.T-G.t) : shiftLen(S.lvl); setT('#swTime', Math.floor(rest/60)+':'+String(Math.floor(rest%60)).padStart(2,'0'));
   const od = G ? overdue() : 0, tot = G ? G.arrived + od : 0; setT('#swPunct', tot ? Math.round(G.onTime/tot*100)+' %' : '–');
@@ -1780,7 +1786,7 @@ function log(m,c=''){ const d = document.createElement('div'); if (c) d.classNam
 
 /* ---- Schleife ---- */
 function loop(ts){ const dt = Math.min(.05, (ts-last)/1000 || 0); last = ts;
-  if (!paused && G){ step(dt); if (G && !paused && (G.t >= G.T || (G.sapEnd && G.t >= G.sapEnd))) endShift(); }
+  if (!paused && G){ step(dt * ADMSPD); if (G && !paused && (G.t >= G.T || (G.sapEnd && G.t >= G.sapEnd))) endShift(); }
   draw(ts); hud(); raf = requestAnimationFrame(loop); }
 new IntersectionObserver(es=>{ const v = es[0].isIntersecting; if (v && !raf){ last = performance.now(); raf = requestAnimationFrame(loop); } if (!v && raf){ cancelAnimationFrame(raf); raf = 0; } }).observe(cv);
 
@@ -2128,7 +2134,7 @@ function kiSolve(P){ S.st.kiTickets++; S.st.points += 15; const got = giveReward
 /* ---- Bestenliste & Spieler ---- */
 const PKEY = 'rw-isi-profiles';
 const BOT_TIERS = [[20,1,320000,220,40,92],[17,0,210000,170,34,90],[15,0,160000,140,31,88],[12,0,85000,90,23,84],[10,0,56000,72,19,80],[9,0,42000,60,16,78],[6,0,18000,35,10,71],[4,0,8000,20,6,64]];
-const BOT_FIRST = ['Lukas','Anna','Maximilian','Sophie','Jonas','Laura','Felix','Julia','Tobias','Katharina','Michael','Sabine','Stefan','Nicole','Andreas','Claudia','Thomas','Sandra','Markus','Melanie','Florian','Lena','Sebastian','Christina','Matthias','Stefanie','Daniel','Jessica','Patrick','Vanessa','Johannes','Carina','Alexander','Franziska','Benedikt','Theresa','Simon','Verena','Martin','Kerstin','Fabian','Leonie','Dominik','Miriam','Christian','Bianca','Philipp','Sarah'];
+const BOT_FIRST = ['Lukas','Anna','Maximilian','Sophie','Jonas','Laura','Felix','Julia','Tobias','Katharina','Michael','Sabine','Stefan','Nicole','Andreas','Claudia','Thomas','Sandra','Markus','Melanie','Florian','Lena','Sebastian','Christina','Matthias','Stefanie','Jessica','Patrick','Vanessa','Johannes','Carina','Alexander','Franziska','Benedikt','Theresa','Simon','Verena','Martin','Kerstin','Fabian','Leonie','Dominik','Miriam','Christian','Bianca','Philipp','Sarah'];
 let BOTL = null;
 function bots(){ if (BOTL) return BOTL;
   try { const r = JSON.parse(localStorage.getItem('rw-isi-bots')||'null'); if (Array.isArray(r) && r.length===BOT_TIERS.length){ r.forEach(b=>{ b.n = String(b.n).split(' ')[0]; }); BOTL = r; try { localStorage.setItem('rw-isi-bots', JSON.stringify(r)); } catch(e){} return BOTL; } } catch(e){}
@@ -2191,6 +2197,71 @@ function drawHero(now){ const h = G.hero, f = h.f, k = Math.min(1, (G.t-h.t0)/1.
   danielFig(cx, Math.sin(now/70)*3);
   cx.restore();
   cx.font = `700 ${11*K}px Inter, sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 3*K; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.strokeText('Daniel', x, y+34*K); cx.fillStyle = '#facc15'; cx.fillText('Daniel', x, y+34*K); }
+
+/* ---- Versteckter Admin-Modus ---- */
+const ADM_H = '1c91704d';
+const fnv = t => { let h = 0x811c9dc5; for (const c of t){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); };
+let ADM = false, ADMSPD = 1, ADMNOF = false, ADMV = null, admFails = 0, admLock = 0;
+try { ADM = sessionStorage.getItem('rw-adm')==='1'; } catch(e){}
+function admView(){ if (ADMV) return; ADMV = {run: !!G && !paused, wasPanel: ov.classList.contains('show') ? ov.innerHTML : ''}; paused = true; }
+function admClose(){ const r = ADMV; ADMV = null; if (!r) return;
+  if (r.run){ hidePanel(); paused = false; $('#swPlay').textContent = '⏸ Pause'; }
+  else if (r.wasPanel && !/swAdm/.test(r.wasPanel)){ ov.innerHTML = r.wasPanel; ov.classList.add('show'); }
+  else if (G){ panel(`<h3>⏸ Pause</h3><p>Weiter geht's.</p><div class="row"><button class="btn primary" data-a="resume">▶ Weiter</button></div>`); }
+  else intro(); }
+function admLogin(){ if (TK || TMO || ov.querySelector('[data-sap]')) return; if (ADM){ admMenu(); return; } admView();
+  panel(`<h3>🔐 Administrator</h3><p>Bitte Passwort eingeben.</p>
+  <div class="sw-namebox"><input id="swAdmPw" type="password" inputmode="numeric" autocomplete="off" aria-label="Admin-Passwort"><button class="btn primary" data-adm="login">Anmelden</button></div>
+  <p class="sw-hint" id="swAdmMsg"></p><div class="row"><button class="btn" data-adm="close">Abbrechen</button></div>`);
+  setTimeout(()=>{ const i = $('#swAdmPw'); if (i) i.focus({preventScroll:true}); }, 50); }
+function admTry(){ const i = $('#swAdmPw'), m = $('#swAdmMsg'); if (!i) return;
+  if (Date.now() < admLock){ m.textContent = `Zu viele Versuche. Bitte ${Math.ceil((admLock-Date.now())/1000)} s warten.`; return; }
+  if (fnv('isi-admin:'+i.value)===ADM_H){ ADM = true; admFails = 0; try { sessionStorage.setItem('rw-adm','1'); } catch(e){} toast('🛠️ Admin-Modus aktiv'); admMenu(); }
+  else { admFails++; i.value = ''; i.classList.add('err'); if (admFails>=5){ admLock = Date.now()+30000; admFails = 0; m.textContent = 'Zu viele Fehlversuche. 30 s gesperrt.'; } else m.textContent = 'Falsches Passwort.'; } }
+function admMenu(){ admView(); const g = !!G;
+  const B = (id, t, dis) => `<button class="btn${dis?'':' '}" data-adm="${id}" ${dis?'disabled':''}>${t}</button>`;
+  panel(`<h3>🛠️ Admin-Modus</h3><p class="sw-hint">Nur für dich. Änderungen wirken sofort auf den Spielstand dieses Geräts.</p>
+  <h4 class="sw-h4">Spielstand</h4>
+  <div class="adm-row"><input id="swAdmLvl" type="number" min="1" max="99" value="${S.lvl}" aria-label="Level"><button class="btn primary" data-adm="lvl">Level setzen</button></div>
+  <div class="adm-grid">${B('m10','+10.000 €')}${B('m100','+100.000 €')}${B('st10','+10 ⭐')}${B('st50','+50 ⭐')}${B('soc','+20 🤝')}${B('dan','+5 Daniel')}${B('all','🔓 Alles freischalten')}${B('team','👥 Team auf Level 20')}${B('retry','✅ Wiederholpflicht aufheben')}${B('board','🗑️ Bestenliste zurücksetzen')}</div>
+  <h4 class="sw-h4">Laufende Schicht ${g?'':'<small>(erst eine Schicht starten)</small>'}</h4>
+  <div class="adm-grid">${B('isi','🧩 ISI-Störung auslösen',!g)}${B('tk','📞 Ticket jetzt',!g)}${B('tm','🤝 Team-Moment jetzt',!g)}${B('sap','📨 SAP-Frage jetzt',!g)}${B('win','🏁 Schicht sofort gewinnen',!g)}${B('nof', ADMNOF ? '🛡️ Störungen: AUS' : '🛡️ Störungen: AN')}${B('spd', `⏩ Tempo: ×${ADMSPD}`)}</div>
+  <h4 class="sw-h4">Nächste Schicht</h4>
+  <div class="adm-grid">${B('npz','📢 Präsenzpflicht')}${B('nein','🥨 Team-Event-Einladung')}${B('nsap','📨 SAP-Frage')}${B('nwiesn','🍻 Oktoberfest')}${B('nstorm','⛈️ Sturm')}</div>
+  <div class="row" style="margin-top:12px"><button class="btn primary" data-adm="close">Schließen</button><button class="btn" data-adm="off">Admin-Modus beenden</button></div>`, true); }
+function admNext(f){ BR = brief(); BR.retry = 0; f(BR); toast('🛠️ Gilt für die nächste Schicht.'); }
+function admAct(k){
+  if (k==='login'){ admTry(); return; }
+  if (k==='close'){ admClose(); return; }
+  if (!ADM) return;
+  if (k==='off'){ ADM = false; ADMSPD = 1; ADMNOF = false; try { sessionStorage.removeItem('rw-adm'); } catch(e){} toast('🛠️ Admin-Modus beendet'); admClose(); return; }
+  if (k==='lvl'){ const v = Math.max(1, Math.min(99, parseInt($('#swAdmLvl').value)||1)); S.lvl = v; S.xp = 0; S.st.maxLvl = Math.max(S.st.maxLvl, v); }
+  if (k==='m10') S.money += 10000; if (k==='m100') S.money += 100000;
+  if (k==='st10') S.stars += 10; if (k==='st50') S.stars += 50;
+  if (k==='soc'){ S.soc += 20; S.st.socTotal += 20; }
+  if (k==='dan') S.daniel += 5;
+  if (k==='all'){ UPG.forEach(it=>{ U[it.id] = it.cost.length; }); REG.forEach(r=>{ S.net[r.id] = 1; }); LINES.forEach(r=>{ S.net[r.id] = 1; });
+    SKINS.forEach(s=>{ if (!S.sk.own.includes(s.id)) S.sk.own.push(s.id); }); PERKS.forEach(p=>{ if (!p.once) S.perks[p.id] = 1; }); STAFF.forEach(p=>{ S.staff[p.id].h = 1; }); net(); }
+  if (k==='team') STAFF.forEach(p=>{ S.staff[p.id].h = 1; S.staff[p.id].l = 20; S.staff[p.id].x = 0; });
+  if (k==='retry'){ S.mustRetry = null; BR = null; }
+  if (k==='board'){ try { localStorage.removeItem(PKEY); localStorage.removeItem('rw-isi-bots'); } catch(e){} BOTL = null; }
+  if (G){
+    if (k==='isi'){ const n = HQ.find(i=>!G.faults.some(f=>f.node===i)); if (n!==undefined){ const f = {id:nextId++, type:'isi', st:'on', fc:0, prog:0, crew:null, x:N[n].x, y:N[n].y-2, open:0, age:0, node:n}; G.faults.push(f); activate(f); } }
+    if (k==='tk'){ G.tk.offer = mkPuzzle(); G.tk.offer.until = G.t + 20; }
+    if (k==='tm'){ G.tm.offer = {i:Math.floor(Math.random()*TMS.length), until:G.t+20}; }
+    if (k==='sap'){ G.sapq = true; G.sapAsked = false; G.sapNow = true; }
+    if (k==='win'){ G.arrived = Math.max(G.arrived, 10); G.onTime = G.arrived; G.trains.forEach(t=>{ t.age = 0; }); G.sapq = false; G.t = G.T; }
+  }
+  if (k==='nof') ADMNOF = !ADMNOF;
+  if (k==='spd') ADMSPD = ADMSPD===1 ? 2 : ADMSPD===2 ? 4 : 1;
+  if (k==='npz') admNext(b=>{ b.ev = 'praesenz'; b.pzStage = Math.min(4, S.pz.stage); });
+  if (k==='nein') admNext(b=>{ b.ev = 'einladung'; b.party = rnd(PARTIES); b.host = nm(rnd(STAFF.filter(p=>p.id!=='roman')).id); });
+  if (k==='nsap') admNext(b=>{ b.sapq = true; });
+  if (k==='nwiesn') admNext(b=>{ b.ev = 'wiesn'; });
+  if (k==='nstorm') admNext(b=>{ b.wx = 'storm'; });
+  checkAch(); save();
+  if (['isi','tk','tm','sap','win'].includes(k)){ toast('🛠️ Ausgelöst'); ADMV.run = true; admClose(); return; }
+  toast('🛠️ Erledigt'); admMenu(); }
 
 /* ---- Panels ---- */
 function panel(html, wide){ ov.innerHTML = `<div class="sw-panel${wide?' wide':''}">${html}</div>`; ov.classList.add('show'); ov.scrollTop = 0; }
@@ -2361,7 +2432,7 @@ function setImg(id, file){ if (!file || !/^image\//.test(file.type)) return; con
     im.src = rd.result; };
   rd.readAsDataURL(file); }
 ov.addEventListener('change', e=>{ const t = e.target; if (t.dataset.nm){ setName(t.dataset.nm, t.value); shop(); } if (t.dataset.img) setImg(t.dataset.img, t.files[0]); });
-ov.addEventListener('keydown', e=>{ if (e.target.matches('input')){ e.stopPropagation(); if (e.key==='Enter'){ if (e.target.id==='swPlayer') doSetPlayer(); else if (e.target.id==='swRename') doRename(); else e.target.blur(); } if (e.key==='Escape' && e.target.id==='swRename'){ closeRename(); } } });
+ov.addEventListener('keydown', e=>{ if (e.target.matches('input')){ e.stopPropagation(); if (e.key==='Enter'){ if (e.target.id==='swPlayer') doSetPlayer(); else if (e.target.id==='swAdmPw') admTry(); else if (e.target.id==='swRename') doRename(); else e.target.blur(); } if (e.key==='Escape' && e.target.id==='swRename'){ closeRename(); } } });
 let RN = null;
 function openRename(){ if (TK || TMO || ov.querySelector('[data-sap]') || RN) return; if (!S.player){ intro(); return; }
   RN = {run: !!G && !paused, wasPanel: ov.classList.contains('show') ? ov.innerHTML : ''}; paused = true;
@@ -2384,6 +2455,7 @@ function doSetPlayer(){ const i = $('#swPlayer'); if (!i) return; if (!setPlayer
 ov.addEventListener('click', e=>{
   const b = e.target.closest('button'); if (!b || b.disabled) return;
   const ds = b.dataset;
+  if (ds.adm){ admAct(ds.adm); return; }
   if (TK){ tkClick(b); return; }
   if (TMO && ds.tmc!==undefined){ resolveTm(+ds.tmc); return; }
   if (ds.sap){ decideSap(ds.sap==='yes'); return; }
@@ -2442,6 +2514,8 @@ $('#swShopBtn').onclick = () => { if (TK || TMO || ov.querySelector('[data-sap]'
 $('#swTk').onclick = () => openTicket();
 $('#swTm').onclick = () => openTm();
 $('#swMe').onclick = () => openRename();
+$('#swAdmChip').onclick = () => admMenu();
+{ let ac = 0, at = 0; const t = $('#swAdm'); if (t) t.addEventListener('click', ()=>{ clearTimeout(at); at = setTimeout(()=>{ ac = 0; }, 2500); if (++ac>=5){ ac = 0; document.getElementById('sw').scrollIntoView({behavior:'smooth', block:'start'}); admLogin(); } }); }
 $('#swHero').onclick = () => { if (!G || TK || TMO || G.hero) return; if (!S.daniel){ shop('upg'); return; } callDaniel(); };
 const tipEl = $('#swTip'); let tipTo = 0;
 function showTip(html, ex, ey){ if (!tipEl) return; if (!html){ tipEl.hidden = true; return; } tipEl.innerHTML = html; tipEl.hidden = false;
