@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "de.wagnerroman.isiteamspiel",
+    "sha256_cert_fingerprints": ["37:18:DB:BB:FD:58:EE:01:EB:BB:0E:D2:43:AC:80:73:7E:44:0F:6C:B9:DC:8D:6F:0B:86:6B:E1:96:21:D2:49"]
+  }
+}]
