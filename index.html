@@ -1082,6 +1082,7 @@ const BADGES = [
  ['perk','🎁','Gönn dir','Den ersten Perk mit Social-Punkten eingelöst.']
 ];
 const PERKS = [
+ {id:'eigen', ic:'💪', n:'Eigenmotivation', d:'Wer neben einer Störung steht, packt von selbst an. Du musst nicht mehr klicken.', c:3},
  {id:'kaffee', ic:'☕', n:'Kaffeemaschine im Depot', d:'Dein Team startet jede Schicht mit 10 s Turbo.', c:8},
  {id:'wiki', ic:'📚', n:'Wissensdatenbank', d:'Bei Anrufen und Tickets hast du 5 s mehr Zeit zum Rätseln.', c:10},
  {id:'draht', ic:'📞', n:'Kurzer Draht zum Kunden', d:'Gelöste Tickets und Anrufe bringen 50 % mehr Belohnung.', c:10},
@@ -1386,6 +1387,9 @@ function dispatch(f, crew){
   if (crew.st==='work') return false;
   if (crew.st==='go' && crew.f && crew.f.crew===crew) crew.f.crew = null;
   crew.st='go'; crew.f=f; f.crew=crew; return true; }
+function eigenDispatch(){ const R = 55*K;
+  G.crews.forEach(c=>{ if (c.st!=='idle' || c===G.sel) return; const f = G.faults.filter(f=>!f.crew && Math.hypot(c.x-f.x,c.y-f.y) < R).sort((a,b)=>Math.hypot(c.x-a.x,c.y-a.y)-Math.hypot(c.x-b.x,c.y-b.y))[0];
+    if (f && dispatch(f,c)) log(`💪 ${c.name} packt selbst an: ${label(f)}`,'g'); }); }
 function autoDispatch(){
   const idle = G.crews.filter(c=>c.st==='idle' && c!==G.sel), open = G.faults.filter(f=>!f.crew);
   if (!idle.length || !open.length) return;
@@ -1410,6 +1414,7 @@ function step(dt){
     if (ft.auto && !f.crew && f.age >= ft.auto){ removeFault(f); log(`🐄 Die Tiere sind weitergezogen (${N[E[f.edge].a].n}–${N[E[f.edge].b].n}).`,'y'); }
   });
   if (U.isi2 && !G.isiDown && !G.sapTook) autoDispatch();
+  if (PK('eigen') && !G.sapTook) eigenDispatch();
   if (!G.sapTook){ tkStep(dt); tmStep(dt); }
   G.trains.forEach(t=>{
     t.age += dt; if (t.hold > 0){ t.hold -= dt; t.age = 0; return; }
