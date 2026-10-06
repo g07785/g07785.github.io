@@ -488,7 +488,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
       <div class="board" aria-live="polite">
         <div class="head"><span>Abfahrt</span><span>Ziel</span><span>Gleis</span></div>
         <div class="row"><span class="time" id="btime">--:--</span><div class="flaps" id="flaps" aria-label=""></div><span class="gleis" id="gleis">Gl. 1</span></div>
-        <div class="sub"><span class="ticker" id="ticker">+++ Fachreferent Application Management +++ SAP-Stammdaten &amp; Konfiguration +++ BW +++ Monitoring +++ Focused Insights +++ Abfahrt pünktlich, Monitoring grün +++</span></div>
+        <div class="sub"><span class="ticker" id="ticker">+++ Fachreferent bei der Deutschen Bahn +++ SAP-Stammdaten &amp; Konfiguration +++ BW +++ Monitoring +++ Focused Insights +++ Abfahrt pünktlich, Monitoring grün +++</span></div>
       </div>
       <div class="cta">
         <a class="btn primary" href="#journey">Meine Strecke ansehen →</a>
@@ -527,7 +527,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
     <div class="sec-head reveal"><div class="num">01 / Über mich</div><h2>IT mit Bankerblick</h2></div>
     <div class="about">
       <div class="reveal">
-        <p>Seit August 2022 bin ich <b>Fachreferent im Application Management</b> bei der Deutschen Bahn. Mein Fokus liegt auf <b>SAP-Stammdaten und Konfiguration</b>, <b>BW</b> und <b>Monitoring</b>: Ich sorge dafür, dass Jobs, IDocs und Schnittstellen zuverlässig laufen, auch dann, wenn keiner hinschaut.</p>
+        <p>Seit August 2022 bin ich <b>Fachreferent</b> bei der Deutschen Bahn. Mein Fokus liegt auf <b>SAP-Stammdaten und Konfiguration</b>, <b>BW</b> und <b>Monitoring</b>: Ich sorge dafür, dass Jobs, IDocs und Schnittstellen zuverlässig laufen, auch dann, wenn keiner hinschaut.</p>
         <p>Im Projekt <b>Focused Insights</b> habe ich die Überwachung von BW- und S&amp;K-Jobs mit aufgebaut. Ich habe Testfälle für die <b>Testautomatisierung</b> nach Releases entwickelt und bearbeite Incidents im 1st Level. Für S&amp;K, allgemeine ISI-Themen und Focused Insights bin ich auch 2nd Level, was darüber hinausgeht, leite ich ans Application Management (AM) weiter. Dazu kommen Berechtigungen und Customizing.</p>
         <p>Angefangen habe ich als <b>Bankkaufmann</b>. Daher kommt mein Blick für Kunden, Zahlen und saubere Prozesse. Heute verbinde ich das mit Technik und zuletzt besonders mit <b>generativer KI</b> und KI-Agenten.</p>
       </div>
@@ -568,7 +568,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
       <div class="phase">Endstation: Heute</div>
       <div class="stop reveal"><div class="card">
         <div class="when">08/2022 – heute</div>
-        <h3>Fachreferent Application Management S&amp;K/BW <span class="tag">aktuell</span></h3>
+        <h3>Fachreferent S&amp;K/BW <span class="tag">aktuell</span></h3>
         <div class="org">Deutsche Bahn · Vollzeit · Remote</div>
         <ul><li>Qualitätssicherung und Monitoring für S&amp;K, Mobile, MM, BW und Schnittstellen (Jobs, IDocs)</li><li>Projekt Focused Insights: Überwachung für BW- und S&amp;K-Jobs eingeführt</li><li>Projekt Testautomatisierung: Testfälle nach Releases konstruiert</li></ul>
         <details><summary>Mehr Aufgaben</summary><ul><li>Incidents im 1st Level, für S&amp;K, allgemeine ISI-Themen und Focused Insights auch im 2nd Level, mit Weiterleitung ans Application Management (AM)</li><li>Berechtigungsverwaltung SAP/DEBI</li><li>Customizing SAP S&amp;K</li></ul></details>
@@ -947,7 +947,7 @@ $('#fab').onclick=()=>toggleTerm(true); $('#openTerm2').onclick=()=>toggleTerm(t
 const cmds={
  help:()=>say('Befehle:\n  whoami     – wer ist Roman?\n  job        – aktuelle Rolle\n  skills     – Kenntnisse nach Bereich\n  certs      – Weiterbildungen\n  sap        – SAP-Status prüfen\n  incident   – Incident in der Live-Demo auslösen\n  meteor     – ☄️\n  zug        – 🚆 (Vorsicht!)\n  spiel      – ISI Teamspiel spielen\n  kontakt    – Kontaktmöglichkeiten\n  hinweis    – KI-Transparenzhinweis\n  theme      – Hell/Dunkel wechseln\n  clear      – Bildschirm leeren\n  exit       – schließen'),
  whoami:()=>say('Roman Wagner – Fachreferent, SAP-Stammdaten & Konfiguration, BW, Monitoring. Gelernter Bankkaufmann, KI-Enthusiast. Nördlingen, Bayern.'),
- job:()=>say('Deutsche Bahn · Fachreferent Application Management · seit 08/2022 · remote\n→ SAP-Stammdaten · Konfiguration · BW · Monitoring · Focused Insights\n→ 1st Level, für S&K, ISI-Themen & Focused Insights auch 2nd Level, Weiterleitung ans AM'),
+ job:()=>say('Deutsche Bahn · Fachreferent bei der Deutschen Bahn · seit 08/2022 · remote\n→ SAP-Stammdaten · Konfiguration · BW · Monitoring · Focused Insights\n→ 1st Level, für S&K, ISI-Themen & Focused Insights auch 2nd Level, Weiterleitung ans AM'),
  skills:()=>cats.forEach(c=>say(`[${c}] `+skills[c].map(s=>s.split('|')[0]).join(', '))),
  certs:()=>certs.forEach(c=>say('✓ '+c[0])),
  sap:()=>['Verbinde mit Monitoring…','Prüfe Jobs…   OK','Prüfe IDocs…  OK','Prüfe BW-Ladeketten… OK','Status: alles grün ✅ (Demo, keine echten Systeme)'].forEach((s,i)=>setTimeout(()=>say(s),i*450)),
