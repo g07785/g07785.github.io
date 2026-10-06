@@ -386,6 +386,8 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 .sw-namebox input.err{border-color:#ef4444}
 .sw-tip{position:absolute;z-index:5;max-width:280px;background:rgba(10,13,22,.95);border:1px solid #3b4466;color:#dfe3f5;border-radius:12px;padding:9px 11px;font-size:12.5px;line-height:1.45;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 .sw-tip b{color:#fff}
+.sw-tip.short{max-width:min(250px,80%);padding:5px 10px;font-size:12px;line-height:1.35;border-radius:9px;border-color:#facc15;background:rgba(10,13,22,.88);transition:opacity .25s}
+.sw-tip.short.out{opacity:0}
 .sw-tip small{color:#9aa3c7}
 .sw-info .tm{font:700 12.5px var(--mono);background:linear-gradient(120deg,#0ea5e9,#6366f1);color:#fff;border:0;border-radius:999px;padding:6px 12px;cursor:pointer;animation:swring .9s infinite}
 .sw-info .mor{border-color:#16a34a;color:#86efac}
@@ -1607,6 +1609,20 @@ function tipAt(x, y){ const tol = 24*K;
     const hq = HQ.includes(n.i), cd = G ? Math.max(0, G.hqCd[n.i]||0) : 0;
     return `<b>${n.n}</b> · ${LM[n.i]}${n.i===DEPOT ? '<br>Depot: Hier startet dein Team.' : ''}${hq ? `<br>🏛️ HQ: pünktliche Züge +50 %. ${cd>0 ? `Turbo lädt (${Math.ceil(cd)} s).` : 'Turbo bereit: antippen!'}` : ''}`; }
   return ''; }
+/* Kurzmeldung beim Antippen (Handy): ein Satz im Bahn-Ansageton */
+const BAHN = {track:'Wegen eines Gleisschadens ist die Strecke gesperrt.', signal:'Aufgrund einer Signalstörung kommt es zu Verzögerungen.', switch:'Wegen einer Weichenstörung verzögert sich die Weiterfahrt.', defect:'Wegen einer Reparatur am Zug verzögert sich die Weiterfahrt.', door:'Aufgrund einer Türstörung verzögert sich die Abfahrt.', animal:'Wegen Tieren im Gleis ist die Strecke gesperrt.', ole:'Wegen einer Störung an der Oberleitung ist die Strecke gesperrt.', bue:'Aufgrund einer Störung am Bahnübergang: Langsamfahrt.', brake:'Wegen einer Bremsstörung verzögert sich die Weiterfahrt.', isi:'Aufgrund einer IT-Störung fallen die ISI-Meldungen aus.', stw:'Aufgrund einer Stellwerksstörung: kein Zugverkehr.', driver:'Wegen kurzfristigen Personalausfalls verzögert sich die Abfahrt.', ac:'Wegen einer defekten Klimaanlage verkehrt der Zug mit Verspätung.', tree:'Wegen eines umgestürzten Baums ist die Strecke gesperrt.', fire:'Aufgrund eines Böschungsbrands ist die Strecke gesperrt.', buckle:'Wegen einer Gleisverwerfung ist die Strecke gesperrt.', ice:'Aufgrund einer vereisten Weiche kommt es zu Verzögerungen.', flood:'Wegen einer Unterspülung ist die Strecke gesperrt.', bolt:'Nach einem Blitzeinschlag: Störung an der Signaltechnik.', cable:'Aufgrund eines Kabeldiebstahls ist die Strecke gesperrt.', rail:'Wegen eines Schienenbruchs ist die Strecke gesperrt.', loco:'Wegen eines Lokschadens verzögert sich die Weiterfahrt.'};
+function tipShort(x, y){ const tol = 24*K;
+  if (G){
+    const f = G.faults.find(f=>Math.hypot(f.x-x,f.y-y)<tol);
+    if (f){ const ft = FT[f.type]; return f.st==='fc' ? `${ft.ic} ISI-Prognose: ${esc(ft.n)} in ${Math.ceil(f.fc)} s.` : `${ft.ic} ${BAHN[f.type] || esc(ft.n)}`; }
+    if (G.ev && EV[G.ev].node!==undefined){ const ev = EV[G.ev], n = N[ev.node], ei = evIcon(n); if (Math.hypot(ei[0]-x, ei[1]-y) < 22*K) return `${ev.mk} ${ev.n}: erhöhtes Fahrgastaufkommen in ${n.n}.`; }
+    if (G.closed>=0){ const e = E[G.closed]; if (Math.hypot((N[e.a].x+N[e.b].x)/2-x, (N[e.a].y+N[e.b].y)/2-y) < tol) return `🏗️ Wegen Bauarbeiten ist die Strecke ${N[e.a].n}–${N[e.b].n} gesperrt.`; }
+    const t = G.trains.find(t=>t.hold<=0 && Math.hypot(t.x-x,t.y-y)<14*K);
+    if (t){ const late = Math.round(t.age-t.sched); return `🚆 ${t.id} nach ${N[t.path[t.path.length-1]].n}${late>0 ? `, heute ca. ${late} s später` : ', pünktlich'}.`; }
+  }
+  const n = N.find(n=>Math.hypot(n.x-x,n.y-y)<tol || (ACT[n.i] && Math.hypot(lmPos(n)[0]-x, lmPos(n)[1]-12*K-y)<16*K));
+  if (n){ if (!ACT[n.i]){ const rg = REG.find(r=>r.id===n.reg); return `🔒 ${n.n}: ab Level ${rg.lv} im Shop.`; } return `🚉 ${n.n}${HQ.includes(n.i) ? ' · HQ' : ''}`; }
+  return ''; }
 
 /* ---- Zeichnen ---- */
 const C = { wait:'#f59e0b', bad:'#ef4444', ok:'#4ade80', isi:'#22c55e', run:'#8b8cff' };
@@ -2518,15 +2534,20 @@ $('#swAdmChip').onclick = () => admMenu();
 { let ac = 0, at = 0; const t = $('#swAdm'); if (t) t.addEventListener('click', ()=>{ clearTimeout(at); at = setTimeout(()=>{ ac = 0; }, 2500); if (++ac>=5){ ac = 0; document.getElementById('sw').scrollIntoView({behavior:'smooth', block:'start'}); admLogin(); } }); }
 $('#swHero').onclick = () => { if (!G || TK || TMO || G.hero) return; if (!S.daniel){ shop('upg'); return; } callDaniel(); };
 const tipEl = $('#swTip'); let tipTo = 0;
-function showTip(html, ex, ey){ if (!tipEl) return; if (!html){ tipEl.hidden = true; return; } tipEl.innerHTML = html; tipEl.hidden = false;
-  const st = cv.parentElement.getBoundingClientRect(); let l = ex-st.left+14, t = ey-st.top+14; const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
-  if (l+w > st.width-6) l = Math.max(6, ex-st.left-w-14); if (t+h > st.height-6) t = Math.max(6, ey-st.top-h-14); tipEl.style.left = l+'px'; tipEl.style.top = t+'px'; }
+function showTip(html, ex, ey, short){ if (!tipEl) return; clearTimeout(tipTo); if (!html){ tipEl.hidden = true; tipEl.classList.remove('short','out'); return; }
+  tipEl.innerHTML = html; tipEl.classList.toggle('short', !!short); tipEl.classList.remove('out'); tipEl.hidden = false;
+  const st = cv.parentElement.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight; let l, t;
+  if (short){ l = Math.min(Math.max(6, ex-st.left-w/2), st.width-w-6); t = ey-st.top-h-22; if (t < 6) t = ey-st.top+22; }
+  else { l = ex-st.left+14; t = ey-st.top+14; if (l+w > st.width-6) l = Math.max(6, ex-st.left-w-14); if (t+h > st.height-6) t = Math.max(6, ey-st.top-h-14); }
+  tipEl.style.left = l+'px'; tipEl.style.top = t+'px'; }
 const toCv = e => { const r = cv.getBoundingClientRect(); return [(e.clientX-r.left)/r.width*W, (e.clientY-r.top)/r.height*H]; };
-cv.addEventListener('mousemove', e=>{ if (ov.classList.contains('show')){ showTip(''); return; } const q = toCv(e), h = tipAt(q[0],q[1]); showTip(h, e.clientX, e.clientY); cv.style.cursor = h ? 'pointer' : 'crosshair'; });
-cv.addEventListener('mouseleave', ()=>showTip(''));
-function tapTip(e){ if (e.pointerType==='mouse') return; const q = toCv(e), h = tipAt(q[0],q[1]); if (h){ showTip(h, e.clientX, e.clientY); clearTimeout(tipTo); tipTo = setTimeout(()=>showTip(''), 3200); } }
+cv.addEventListener('pointermove', e=>{ if (e.pointerType!=='mouse') return; if (ov.classList.contains('show')){ showTip(''); return; } const q = toCv(e), h = tipAt(q[0],q[1]); showTip(h, e.clientX, e.clientY); cv.style.cursor = h ? 'pointer' : 'crosshair'; });
+cv.addEventListener('pointerleave', e=>{ if (e.pointerType==='mouse') showTip(''); });
+function tapTip(e){ if (e.pointerType==='mouse' || ov.classList.contains('show')) return; const q = toCv(e), h = tipShort(q[0],q[1]); if (!h){ showTip(''); return; }
+  showTip(h, e.clientX, e.clientY, true); tipTo = setTimeout(()=>{ tipEl.classList.add('out'); tipTo = setTimeout(()=>showTip(''), 250); }, 1500); }
 cv.addEventListener('pointerdown', e=>{
-  if (!G || paused){ if (!ov.classList.contains('show')) tapTip(e); return; }
+  tapTip(e);
+  if (!G || paused) return;
   if (G.sapTook){ log('⏳ Alle warten auf den SAP-Support …','e'); return; }
   const r = cv.getBoundingClientRect(), x = (e.clientX-r.left)/r.width*W, y = (e.clientY-r.top)/r.height*H, tol = Math.max(30*K, 34*W/r.width);
   const f = G.faults.filter(f=>!f.crew).map(f=>[f,Math.hypot(f.x-x,f.y-y)]).filter(([,d])=>d<tol).sort((a,b)=>a[1]-b[1])[0];
