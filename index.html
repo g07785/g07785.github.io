@@ -1242,6 +1242,7 @@ function mkCrews(){ const list = [];
     c.x = N[DEPOT].x + (k-(inRow-1)/2)*26*K; c.y = N[DEPOT].y + (PORT ? 80 + r*36 : 100 + r*44)*K; });
   return list; }
 function newShift(){
+  if (BR || true){ const b0 = BR; if (b0) S.lastBrief = JSON.parse(JSON.stringify({wx:b0.wx, wx2:b0.wx2, ev:b0.ev, mis:b0.mis, party:b0.party, host:b0.host, pzStage:b0.pzStage, choice:b0.choice, sapq:b0.sapq})); }
   net(); const map = S.sk.map; applyLayout(isGeo(map) ? 'geo' : 'base'); const b = BR || brief(); BR = null; const d = diff(S.lvl);
   const fest = (S.perks.fest||0) > 0; if (fest) S.perks.fest--;
   const sapq = S.lvl>=8 && (b.sapq || !S.seen.sapq || S.st.shifts >= (S.sapNext||0));
@@ -2148,9 +2149,12 @@ function intro(){
   <li>Sammle <b>⭐ Sterne</b> mit Schichtwertungen, Missionen und Erfolgen und tausch sie gegen <b>Skins</b>. Ab Level 15 wartet die <b>Generalsanierung</b> (Prestige).</li></ul>
   <div class="row"><button class="btn primary" data-a="start">▶ Schicht starten</button><button class="btn" data-a="shop">🛒 Shop</button>${S.st.shifts?'<button class="btn" data-a="reset">↺ Spielstand löschen</button>':''}</div>`);
 }
+function repeatBrief(){ const L = S.lastBrief; if (!L) return Object.assign(brief(), {retry:1});
+  const r = JSON.parse(JSON.stringify(L)); r.retry = 1; delete r.newB; delete r.soc; if (r.mis){ r.mis.p = 0; r.mis.done = false; r.mis.fail = false; } return r; }
 function showBrief(){
   if (S.mustRetry && !(BR && BR.retry)){ BR = brief(); BR.retry = 1;
     if (S.mustRetry==='office'){ BR.ev = 'praesenz'; BR.choice = null; BR.pzStage = S.pz.last; if (BR.wx==='storm' && !BR.wx2) BR.wx = 'clear'; }
+    else if (S.mustRetry==='any') BR = repeatBrief();
     else { BR.sapq = true; if (BR.ev && EV[BR.ev].choices) BR.ev = null; } }
   if (!BR) BR = brief(); const b = BR, d = diff(S.lvl);
   if (b.ev && EV[b.ev].choices && !b.choice){
@@ -2180,7 +2184,7 @@ function go(){ newShift(); hidePanel(); paused = false; $('#swPlay').textContent
 function endShift(){
   paused = true; const od = overdue(); G.arrived += od; const lost = !!G.sapTook, p = G.arrived ? Math.round(G.onTime/G.arrived*100) : 0, ok = !lost && p >= G.d.goal;
   if (ok && G.ev==='wiesn') S.st.wiesn++;
-  S.mustRetry = lost ? 'sap' : (G.mode==='office' && !ok) ? 'office' : null;
+  S.mustRetry = lost ? 'sap' : (G.mode==='office' && !ok) ? 'office' : !ok ? 'any' : null;
   const stars = ok ? 1 + (p >= Math.min(98,G.d.goal+5) ? 1 : 0) + (p >= Math.min(98,G.d.goal+10) ? 1 : 0) : 0;
   const m = G.mis; if (m && m.k==='clean' && !m.fail) m.done = true;
   const misOk = !!(m && m.done);
@@ -2191,7 +2195,7 @@ function endShift(){
   if (stars===3) addSoc(1,'Drei-Sterne-Schicht');
   S.st.shifts++; S.st.best = Math.max(S.st.best, p); if (ok && p===100 && G.arrived>=5) S.st.perfect++; if (stars===3) S.st.three++; if (ok && (G.wx==='storm')) S.st.storm++;
   const got = checkAch(); save();
-  $('#swPlay').textContent = '▶ Nächste Schicht';
+  $('#swPlay').textContent = ok ? '▶ Nächste Schicht' : '🔁 Schicht wiederholen';
   if (lost){ panel(`<h3>⛔ Runde verloren</h3><p>Seit SAP den Support übernommen hat, stand alles still: Die Tickets landeten in einer Warteschlange, niemand durfte mehr reparieren, und die Störungen stapelten sich.</p>
     <div class="sw-res"><div><span>Pünktlich</span><b>${p} %</b></div><div><span>Repariert</span><b>${G.repaired}</b></div><div><span>Offene Störungen</span><b>${G.faults.length}</b></div></div>
     <p class="sw-exp">💡 Tipp: Beim nächsten Mal den Support lieber im eigenen Team lassen. Ihr kennt ISI und das Netz am besten.</p>
@@ -2206,7 +2210,7 @@ function endShift(){
   ${got.length ? `<p>🏆 Neue Erfolge: ${got.join(', ')}</p>` : ''}
   ${G.socGain ? `<p>🤝 Social-Punkte: +${G.socGain} (jetzt ${S.soc})</p>` : ''}${G.newB.length ? `<p class="sw-badge-new">🎖️ Neues Badge: ${G.newB.join(', ')}</p>` : ''}
   ${G.mode==='office' && !ok ? '<p class="sw-exp">💡 Kleiner Tipp: Vielleicht ist es keine so gute Idee, alle ins Büro zu schicken. Pendeln und Großraumbüro kosten viel Zeit. Ein Teamfrühstück dagegen wirkt Wunder …</p>' : ''}
-  <div class="row">${G.mode==='office' && !ok ? '<button class="btn primary" data-a="retry">🔁 Schicht wiederholen</button>' : `<button class="btn primary" data-a="start">▶ Nächste Schicht</button><button class="btn" data-a="shop">🛒 Shop (${fmt(S.money)} € · ${S.stars} ⭐)</button>`}</div>`);
+  <div class="row">${G.mode==='office' && !ok ? '<button class="btn primary" data-a="retry">🔁 Schicht wiederholen</button>' : `${ok ? '<button class="btn primary" data-a="start">▶ Nächste Schicht</button>' : '<button class="btn primary" data-a="retryany">🔁 Schicht wiederholen</button>'}<button class="btn" data-a="shop">🛒 Shop (${fmt(S.money)} € · ${S.stars} ⭐)</button>`}</div>`);
   G = null;
 }
 let tab = 'upg', presArm = false;
@@ -2353,6 +2357,7 @@ ov.addEventListener('click', e=>{
   if (a==='setplayer'){ doSetPlayer(); return; }
   if (a==='rename'){ doRename(); return; }
   if (a==='rncancel'){ closeRename(); return; }
+  if (a==='retryany'){ BR = repeatBrief(); showBrief(); }
   if (a==='retrysap'){ BR = brief(); BR.sapq = true; BR.retry = 1; if (BR.ev && EV[BR.ev].choices) BR.ev = null; showBrief(); }
   if (a==='retry'){ BR = brief(); BR.ev = 'praesenz'; BR.choice = null; BR.pzStage = S.pz.last; BR.retry = 1; if (BR.wx==='storm' && !BR.wx2) BR.wx = 'clear'; showBrief(); }
   if (a==='resume'){ hidePanel(); paused = false; $('#swPlay').textContent = '⏸ Pause'; }
