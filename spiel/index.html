@@ -464,6 +464,11 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 .sapx .sx-status{padding:7px 12px;font:600 12.5px Arial,sans-serif;border-top:1px solid #c5ced8}
 .sapx .sx-status.e{background:#fbeaea;color:#bb0000}
 .sapx .sx-status.w{background:#fef7e6;color:#a15c00}
+/* Foto-Zuschnitt */
+.cr-view{position:relative;width:min(240px,70vw);aspect-ratio:1;margin:8px auto;touch-action:none;cursor:grab;border-radius:12px;overflow:hidden;background:#0a0d16}
+.cr-view canvas{width:100%;height:100%;display:block}
+.cr-ring{position:absolute;inset:0;pointer-events:none;border-radius:50%;box-shadow:0 0 0 999px rgba(6,8,14,.62);outline:2px dashed rgba(255,255,255,.85);outline-offset:-2px}
+.cr-zoom{display:flex;align-items:center;gap:8px;margin:6px 0}.cr-zoom input{flex:1;accent-color:#818cf8;height:28px}
 
 /* terminal */
 #term{position:fixed;right:20px;bottom:20px;width:min(520px,calc(100vw - 32px));height:340px;background:var(--term);color:var(--termtx);border-radius:14px;box-shadow:0 20px 60px -10px rgba(0,0,0,.5);z-index:200;display:none;flex-direction:column;font:13px var(--mono);overflow:hidden;border:1px solid #232838}
@@ -810,35 +815,35 @@ const PERKS = [
 ];
 const PK = id => !!S.perks[id];
 const UPG = [
- {id:'crew', ic:'👷', n:'Zusätzlicher Reparaturtrupp', d:'Ein weiterer allgemeiner Trupp, der Störungen gleichzeitig beheben kann.', cost:[120,400,1200,3500,8000,15000], lv:[1,2,4,8,12,16]},
- {id:'tools',ic:'🧰', n:'Profi-Werkzeug', d:'Alle Reparaturen pro Stufe 20 % schneller.', cost:[150,600,4000,12000], lv:[1,3,8,12]},
- {id:'rails',ic:'🛤️', n:'Neue Schienen', d:'Pro Stufe 20 % weniger Gleisschäden und Schienenbrüche.', cost:[250,1200], lv:[2,4]},
- {id:'maint',ic:'🔧', n:'Wartungsplan Werkstatt', d:'Stufe 1: 30 % weniger Zug-, Tür- und Bremsdefekte. Stufe 2: zusätzlich halb so viele Lok- und Klimaausfälle.', cost:[400,5000], lv:[2,7]},
- {id:'fi',   ic:'📊', n:'Focused Insights', d:'Monitoring-Dashboard: +25 % Budget und Erfahrung.', cost:[500], lv:[3]},
- {id:'veg',  ic:'🌿', n:'Vegetationsmanagement', d:'Rückschnitt entlang der Strecken: 70 % weniger Bäume im Gleis, 60 % weniger Böschungsbrände, weniger Tiere.', cost:[3500], lv:[6]},
- {id:'heat', ic:'♨️', n:'Weichenheizung', d:'80 % weniger vereiste Weichen und 40 % weniger Schienenbrüche.', cost:[3500], lv:[6]},
- {id:'vip',  ic:'🥂', n:'VIP-Service', d:'Goldene VIP-Züge fahren mit: knapper Fahrplan, aber dreifaches Budget und doppelte Erfahrung.', cost:[4500], lv:[6]},
- {id:'drain',ic:'💧', n:'Entwässerung', d:'Gräben und Durchlässe: 75 % weniger Unterspülungen bei Starkregen.', cost:[4500], lv:[7]},
- {id:'cable',ic:'🛡️', n:'Kabel- und Blitzschutz', d:'Kabelkanäle, Kameras und Überspannungsschutz: 75 % weniger Kabeldiebstahl, halb so viele Blitzschäden.', cost:[7000], lv:[8]},
- {id:'freight',ic:'📦', n:'Güterverkehr', d:'Güterzüge fahren mit: langsamer, aber +80 % Budget pro Fahrt.', cost:[8000], lv:[8]},
- {id:'diag', ic:'📡', n:'Weichen-Diagnosesystem', d:'Sensoren an Weichen und Signalen: 40 % weniger Weichen- und 20 % weniger Signalstörungen.', cost:[6000], lv:[9]},
- {id:'gsmr', ic:'📻', n:'Zugfunk-Disposition (GSM-R)', d:'Wartende Züge werden über Funk umgeleitet, auch ohne KI-Prognose.', cost:[8000], lv:[9]},
- {id:'lager', ic:'🏬', n:'Ersatzteil-Depots in den HQs', d:'Fahrzeugstörungen werden 25 % schneller behoben.', cost:[7000], lv:[10]},
- {id:'drohne', ic:'🚁', n:'Inspektionsdrohnen', d:'Schäden an der Strecke werden schneller gefunden: Streckenreparaturen 15 % schneller.', cost:[9000], lv:[11]},
- {id:'hq2', ic:'🏛️', n:'HQ-Ausbau', d:'Der Turbo hält 5 s länger, und die HQs laden 20 % schneller.', cost:[10000], lv:[12]},
- {id:'akku', ic:'🔋', n:'Akku-Triebzüge', d:'Bei Oberleitungsschäden und Kabeldiebstahl fahren Züge mit Akku langsam weiter, statt zu warten.', cost:[15000], lv:[13]},
- {id:'schnee', ic:'❄️', n:'Winterdienst und Schneepflüge', d:'Bei Frost sind deine Trupps nicht mehr langsamer. 30 % weniger vereiste Weichen und Schienenbrüche.', cost:[5000], lv:[7]},
- {id:'sturm', ic:'🌪️', n:'Sturmschutz-Programm', d:'Bei Sturm sind deine Trupps nicht mehr langsamer. 30 % weniger Bäume im Gleis und Oberleitungsschäden.', cost:[6000], lv:[8]},
- {id:'klima', ic:'🧊', n:'Klima-Nachrüstung der Flotte', d:'80 % weniger Klimaausfälle und 30 % weniger Gleisverwerfungen bei Hitze.', cost:[5500], lv:[8]},
- {id:'tempo', ic:'🚄', n:'Streckenertüchtigung', d:'Pro Stufe fahren alle Züge 10 % schneller. Der Fahrplan bleibt gleich, also mehr Puffer für Pünktlichkeit.', cost:[9000,22000], lv:[9,14]},
- {id:'sev', ic:'🚌', n:'Ersatzverkehr-Konzept', d:'Busse stehen bereit: Ein Zug gilt noch bis 4 s statt 2 s nach Plan als pünktlich.', cost:[10000], lv:[10]},
- {id:'estw', ic:'🖲️', n:'Elektronische Stellwerke (ESTW)', d:'Halb so viele Stellwerksstörungen, und die übrigen werden 30 % schneller behoben.', cost:[12000], lv:[11]},
- {id:'bz', ic:'🏢', n:'Betriebszentrale', d:'Alles im Blick: ISI-Vorwarnung +1 s und dauerhaft +10 % Budget.', cost:[35000], lv:[15]},
+ {id:'crew', ic:'👷', n:'Zusätzlicher Reparaturtrupp', d:'Ein weiterer allgemeiner Trupp, der Störungen gleichzeitig beheben kann.', cost:[120,400,1500,6000,25000,45000], lv:[1,2,4,8,12,16]},
+ {id:'tools',ic:'🧰', n:'Profi-Werkzeug', d:'Alle Reparaturen pro Stufe 20 % schneller.', cost:[150,600,6000,30000], lv:[1,3,8,12]},
+ {id:'rails',ic:'🛤️', n:'Neue Schienen', d:'Pro Stufe 20 % weniger Gleisschäden und Schienenbrüche.', cost:[250,1500], lv:[2,4]},
+ {id:'maint',ic:'🔧', n:'Wartungsplan Werkstatt', d:'Stufe 1: 30 % weniger Zug-, Tür- und Bremsdefekte. Stufe 2: zusätzlich halb so viele Lok- und Klimaausfälle.', cost:[400,8000], lv:[2,7]},
+ {id:'fi',   ic:'📊', n:'Focused Insights', d:'Monitoring-Dashboard: +25 % Budget und Erfahrung.', cost:[900], lv:[3]},
+ {id:'veg',  ic:'🌿', n:'Vegetationsmanagement', d:'Rückschnitt entlang der Strecken: 70 % weniger Bäume im Gleis, 60 % weniger Böschungsbrände, weniger Tiere.', cost:[6000], lv:[6]},
+ {id:'heat', ic:'♨️', n:'Weichenheizung', d:'80 % weniger vereiste Weichen und 40 % weniger Schienenbrüche.', cost:[6000], lv:[6]},
+ {id:'vip',  ic:'🥂', n:'VIP-Service', d:'Goldene VIP-Züge fahren mit: knapper Fahrplan, aber dreifaches Budget und doppelte Erfahrung.', cost:[9000], lv:[6]},
+ {id:'drain',ic:'💧', n:'Entwässerung', d:'Gräben und Durchlässe: 75 % weniger Unterspülungen bei Starkregen.', cost:[8000], lv:[7]},
+ {id:'cable',ic:'🛡️', n:'Kabel- und Blitzschutz', d:'Kabelkanäle, Kameras und Überspannungsschutz: 75 % weniger Kabeldiebstahl, halb so viele Blitzschäden.', cost:[12000], lv:[8]},
+ {id:'freight',ic:'📦', n:'Güterverkehr', d:'Güterzüge fahren mit: langsamer, aber +80 % Budget pro Fahrt.', cost:[14000], lv:[8]},
+ {id:'diag', ic:'📡', n:'Weichen-Diagnosesystem', d:'Sensoren an Weichen und Signalen: 40 % weniger Weichen- und 20 % weniger Signalstörungen.', cost:[14000], lv:[9]},
+ {id:'gsmr', ic:'📻', n:'Zugfunk-Disposition (GSM-R)', d:'Wartende Züge werden über Funk umgeleitet, auch ohne KI-Prognose.', cost:[16000], lv:[9]},
+ {id:'lager', ic:'🏬', n:'Ersatzteil-Depots in den HQs', d:'Fahrzeugstörungen werden 25 % schneller behoben.', cost:[22000], lv:[10]},
+ {id:'drohne', ic:'🚁', n:'Inspektionsdrohnen', d:'Schäden an der Strecke werden schneller gefunden: Streckenreparaturen 15 % schneller.', cost:[30000], lv:[11]},
+ {id:'hq2', ic:'🏛️', n:'HQ-Ausbau', d:'Der Turbo hält 5 s länger, und die HQs laden 20 % schneller.', cost:[35000], lv:[12]},
+ {id:'akku', ic:'🔋', n:'Akku-Triebzüge', d:'Bei Oberleitungsschäden und Kabeldiebstahl fahren Züge mit Akku langsam weiter, statt zu warten.', cost:[45000], lv:[13]},
+ {id:'schnee', ic:'❄️', n:'Winterdienst und Schneepflüge', d:'Bei Frost sind deine Trupps nicht mehr langsamer. 30 % weniger vereiste Weichen und Schienenbrüche.', cost:[9000], lv:[7]},
+ {id:'sturm', ic:'🌪️', n:'Sturmschutz-Programm', d:'Bei Sturm sind deine Trupps nicht mehr langsamer. 30 % weniger Bäume im Gleis und Oberleitungsschäden.', cost:[11000], lv:[8]},
+ {id:'klima', ic:'🧊', n:'Klima-Nachrüstung der Flotte', d:'80 % weniger Klimaausfälle und 30 % weniger Gleisverwerfungen bei Hitze.', cost:[10000], lv:[8]},
+ {id:'tempo', ic:'🚄', n:'Streckenertüchtigung', d:'Pro Stufe fahren alle Züge 10 % schneller. Der Fahrplan bleibt gleich, also mehr Puffer für Pünktlichkeit.', cost:[18000,70000], lv:[9,14]},
+ {id:'sev', ic:'🚌', n:'Ersatzverkehr-Konzept', d:'Busse stehen bereit: Ein Zug gilt noch bis 4 s statt 2 s nach Plan als pünktlich.', cost:[28000], lv:[10]},
+ {id:'estw', ic:'🖲️', n:'Elektronische Stellwerke (ESTW)', d:'Halb so viele Stellwerksstörungen, und die übrigen werden 30 % schneller behoben.', cost:[35000], lv:[11]},
+ {id:'bz', ic:'🏢', n:'Betriebszentrale', d:'Alles im Blick: ISI-Vorwarnung +1 s und dauerhaft +10 % Budget.', cost:[100000], lv:[15]},
  {id:'isi1', ic:'🟢', n:'SAP ISI · Frühwarnung', d:'ISI erkennt Störungen 5 Sekunden, bevor sie auftreten. Schickst du rechtzeitig jemanden hin, wird die Störung verhindert.', cost:[800], lv:[3], isi:1},
- {id:'isi2', ic:'🤖', n:'SAP ISI · Auto-Disposition', d:'ISI schickt freie Trupps automatisch zur nächsten Störung.', cost:[1600], lv:[4], isi:1, req:'isi1'},
- {id:'isi3', ic:'🧠', n:'SAP ISI · Analytics', d:'ISI wertet Muster aus: 25 % weniger Störungen, 15 % schnellere Reparatur, +20 % Budget.', cost:[3000], lv:[5], isi:1, req:'isi2'},
- {id:'isi4', ic:'🔮', n:'SAP ISI · KI-Prognose', d:'Vorwarnung 8 statt 5 Sekunden. Die Auto-Disposition schickt den passenden Spezialisten, und wartende Züge werden automatisch umgeleitet.', cost:[12000], lv:[10], isi:1, req:'isi3'},
- {id:'isi5', ic:'🪞', n:'SAP ISI · Digitaler Zwilling', d:'ISI simuliert das ganze Netz: 25 % der Störungen werden schon im Zwilling gelöst, bevor sie passieren. +10 % Budget.', cost:[30000], lv:[14], isi:1, req:'isi4'}
+ {id:'isi2', ic:'🤖', n:'SAP ISI · Auto-Disposition', d:'ISI schickt freie Trupps automatisch zur nächsten Störung.', cost:[2500], lv:[4], isi:1, req:'isi1'},
+ {id:'isi3', ic:'🧠', n:'SAP ISI · Analytics', d:'ISI wertet Muster aus: 25 % weniger Störungen, 15 % schnellere Reparatur, +20 % Budget.', cost:[5000], lv:[5], isi:1, req:'isi2'},
+ {id:'isi4', ic:'🔮', n:'SAP ISI · KI-Prognose', d:'Vorwarnung 8 statt 5 Sekunden. Die Auto-Disposition schickt den passenden Spezialisten, und wartende Züge werden automatisch umgeleitet.', cost:[32000], lv:[10], isi:1, req:'isi3'},
+ {id:'isi5', ic:'🪞', n:'SAP ISI · Digitaler Zwilling', d:'ISI simuliert das ganze Netz: 25 % der Störungen werden schon im Zwilling gelöst, bevor sie passieren. +10 % Budget.', cost:[80000], lv:[14], isi:1, req:'isi4'}
 ];
 const STAFF = [
  {id:'roman', n:'Roman', role:'Teamchef', ic:'⭐', helm:'#fbbf24', cats:[], cost:0, lv:1, sp:'Holt sich im HQ den Turbo. Pro Level hält der Turbo länger und das HQ lädt schneller. Ab Level 10 „Teamgeist“: alle reparieren 10 % schneller. Auf Level 20 fällt ISI nie mehr aus.'},
@@ -849,7 +854,8 @@ const STAFF = [
  {id:'sabine', n:'Sabine', role:'SAP-Beraterin', ic:'💻', helm:'#ef4444', cats:['it'], cost:4000, lv:6, req:'isi1', fem:'#111827', sp:'IT-Profi für ISI und Stellwerke. Verlängert die ISI-Vorwarnung um 1 s (ab Level 10: 2 s).'}
 ];
 const STF = Object.fromEntries(STAFF.map(p=>[p.id,p]));
-const nm = id => id==='roman' ? 'Roman' : (S.custom && S.custom[id] && S.custom[id].name) || STF[id].n;
+const defNm = id => /^trupp\d+$/.test(id) ? 'Trupp ' + id.slice(5) : STF[id].n;
+const nm = id => id==='roman' ? 'Roman' : (S.custom && S.custom[id] && S.custom[id].name) || defNm(id);
 const esc = t => String(t).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const FACES = {};
 function loadFaces(){ Object.keys(FACES).forEach(k=>delete FACES[k]); Object.entries(S.custom||{}).forEach(([id,c])=>{ if (id!=='roman' && c && c.img){ const im = new Image(); im.src = c.img; FACES[id] = im; } }); }
@@ -1015,13 +1021,13 @@ function brief(){ const l = S.lvl;
   return r; }
 
 function mkCrews(){ const list = [];
-  const add = (who,name) => list.push({who, name, chef:who==='roman', x:0, y:0, st:'idle', f:null, boost:0});
+  const add = (who,name,cid) => list.push({who, cid, name, chef:who==='roman', x:0, y:0, st:'idle', f:null, boost:0});
   add('roman', nm('roman'));
   STAFF.forEach(p=>{ if (p.id!=='roman' && S.staff[p.id].h) add(p.id, nm(p.id)); });
-  for (let i=0;i<U.crew;i++) add('trupp','Trupp '+(i+1));
+  for (let i=0;i<U.crew;i++) add('trupp', nm('trupp'+(i+1)), 'trupp'+(i+1));
   const n = list.length;
   list.forEach((c,i)=>{ const r = Math.floor(i/6), k = i%6, inRow = Math.min(6, n - r*6);
-    c.x = N[DEPOT].x + (k-(inRow-1)/2)*26*K; c.y = N[DEPOT].y + (PORT ? 80 + r*36 : 100 + r*44)*K; });
+    c.x = N[DEPOT].x + (k-(inRow-1)/2)*31*K; c.y = N[DEPOT].y + (PORT ? 80 + r*40 : 100 + r*46)*K; });
   return list; }
 function newShift(){
   if (BR || true){ const b0 = BR; if (b0) S.lastBrief = JSON.parse(JSON.stringify({wx:b0.wx, wx2:b0.wx2, ev:b0.ev, mis:b0.mis, party:b0.party, invite:b0.invite, host:b0.host, pzWhy:b0.pzWhy, pzStage:b0.pzStage, choice:b0.choice, sapq:b0.sapq})); }
@@ -1490,10 +1496,29 @@ function weather(now){
     for (let i=0;i<70;i++){ const y = ((i*71)%H + now*.05*(1+(i%3)*.3)) % H, x = (i*113)%W + Math.sin(now/800+i)*8; cx.moveTo(x+1.8*K,y); cx.arc(x,y,1.8*K,0,7); } cx.fill(); }
   else if (w==='heat'){ const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(249,115,22,.16)'); g.addColorStop(1,'rgba(249,115,22,0)'); cx.fillStyle = g; cx.fillRect(0,0,W,H); }
 }
+/* ---- Perücken & Westen: alle haben Romans Gesicht, aber nur Roman trägt keine Perücke ---- */
+const WIGS = {
+ gerd:{s:'mullet', h:'#8b5a2b', v:'#0d9488'}, elke:{s:'long', h:'#facc15', v:'#7c3aed'}, mehmet:{s:'afro', h:'#1c1917', v:'#dc2626'},
+ sven:{s:'punk', h:'#22c55e', v:'#0284c7'}, sabine:{s:'zopf', h:'#dc2626', v:'#db2777'} };
+const WIG_T = [{s:'bob', h:'#f472b6', v:'#65a30d'}, {s:'locken', h:'#9ca3af', v:'#a16207'}, {s:'long', h:'#111827', v:'#475569'},
+ {s:'afro', h:'#c2410c', v:'#0891b2'}, {s:'zopf', h:'#3b82f6', v:'#c026d3'}, {s:'bob', h:'#fef3c7', v:'#4d7c0f'}, {s:'punk', h:'#f43f5e', v:'#1e40af'}, {s:'locken', h:'#facc15', v:'#9f1239'}];
+const wigOf = c => WIGS[c.who] || WIG_T[((parseInt(String(c.cid || '').slice(5), 10) || 1) - 1) % WIG_T.length];
+function wigBack(w){ cx.fillStyle = w.h;
+  if (w.s==='long'){ RR(-12.5,-22,25,24,6); cx.fill(); }
+  else if (w.s==='bob'){ RR(-12.5,-22,25,17,7); cx.fill(); }
+  else if (w.s==='afro'){ cx.beginPath(); cx.arc(0,-17,15.5,0,7); cx.fill(); }
+  else if (w.s==='locken'){ cx.beginPath(); [[-10.5,-19],[10.5,-19],[-11,-12],[11,-12],[-9,-5],[9,-5],[-5,-1],[5,-1]].forEach(([x,y])=>{ cx.moveTo(x+4.6,y); cx.arc(x,y,4.6,0,7); }); cx.fill(); }
+  else if (w.s==='mullet'){ RR(-11,-22,22,11,4); cx.fill(); RR(-9.5,-12,19,17,5); cx.fill(); }
+  else { RR(-10.5,-22,21,11,4); cx.fill(); } }
+function wigFront(w){ cx.fillStyle = w.h;
+  if (w.s==='zopf'){ [-1,1].forEach(d=>{ cx.beginPath(); cx.ellipse(d*12.5,-9,3.6,7.5,d*.25,0,7); cx.fill(); });
+    cx.fillStyle = '#fde047'; [-1,1].forEach(d=>{ cx.beginPath(); cx.moveTo(d*12,-16); cx.lineTo(d*16,-18.5); cx.lineTo(d*16,-13.5); cx.closePath(); cx.moveTo(d*12,-16); cx.lineTo(d*8.5,-18.5); cx.lineTo(d*8.5,-13.5); cx.closePath(); cx.fill(); }); }
+  else if (w.s==='punk'){ cx.beginPath(); [-1,1].forEach(d=>{ for (let i=0;i<3;i++){ const y = -20 + i*4.2; cx.moveTo(d*8.5,y); cx.lineTo(d*(17+i%2*2),y+1.2); cx.lineTo(d*8.5,y+3.4); } }); cx.fill(); } }
+
 function worker(c, now){
   const o = c.st==='work' ? 18*K : 0, mv = c.st==='go', sw = mv ? Math.sin(now/(c.boost>0?55:90)) : 0, wk = c.st==='work';
-  const sk = S.sk.roman, P = STF[c.who];
-  let vest = c.chef ? '#f97316' : '#ea580c', helm = P ? P.helm : '#facc15', legs = '#1f2937';
+  const sk = c.chef ? S.sk.roman : 'classic', P = STF[c.who], WG = c.chef ? null : wigOf(c);
+  let vest = c.chef ? '#f97316' : WG.v, helm = P ? P.helm : '#facc15', legs = '#1f2937';
   if (sk==='diamant'){ vest = '#94a3b8'; helm = '#a5f3fc'; }
   if (sk==='neon'){ vest = '#a3e635'; helm = '#f0abfc'; }
   if (sk==='lokf'){ vest = '#1e3a8a'; }
@@ -1505,6 +1530,10 @@ function worker(c, now){
   if (G && G.sel===c){ cx.strokeStyle = '#38bdf8'; cx.lineWidth = 2; cx.setLineDash([4,3]); cx.beginPath(); cx.arc(0,-6,25,0,7); cx.stroke(); cx.setLineDash([]); }
   if (sk==='legende'){ cx.fillStyle = `rgba(253,224,71,${.18+.1*Math.sin(now/200)})`; cx.beginPath(); cx.arc(0,-8,30,0,7); cx.fill(); }
   if (c.boost>0){ cx.fillStyle = `rgba(250,204,21,${.25+.15*Math.sin(now/80)})`; cx.beginPath(); cx.arc(0,-6,26,0,7); cx.fill(); }
+  if (c.chef){ const pl = .5 + .5*Math.sin(now/520);   // Roman steht im Rampenlicht
+    const g = cx.createLinearGradient(0,-78,0,22); g.addColorStop(0,'rgba(255,240,180,0)'); g.addColorStop(1,`rgba(255,232,150,${(.2+.1*pl).toFixed(3)})`);
+    cx.fillStyle = g; cx.beginPath(); cx.moveTo(-5,-78); cx.lineTo(5,-78); cx.lineTo(24,19); cx.lineTo(-24,19); cx.closePath(); cx.fill();
+    cx.fillStyle = `rgba(255,232,150,${(.28+.12*pl).toFixed(3)})`; cx.beginPath(); cx.ellipse(0,19,24,5.5,0,0,7); cx.fill(); }
   if (sk==='neon'){ cx.shadowColor = '#f0abfc'; cx.shadowBlur = 12; }
   cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(0,19,10,3,0,0,7); cx.fill();
   cx.strokeStyle = legs; cx.lineWidth = 4; cx.lineCap = 'round';
@@ -1521,10 +1550,11 @@ function worker(c, now){
   else if (sk==='lokf'){ cx.fillStyle = '#fbbf24'; [-2,3,8].forEach(y=>{ cx.beginPath(); cx.arc(0,y-2,1,0,7); cx.fill(); }); }
   else if (sk!=='astro'){ cx.fillStyle = '#fde68a'; cx.fillRect(-8,1,16,2.2); cx.fillRect(-.8,-6,1.6,16); }
   cx.shadowBlur = 0;
-  if (P && P.fem){ cx.fillStyle = P.fem; cx.beginPath(); cx.ellipse(10,-13,4,7,.4,0,7); cx.fill(); }
-  const cf = FACES[c.who];
-  if (!cf && c.chef && face.complete && face.naturalWidth){ const hh = 30, hw = hh*face.naturalWidth/face.naturalHeight;
-    cx.save(); cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = 3; cx.drawImage(face, -hw/2, -31, hw, hh); cx.restore(); }
+  const cf = FACES[c.cid || c.who];
+  if (!cf && face.complete && face.naturalWidth){ const hh = 30, hw = hh*face.naturalWidth/face.naturalHeight;
+    if (WG) wigBack(WG);
+    cx.save(); if (c.chef){ cx.shadowColor = 'rgba(253,224,71,.95)'; cx.shadowBlur = 7; } else { cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = 3; }
+    cx.drawImage(face, -hw/2, -31, hw, hh); cx.restore(); if (WG) wigFront(WG); }
   else {
   cx.save(); cx.beginPath(); cx.arc(0,-17,12,0,7); cx.closePath();
   if (cf && cf.complete && cf.naturalWidth){ cx.clip(); const w = cf.naturalWidth, h = cf.naturalHeight, m = Math.min(w,h); cx.drawImage(cf, (w-m)/2, (h-m)/2, m, m, -12,-29,24,24); }
@@ -1542,6 +1572,8 @@ function worker(c, now){
     if (sk==='diamant'){ const a = .5+.5*Math.sin(now/150); cx.fillStyle = `rgba(255,255,255,${a})`; cx.beginPath(); cx.moveTo(-6,-35); cx.lineTo(-5,-31); cx.lineTo(-1,-30); cx.lineTo(-5,-29); cx.lineTo(-6,-25); cx.lineTo(-7,-29); cx.lineTo(-11,-30); cx.lineTo(-7,-31); cx.fill(); }
     if (sk==='legende'){ cx.fillStyle = '#fde047'; cx.beginPath(); cx.moveTo(-8,-31); cx.lineTo(-8,-39); cx.lineTo(-4,-34); cx.lineTo(0,-40); cx.lineTo(4,-34); cx.lineTo(8,-39); cx.lineTo(8,-31); cx.fill(); }
     if (c.chef && sk!=='legende'){ cx.fillStyle = '#fff7d6'; cx.font = '700 7px Inter, sans-serif'; cx.textAlign = 'center'; cx.fillText('★',0,-26); } }
+  if (c.chef){ cx.fillStyle = '#fde047'; for (let i=0;i<3;i++){ const a = now/650 + i*2.094, x = Math.cos(a)*18, y = -20 + Math.sin(a)*8, r = 1.4 + 1.3*Math.abs(Math.sin(now/240 + i*1.3));
+      cx.beginPath(); cx.moveTo(x, y-r*2); cx.lineTo(x+r*.45, y-r*.45); cx.lineTo(x+r*2, y); cx.lineTo(x+r*.45, y+r*.45); cx.lineTo(x, y+r*2); cx.lineTo(x-r*.45, y+r*.45); cx.lineTo(x-r*2, y); cx.lineTo(x-r*.45, y-r*.45); cx.closePath(); cx.fill(); } }
   if (!wk && (c.chef || P)){ const txt = c.chef ? c.name : `${c.name} ${S.staff[c.who].l}`; cx.font = `700 ${c.chef?8:7}px Inter, sans-serif`; cx.textAlign = 'center';
     const tw = cx.measureText(txt).width+8; cx.fillStyle = 'rgba(10,13,22,.8)'; RR(-tw/2,23,tw,11,5); cx.fill(); cx.fillStyle = c.chef ? '#fbbf24' : P.helm; cx.fillText(txt,0,31.5); }
   if (c.boost>0){ cx.font = '12px system-ui'; cx.textAlign = 'center'; cx.fillText('⚡',16,-26); }
@@ -3174,7 +3206,7 @@ function mkSx(P){
 }
 
 function mkPuzzle(){
-  const l = S.lvl, type = pickW([['quiz',60],['triage',8],['log',l>=3?10:0],['order',9],['prio',8],['memory',5],['user',14],['sapx',24]].filter(x=>x[1]>0));
+  const l = S.lvl, type = pickW([['quiz',18],['triage',2.4],['log',l>=3?3:0],['order',2.7],['prio',2.4],['memory',1.5],['user',15],['sapx',55]]   /* ~70 % SAP-Bildschirm, ~30 % Text */.filter(x=>x[1]>0));
   const tm = Math.max(.65, 1-.015*(l-1)), [chI,ch] = rnd(TK_CH);
   const P = { type, who:rnd(TK_NAMES), chI, ch, time:22*tm + (PK('wiki') ? 5 : 0) + (S.staff.sabine.h && type!=='memory' ? 4 : 0), pos:0 };
   const setD = d => { P.dom = d; P.dept = rnd(DEP[d]); };
@@ -3750,17 +3782,21 @@ function danielFig(c, fl){
   c.fillStyle = '#1d4ed8'; if (c.roundRect){ c.beginPath(); c.roundRect(-6,-9,14,13,4); c.fill(); } else c.fillRect(-6,-9,14,13);
   c.strokeStyle = '#1d4ed8'; c.lineWidth = 3.5; c.lineCap = 'round'; c.beginPath(); c.moveTo(6,-6); c.lineTo(16,-12); c.moveTo(-4,3); c.lineTo(-12,8); c.moveTo(2,3); c.lineTo(-6,10); c.stroke();
   c.fillStyle = '#facc15'; c.beginPath(); c.moveTo(1,-7); c.lineTo(5,-4); c.lineTo(1,0); c.lineTo(-3,-4); c.closePath(); c.fill();
-  c.fillStyle = '#1d4ed8'; c.font = '700 4px Inter'; c.textAlign = 'center'; c.fillText('D',1,-2.6);
+  c.fillStyle = '#1d4ed8'; c.font = '700 4px Inter'; c.textAlign = 'center'; c.fillText('C',1,-2.6);
+  if (face.complete && face.naturalWidth){ const hh = 14, hw = hh*face.naturalWidth/face.naturalHeight; c.fillStyle = '#111827'; c.beginPath(); c.ellipse(4,-17.5,5.4,5.6,0,0,7); c.fill(); c.drawImage(face, 4-hw/2, -22.5, hw, hh);
+    c.fillStyle = '#111827'; c.beginPath(); c.moveTo(-1.5,-19.5); c.quadraticCurveTo(-1,-26.5,6,-26); c.quadraticCurveTo(11,-25.5,10.5,-21.5); c.quadraticCurveTo(7,-23.5,3.5,-21.2); c.quadraticCurveTo(1,-20,-1.5,-19.5); c.closePath(); c.fill(); }
+  else {
   c.fillStyle = '#f1c7a3'; c.beginPath(); c.arc(4,-15,5.5,0,7); c.fill();
   c.fillStyle = '#4b5563'; c.beginPath(); c.arc(4,-15.8,5.9,Math.PI*1.02,Math.PI*1.98); c.lineTo(9.6,-16.6); c.lineTo(-1.6,-16.6); c.closePath(); c.fill(); c.fillRect(-1.7,-17,1.6,3.2);
   c.fillStyle = '#1f2937'; c.beginPath(); c.arc(6.6,-16,.75,0,7); c.fill();
   c.fillStyle = '#374151'; c.fillRect(5,-13.4,4.4,.9);
   c.beginPath(); c.moveTo(6,-12.2); c.lineTo(8.6,-12.2); c.lineTo(7.7,-9.7); c.lineTo(6.9,-9.7); c.closePath(); c.fill();
   c.strokeStyle = '#374151'; c.lineWidth = .7; c.beginPath(); c.moveTo(5.1,-13); c.quadraticCurveTo(5.2,-10.4,7.3,-10.1); c.quadraticCurveTo(9.3,-10.4,9.3,-13); c.stroke();
+  }
   c.fillStyle = '#facc15'; c.beginPath(); c.arc(18,-13,2.4,0,7); c.fill();
 }
 let DIMG = '';
-function danielIcon(){ if (DIMG) return DIMG; const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'); x.translate(48,74); x.scale(2.6,2.6); danielFig(x, 0); DIMG = c.toDataURL(); return DIMG; }
+function danielIcon(){ if (DIMG) return DIMG; if (!(face.complete && face.naturalWidth)) return ''; const c = document.createElement('canvas'); c.width = c.height = 96; const x = c.getContext('2d'); x.translate(48,74); x.scale(2.6,2.6); danielFig(x, 0); DIMG = c.toDataURL(); return DIMG; }
 function drawHero(now){ const h = G.hero, f = h.f, k = Math.min(1, (G.t-h.t0)/1.8), e = 1-Math.pow(1-k,3);
   const x0 = f.x < W/2 ? W+60 : -60, y0 = -60, x = x0 + (f.x-x0)*e, y = y0 + (f.y-32*K-y0)*e - Math.sin(e*Math.PI)*60*K;
   cx.save(); cx.translate(x, y); cx.scale(K*2.3*(x0<0?1:-1), K*2.3);
@@ -3932,22 +3968,27 @@ function shopRender(t){
     if (S.lvl>=15) body += `<div class="sw-item prest"><div class="ic">🏗️</div><div><b>Generalsanierung (Prestige ${S.pres+1})</b><small>Fang bei Level 1 neu an. Du behältst Sterne, Skins, Erfolge und dein Team (mit halbem Level). Dafür gibt es dauerhaft <b>+20 % Budget und Erfahrung</b> pro Prestige, mehr Startbudget und den Skin „Legende“.</small></div><button class="btn primary" data-a="prestige">${presArm?'Wirklich? Tippen!':'🏗️ Sanieren'}</button></div>`;
     body += `<div class="sw-item dnl"><img class="sw-dnl" src="${danielIcon()}" alt="Chef"><div><b>Chef</b> <span class="lv">Vorrat: ${S.daniel}×</span><small>Ist ISI gestört, rufst du den Chef: Er fliegt ein und bringt die ISI-Schnittstelle sofort wieder zum Laufen. Jeder Kauf ist ein Einsatz, du kannst ihn beliebig oft kaufen.</small></div><button class="btn ${S.money>=heroCost()?'primary':''}" data-hero="1" ${S.money>=heroCost()?'':'disabled'}>${fmt(heroCost())} €</button></div>`;
     if (S.lvl<15) body += `<p>🏗️ Ab Level 15 kannst du eine <b>Generalsanierung</b> (Prestige) starten, für dauerhafte Boni.</p>`;
-    body += UPG.map(it=>{ const have = U[it.id], max = it.cost.length, done = have>=max, cost = it.cost[Math.min(have,max-1)], need = it.lv[Math.min(have,max-1)],
+    // Sinnvolle Reihenfolge: jetzt kaufbar (günstigste zuerst) → bald verfügbar (nach Level) → bereits gekauft
+    const ust = it => { const h = U[it.id], mx = it.cost.length; if (h >= mx) return [2, 0]; const lv = it.lv[h], lk = S.lvl < lv || (it.req && !U[it.req]); return lk ? [1, lv*1e6 + it.cost[h]] : [0, it.cost[h]]; };
+    body += UPG.slice().sort((a,b)=>{ const x = ust(a), y = ust(b); return x[0]-y[0] || x[1]-y[1]; }).map(it=>{ const have = U[it.id], max = it.cost.length, done = have>=max, cost = it.cost[Math.min(have,max-1)], need = it.lv[Math.min(have,max-1)],
       locked = S.lvl < need || (it.req && !U[it.req]), afford = S.money >= cost;
       const btn = done ? '<button class="btn" disabled>✓ gekauft</button>' : locked ? `<button class="btn" disabled>🔒 Lvl ${need}${it.req&&!U[it.req]?' + Vorstufe':''}</button>` : `<button class="btn ${afford?'primary':''}" data-buy="${it.id}" ${afford?'':'disabled'}>${fmt(cost)} €</button>`;
       return `<div class="sw-item ${it.isi?'isi':''}"><div class="ic">${it.ic}</div><div><b>${it.n}</b> ${max>1?`<span class="lv">Stufe ${have}/${max}</span>`:''}<small>${it.d}</small></div>${btn}</div>`; }).join('');
   }
   if (tab==='team'){
-    body += `<p class="sw-hint">✏️ Du kannst Namen ändern und eigene Bilder hochladen. Die Bilder werden verkleinert und bleiben nur in deinem Browser gespeichert.</p>`;
+    body += `<p class="sw-hint">✏️ Du kannst Namen ändern und eigene Fotos hochladen und im Kreis zurechtschieben. Die Fotos werden verkleinert und bleiben nur auf deinem Gerät gespeichert.</p>`;
     body += `<p>Jede Person sammelt bei Reparaturen Erfahrung und steigt auf (max. Level 20). Pro Level: +4 % Reparatur, +2 % Tempo. Spezialisten sind in ihrem Fachgebiet 60 % schneller (und mit jedem Level noch mehr). Mit einer <b>Schulung</b> steigt jemand sofort ein Level auf.</p>`;
     body += STAFF.map(p=>{ const s = S.staff[p.id], hired = s.h, locked = S.lvl < p.lv || (p.req && !U[p.req]);
       const prog = s.l>=20 ? 100 : Math.min(100, s.x/wNeed(s.l)*100), tc = trainCost(s.l);
       const btn = !hired ? (locked ? `<button class="btn" disabled>🔒 Lvl ${p.lv}${p.req&&!U[p.req]?' + ISI':''}</button>` : `<button class="btn ${S.money>=p.cost?'primary':''}" data-hire="${p.id}" ${S.money>=p.cost?'':'disabled'}>Einstellen ${fmt(p.cost)} €</button>`)
         : s.l>=20 ? '<button class="btn" disabled>🏆 Max</button>' : `<button class="btn ${S.money>=tc?'primary':''}" data-train="${p.id}" ${S.money>=tc?'':'disabled'}>🎓 Schulung ${fmt(tc)} €</button>`;
       const cu = S.custom[p.id] || {}, av = cu.img ? `<img class="sw-av" src="${cu.img}" alt="">` : `<div class="ic">${p.ic}</div>`;
-      const edit = (hired && p.id!=='roman') ? `<div class="sw-edit"><input class="sw-name" data-nm="${p.id}" value="${esc(nm(p.id))}" maxlength="14" aria-label="Name von ${esc(nm(p.id))}"><label class="btn sm">📷 Bild<input type="file" accept="image/*" data-img="${p.id}" hidden></label>${cu.img||cu.name ? `<button class="btn sm" data-reset="${p.id}">↺ Standard</button>` : ''}</div>` : '';
+      const edit = (hired && p.id!=='roman') ? `<div class="sw-edit"><input class="sw-name" data-nm="${p.id}" value="${esc(nm(p.id))}" maxlength="14" aria-label="Name von ${esc(nm(p.id))}"><label class="btn sm">📷 Foto<input type="file" accept="image/*" data-img="${p.id}" hidden></label>${cu.img||cu.name ? `<button class="btn sm" data-reset="${p.id}">↺ Standard</button>` : ''}</div>` : '';
       return `<div class="sw-item">${av}<div><b>${esc(nm(p.id))}</b> · ${p.role} ${hired?`<span class="lv">Level ${s.l}</span>`:''}<small>${p.cats.length?`Fachgebiet: ${p.cats.map(c=>CATN[c]).join(', ')}. `:''}${p.sp}</small>${hired?`<div class="sw-wbar"><i style="width:${prog}%"></i></div>`:''}${edit}</div>${btn}</div>`; }).join('');
     body += `<p style="margin-top:10px">👷 Allgemeine Trupps: <b>${U.crew}</b> (mehr gibt es unter Upgrades).</p>`;
+    for (let i=1; i<=U.crew; i++){ const id = 'trupp'+i, cu = S.custom[id] || {}, w = WIG_T[(i-1) % WIG_T.length];
+      const av = cu.img ? `<img class="sw-av" src="${cu.img}" alt="">` : `<div class="ic" style="background:${w.v}">👷</div>`;
+      body += `<div class="sw-item">${av}<div><b>${esc(nm(id))}</b> · Reparaturtrupp<div class="sw-edit"><input class="sw-name" data-nm="${id}" value="${esc(nm(id))}" maxlength="14" aria-label="Name von ${esc(nm(id))}"><label class="btn sm">📷 Foto<input type="file" accept="image/*" data-img="${id}" hidden></label>${cu.img||cu.name ? `<button class="btn sm" data-reset="${id}">↺ Standard</button>` : ''}</div></div></div>`; }
   }
   if (tab==='net'){
     body += `<p>Erschließ neue Regionen. Jede Region bringt neue Strecken, einen zusätzlichen Zug und dauerhaft <b>+10 % Budget</b>, aber auch mehr Störungen.</p>`;
@@ -3999,15 +4040,42 @@ function prestige(){
   G = null; BR = null; net(); checkAch(); save();
   toast(`🏗️ Generalsanierung abgeschlossen! Prestige ${S.pres}: dauerhaft +${S.pres*20} % Budget und Erfahrung.`);
 }
-function setName(id, v){ v = v.trim().slice(0,14); S.custom[id] = S.custom[id] || {}; if (v && v!==STF[id].n) S.custom[id].name = v; else delete S.custom[id].name;
-  if (G) G.crews.forEach(c=>{ if (c.who===id) c.name = nm(id); }); save(); }
+function setName(id, v){ v = v.trim().slice(0,14); S.custom[id] = S.custom[id] || {}; if (v && v!==defNm(id)) S.custom[id].name = v; else delete S.custom[id].name;
+  if (G) G.crews.forEach(c=>{ if ((c.cid || c.who)===id) c.name = nm(id); }); save(); }
 function setImg(id, file){ if (!file || !/^image\//.test(file.type)) return; const rd = new FileReader();
-  rd.onload = () => { const im = new Image(); im.onload = () => { const cvs = document.createElement('canvas'), z = 128, m = Math.min(im.width, im.height); cvs.width = cvs.height = z;
-      cvs.getContext('2d').drawImage(im, (im.width-m)/2, (im.height-m)/2, m, m, 0, 0, z, z);
-      S.custom[id] = S.custom[id] || {}; S.custom[id].img = cvs.toDataURL('image/jpeg', .85); loadFaces(); save(); toast(`📷 Neues Bild für ${nm(id)} gespeichert!`); shop(); };
-    im.src = rd.result; };
+  rd.onload = () => { const im = new Image(); im.onload = () => cropEditor(id, im); im.src = rd.result; };
   rd.readAsDataURL(file); }
-ov.addEventListener('change', e=>{ const t = e.target; if (t.dataset.nm){ setName(t.dataset.nm, t.value); shop(); } if (t.dataset.img) setImg(t.dataset.img, t.files[0]); });
+/* Foto im Kreis zurechtschieben und zoomen, dann speichern */
+function cropEditor(id, im){ const old = document.getElementById('swCrop'); if (old) old.remove();
+  const V = 240, base = V / Math.min(im.width, im.height); let z = 1, x = 0, y = 0;   // x/y = Versatz der Bildmitte in px
+  const m = document.createElement('div'); m.id = 'swCrop'; m.className = 'sw-save';
+  m.innerHTML = `<div class="ss-box" role="dialog" aria-label="Foto zuschneiden"><div class="sm-head"><b>📷 Foto für ${esc(nm(id))}</b><button type="button" class="sm-x" data-c="x" aria-label="Schließen">✕</button></div>
+    <p class="ss-p">Schieb das Foto mit dem Finger zurecht, bis das Gesicht im Kreis sitzt. Mit dem Regler zoomst du.</p>
+    <div class="cr-view" id="swCropV"><canvas width="${V*2}" height="${V*2}"></canvas><div class="cr-ring"></div></div>
+    <div class="cr-zoom"><span>➖</span><input type="range" min="100" max="400" value="100" aria-label="Zoom"><span>➕</span></div>
+    <div class="ss-row"><button type="button" class="btn" data-c="x">Abbrechen</button><button type="button" class="btn primary" data-c="ok">💾 Speichern</button></div></div>`;
+  document.body.appendChild(m);
+  const view = m.querySelector('#swCropV'), cv2 = view.querySelector('canvas'), g = cv2.getContext('2d'), rng = m.querySelector('input[type=range]');
+  const clamp = () => { const w = im.width*base*z, h = im.height*base*z, mx = Math.max(0, (w - V)/2), my = Math.max(0, (h - V)/2); x = Math.max(-mx, Math.min(mx, x)); y = Math.max(-my, Math.min(my, y)); };
+  const paint = () => { clamp(); const w = im.width*base*z, h = im.height*base*z; g.setTransform(2,0,0,2,0,0); g.fillStyle = '#0a0d16'; g.fillRect(0,0,V,V); g.drawImage(im, V/2 - w/2 + x, V/2 - h/2 + y, w, h); };
+  paint();
+  const pts = new Map(); let pinch = 0, z0 = 1;
+  view.addEventListener('pointerdown', e => { view.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); if (pts.size === 2){ const [a, b] = [...pts.values()]; pinch = Math.hypot(a[0]-b[0], a[1]-b[1]); z0 = z; } });
+  view.addEventListener('pointermove', e => { const p0 = pts.get(e.pointerId); if (!p0) return; const sc = V / view.getBoundingClientRect().width;
+    if (pts.size === 1){ x += (e.clientX - p0[0])*sc; y += (e.clientY - p0[1])*sc; }
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 2 && pinch){ const [a, b] = [...pts.values()]; z = Math.max(1, Math.min(4, z0 * Math.hypot(a[0]-b[0], a[1]-b[1]) / pinch)); rng.value = Math.round(z*100); }
+    paint(); });
+  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = 0; };
+  view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
+  view.addEventListener('wheel', e => { e.preventDefault(); z = Math.max(1, Math.min(4, z * (e.deltaY < 0 ? 1.08 : 1/1.08))); rng.value = Math.round(z*100); paint(); }, {passive:false});
+  rng.addEventListener('input', () => { z = rng.value/100; paint(); });
+  m.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return;
+    if (b.dataset.c === 'ok'){ const out = document.createElement('canvas'), Z = 160; out.width = out.height = Z; const o = out.getContext('2d'), w = im.width*base*z, h = im.height*base*z, k = Z / V;
+      o.fillStyle = '#ffffff'; o.fillRect(0,0,Z,Z); o.drawImage(im, (V/2 - w/2 + x)*k, (V/2 - h/2 + y)*k, w*k, h*k);
+      S.custom[id] = S.custom[id] || {}; S.custom[id].img = out.toDataURL('image/jpeg', .86); loadFaces(); save(); toast(`📷 Neues Bild für ${nm(id)} gespeichert!`); m.remove(); shop(); return; }
+    m.remove(); }); }
+ov.addEventListener('change', e=>{ const t = e.target; if (t.dataset.nm){ setName(t.dataset.nm, t.value); setTimeout(() => shop(), 0); } if (t.dataset.img) setImg(t.dataset.img, t.files[0]); });
 ov.addEventListener('keydown', e=>{ if (e.target.matches('input')){ e.stopPropagation(); if (e.key==='Enter'){ if (e.target.id==='swPlayer') doSetPlayer(); else if (e.target.id==='swAdmPw') admTry(); else if (e.target.id==='swRename') doRename(); else e.target.blur(); } if (e.key==='Escape' && e.target.id==='swRename'){ closeRename(); } } });
 let RN = null;
 function openRename(){ if (TK || TMO || ov.querySelector('[data-sap]') || RN) return; if (!S.player){ intro(); return; }
@@ -4047,10 +4115,10 @@ ov.addEventListener('click', e=>{
     save(); showBrief(); return; }
   if (ds.perk){ const k = PERKS.find(x=>x.id===ds.perk); if (S.soc>=k.c){ S.soc -= k.c; S.perks[k.id] = (S.perks[k.id]||0) + 1; award('perk'); save(); toast(`${k.ic} Perk eingelöst: ${k.n}!`); shop(); } return; }
   if (ds.hero){ const c = heroCost(); if (S.money>=c){ S.money -= c; S.daniel++; save(); toast(`🦸 Der Chef steht bereit! Vorrat: ${S.daniel}×`); shop(); } return; }
-  if (ds.reset){ delete S.custom[ds.reset]; loadFaces(); if (G) G.crews.forEach(c=>{ if (c.who===ds.reset) c.name = nm(ds.reset); }); save(); shop(); return; }
+  if (ds.reset){ delete S.custom[ds.reset]; loadFaces(); if (G) G.crews.forEach(c=>{ if ((c.cid || c.who)===ds.reset) c.name = nm(ds.reset); }); save(); shop(); return; }
   if (ds.tab){ presArm = false; shop(ds.tab); return; }
   if (ds.buy){ const it = UPG.find(i=>i.id===ds.buy), cost = it.cost[U[it.id]]; if (S.money>=cost){ S.money -= cost; U[it.id]++; save();
-      if (it.id==='crew' && G) G.crews.push({who:'trupp', name:'Trupp '+U.crew, chef:false, x:N[DEPOT].x, y:N[DEPOT].y+88*K, st:'idle', f:null, boost:0});
+      if (it.id==='crew' && G) G.crews.push({who:'trupp', cid:'trupp'+U.crew, name:nm('trupp'+U.crew), chef:false, x:N[DEPOT].x, y:N[DEPOT].y+88*K, st:'idle', f:null, boost:0});
       log(`Gekauft: ${it.n}`,'g'); if (it.isi) toast(`🟢 ${it.n} ist jetzt aktiv!`); shop(); } return; }
   if (ds.hire){ const p = STF[ds.hire]; if (S.money>=p.cost){ S.money -= p.cost; S.staff[p.id].h = 1; if (PK('buddy')) S.staff[p.id].l = Math.max(3, S.staff[p.id].l);
       if (G) G.crews.push({who:p.id, name:nm(p.id), chef:false, x:N[DEPOT].x, y:N[DEPOT].y+88*K, st:'idle', f:null, boost:0});
