@@ -1173,7 +1173,34 @@ function landmark(i, X, Y, s){
    case 18: R(-7,-8,14,8,'#b91c1c'); R(-2.8,-17,5.6,9,'#c2410c'); P([[-3,-17],[0,-31],[3,-17]],'#b91c1c'); x.shadowBlur = 0; x.strokeStyle = 'rgba(254,215,170,.7)'; x.lineWidth = .5; for (let k=-28;k<-17;k+=2.5){ x.beginPath(); x.moveTo(-2.2,k+1); x.lineTo(2.2,k+1); x.stroke(); } break;
   }
   x.restore(); }
-const lmPos = n => { const side = n.x > W-80 ? -1 : 1; return [n.x + side*(HQ.includes(n.i) ? 34 : 26)*K, n.y + 10*K]; };
+/* Wahrzeichen dort platzieren, wo Platz ist: nicht auf Schienen, Knoten, Namen oder anderen Wahrzeichen */
+const LMC = {key:'', pos:{}};
+function lmLayout(){
+  const key = N.map(n=>Math.round(n.x)+','+Math.round(n.y)+(ACT[n.i]?'a':'')).join(';')+'|'+W+'x'+H;
+  if (LMC.key === key) return LMC.pos; LMC.key = key; const pos = LMC.pos = {};
+  const sc = K*1.35, bw = 15*sc, bt = 33*sc, bb = 3*sc, M = 4*K;
+  const below = n => n.y > H-100;
+  const labelRect = n => { const on = ACT[n.i], hq = on && HQ.includes(n.i), txt = n.n + (on && n.i===DEPOT?' · Depot':''); const w = txt.length*(on?8.6:7.4)*K, ly = on ? n.y + (below(n) ? -(hq?30:20)*K : (hq?36:30)*K) : n.y + (below(n)?-20:28)*K; return [n.x-w/2, ly-14*K, n.x+w/2, ly+5*K]; };
+  const segs = E.map(e=>[N[e.a].x,N[e.a].y,N[e.b].x,N[e.b].y, actE(e)?1:.35]);
+  const blocks = N.map(n=>{ const r = (ACT[n.i] && HQ.includes(n.i) ? 26 : 15)*K; return [n.x-r,n.y-r,n.x+r,n.y+r]; }).concat(N.map(labelRect));
+  { const d = N[DEPOT]; blocks.push([d.x-60*K, d.y+6*K, d.x+60*K, d.y+170*K]); }
+  const ov = (a,b) => Math.max(0, Math.min(a[2],b[2])-Math.max(a[0],b[0])) * Math.max(0, Math.min(a[3],b[3])-Math.max(a[1],b[1]));
+  const segHit = (r, s0) => { let h = 0; const [x1,y1,x2,y2,w] = s0, L = Math.hypot(x2-x1,y2-y1), st = Math.max(2, Math.ceil(L/(4*K)));
+    for (let k=0;k<=st;k++){ const t = k/st, x = x1+(x2-x1)*t, y = y1+(y2-y1)*t; if (x>r[0]-M && x<r[2]+M && y>r[1]-M && y<r[3]+M) h += w; } return h; };
+  const order = N.filter(n=>ACT[n.i]).sort((a,b)=>E.filter(e=>e.a===b.i||e.b===b.i).length - E.filter(e=>e.a===a.i||e.b===a.i).length);
+  const placed = [];
+  order.forEach(n=>{ const hq = HQ.includes(n.i); let best = null, bs = 1e9;
+    for (const R of [30,40,52,66]) for (let d=0; d<360; d+=20){ const a = d*Math.PI/180, X = n.x + Math.cos(a)*(R+(hq?8:0))*K, Y = n.y + Math.sin(a)*(R+(hq?8:0))*K + (bt-bb)/2;
+      const r = [X-bw, Y-bt, X+bw, Y+bb]; let sc0 = 0;
+      if (r[0] < 4 || r[2] > W-4 || r[1] < 4 || r[3] > H-4) sc0 += 5000;
+      segs.forEach(s0=>{ sc0 += segHit(r,s0)*120; });
+      blocks.forEach(b=>{ sc0 += ov(r,b)*3; });
+      placed.forEach(b=>{ sc0 += ov(r,b)*4; });
+      sc0 += R*2.5 + (Math.sin(a) < -.3 ? 8 : 0);
+      if (sc0 < bs){ bs = sc0; best = [X, Y, r]; } }
+    pos[n.i] = [best[0], best[1]]; placed.push(best[2]); });
+  return pos; }
+const lmPos = n => { const p = lmLayout()[n.i]; return p || [n.x + 26*K, n.y + 10*K]; };
 
 /* Ereignis-Wirkungskreis */
 const evR = () => PORT ? 230 : 190;
