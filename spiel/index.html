@@ -450,6 +450,20 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 /* Antippbarer Hinweis */
 .toast.show.act{pointer-events:auto;cursor:pointer;background:linear-gradient(120deg,#0ea5e9,#6366f1);color:#fff;font-weight:600;animation:swtoastp 1.2s infinite}
 @keyframes swtoastp{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.6)}50%{box-shadow:0 0 0 8px rgba(56,189,248,0)}}
+/* SAP-Bildschirm-Rätsel */
+.sapx .sx-tb{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;background:#e5eaef;border-bottom:1px solid #c5ced8}
+.sapx .sx-btn{font:600 12px Arial,sans-serif;background:#fff;color:#0a6ed1;border:1px solid #b5c3d1;border-radius:6px;padding:6px 9px;cursor:pointer}
+.sapx .sx-btn:hover,.sapx .sx-btn:focus-visible{background:#ebf5fe;border-color:#0a6ed1}
+.sapx .sx-pick{width:100%;text-align:left;background:none;border:0;border-bottom:1px dotted #d9dee3;font:inherit;color:inherit;cursor:pointer;border-radius:4px}
+.sapx .sx-pick:hover,.sapx .sx-pick:focus-visible{background:#ebf5fe;outline:1px solid #0a6ed1}
+.sapx .sx-tab{padding:4px 8px}
+.sapx .sx-row{display:grid;gap:6px;width:100%;text-align:left;background:#fff;border:0;border-bottom:1px dotted #d9dee3;padding:6px 4px;font:11.5px/1.3 var(--mono,monospace);color:#1d2d3e;cursor:pointer}
+.sapx .sx-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sapx button.sx-row:hover,.sapx button.sx-row:focus-visible{background:#ebf5fe;outline:1px solid #0a6ed1}
+.sapx .sx-th{cursor:default;background:#f4f6f8;color:#556b82;font:600 11px Arial,sans-serif}
+.sapx .sx-status{padding:7px 12px;font:600 12.5px Arial,sans-serif;border-top:1px solid #c5ced8}
+.sapx .sx-status.e{background:#fbeaea;color:#bb0000}
+.sapx .sx-status.w{background:#fef7e6;color:#a15c00}
 
 /* terminal */
 #term{position:fixed;right:20px;bottom:20px;width:min(520px,calc(100vw - 32px));height:340px;background:var(--term);color:var(--termtx);border-radius:14px;box-shadow:0 20px 60px -10px rgba(0,0,0,.5);z-index:200;display:none;flex-direction:column;font:13px var(--mono);overflow:hidden;border:1px solid #232838}
@@ -2992,8 +3006,175 @@ function mkSu(P){
   Object.assign(P,{ screen, msg:C.m((['Lena','Sabrina','Julia','Anna','Katrin','Melanie'].includes(fn) ? 'Unsere Kollegin ' : 'Unser Kollege ')+fn+' '+ln), q:'Schau dir den Benutzer in SU01 an: Woran liegt es?', opts:op, ans:op.indexOf(C.c), exp:C.e, time:P.time+10 });
 }
 
+/* ---- SAP-Bildschirm-Rätsel: echte Masken, antippen statt nur lesen ---- */
+// Modi: field = falsches Feld antippen · row = richtige Zeile antippen · btn = richtige Funktion in der Symbolleiste · mc = Meldung lesen, Lösung wählen
+const SXN = () => { const fn = rnd(SU_FIRST), ln = rnd(SU_LAST); return {fn, ln, n:`${fn} ${ln}`, uid:(fn[0]+ln).toUpperCase().replace('Ü','UE').replace('Ä','AE').replace('Ö','OE')}; };
+const SXORD = () => String(ri(4000100, 4009899)), SXMEL = () => String(ri(10200100, 10209899)), SXEQ = () => String(ri(10004000, 10009899));
+const SXTP = ['STW-AAL-01','STW-NOE-02','WEI-ULM-117','BUE-DON-04','OLA-AUG-22','STW-TRE-01','SIG-ING-45','WEI-NUE-203'];
+const SXDESC = {'STW-AAL-01':'Stellwerk Aalen','STW-NOE-02':'Stellwerk Nördlingen','WEI-ULM-117':'Weiche 117 Ulm Hbf','BUE-DON-04':'Bahnübergang Donauwörth 4','OLA-AUG-22':'Oberleitung Augsburg Abschnitt 22','STW-TRE-01':'Stellwerk Treuchtlingen','SIG-ING-45':'Signal 45 Ingolstadt','WEI-NUE-203':'Weiche 203 Nürnberg Rbf'};
+const sxTp = () => { const t = rnd(SXTP); return [t, SXDESC[t]]; };
+const SXTIME = () => `${String(ri(0,5)).padStart(2,'0')}:${String(ri(0,59)).padStart(2,'0')}:${String(ri(0,59)).padStart(2,'0')}`;
+const SX = [
+/* ===== Feld antippen ===== */
+() => { const [t,d] = sxTp(); return {d:'pm', mode:'field', t:'IW21', title:'Meldung anlegen: Störmeldung', msg:'Ich will meine Störmeldung sichern, aber SAP meckert über ein Datum.',
+  fields:[['Meldungsart','M2 Störmeldung'],['Technischer Platz',`${t} ${d}`],['Kurztext','Antrieb läuft nicht um'],['Priorität','2 Hoch'],['Störungsbeginn',`${dfmt(ri(2,9))} 07:15`],['Meldender','Bereitschaft']],
+  ans:4, exp:'Der Störungsbeginn liegt in der Zukunft. Eine Störung kann erst gemeldet werden, wenn sie schon begonnen hat.'}; },
+() => { const [t,d] = sxTp(); return {d:'pm', mode:'field', t:'IW21', title:'Meldung anlegen: Störmeldung', msg:'Die Dispo ruft an: Warum steht eine quietschende Tür ganz oben auf der Liste?',
+  fields:[['Meldungsart','M2 Störmeldung'],['Technischer Platz',`${t} ${d}`],['Kurztext','Tür Sozialraum quietscht'],['Priorität','1 Sehr hoch (sofort)'],['Störungsbeginn',`${dfmt(-1)} 14:20`],['Auswirkung','Keine Betriebsbehinderung']],
+  ans:3, exp:'Eine quietschende Tür ohne Betriebsbehinderung ist kein Notfall. Priorität 1 ist für Störungen gedacht, die den Zugbetrieb behindern.'}; },
+() => { const o = SXORD(), [t,d] = sxTp(); return {d:'pm', mode:'field', t:'IW31', title:`IH-Auftrag anlegen: ${o}`, msg:'Der Auftrag lässt sich nicht terminieren. Kannst du mal draufschauen?',
+  fields:[['Auftragsart','PM01 Instandsetzung'],['Technischer Platz',`${t} ${d}`],['Planergruppe','A10 IH-Planung'],['Verantw. Arbeitsplatz','IH-TRUPP1'],['Eckstarttermin',dfmt(5)],['Eckendtermin',dfmt(2)]],
+  ans:5, exp:'Der Eckendtermin liegt vor dem Eckstarttermin. Ende muss nach dem Start kommen, sonst kann SAP nicht terminieren.'}; },
+() => { const o = SXORD(); return {d:'pm', mode:'field', t:'IW41', title:`Rückmeldung erfassen: Auftrag ${o}`, msg:'Der Controller fragt, warum mein Auftrag plötzlich 80 Stunden gekostet hat.',
+  fields:[['Auftrag',o],['Vorgang','0010 Weiche schmieren'],['Plan-Arbeit','2,0 H'],['Ist-Arbeit','80,0 H'],['Arbeitsbeginn',`${dfmt(-1)} 08:00`],['Arbeitsende',`${dfmt(-1)} 10:00`],['Endrückmeldung','✔']],
+  ans:3, exp:'Gearbeitet wurde von 8 bis 10 Uhr, also 2 Stunden. 80 statt 8,0 oder 2,0 ist ein klassischer Tippfehler. Rückmeldung stornieren (IW45) und neu erfassen.'}; },
+() => { const o = SXORD(); return {d:'mm', mode:'field', t:'MIGO', title:'Warenausgang zum Auftrag', msg:'Im Lager fehlen plötzlich 99 Isolatoren. Ich habe doch nur einen entnommen!',
+  fields:[['Bewegungsart','261 WA für Auftrag'],['Auftrag',o],['Material','100234 Isolator 25 kV'],['Menge','100 ST'],['Werk','1000'],['Lagerort','L001 Hauptlager']],
+  ans:3, exp:'Gebucht wurden 100 statt 1 Stück. Die Buchung mit Bewegungsart 262 stornieren und die richtige Menge neu entnehmen.'}; },
+() => { const o = SXORD(); return {d:'mm', mode:'field', t:'MIGO', title:'Warenbewegung erfassen', msg:'Ich wollte Material für meinen Auftrag entnehmen, aber jetzt ist der Bestand gestiegen statt gesunken.',
+  fields:[['Bewegungsart','101 Wareneingang'],['Auftrag',o],['Material','100871 Schienenklemme'],['Menge','4 ST'],['Werk','1000'],['Lagerort','L001 Hauptlager']],
+  ans:0, exp:'101 ist ein Wareneingang. Für die Entnahme zum Auftrag braucht man Bewegungsart 261 (Warenausgang für Auftrag).'}; },
+() => { const p = SXN(); return {d:'user', mode:'field', t:'SU01', title:'Benutzer pflegen: Anzeigen', head:`Benutzer <b>${p.uid}</b> · ${p.n}`, msg:`${p.n} bekommt keine Mails aus SAP, alle anderen schon.`,
+  fields:[['Vorname',p.fn],['Nachname',p.ln],['Abteilung','Instandhaltung Ulm'],['Telefon','0731 1234-56'],['E-Mail',`${p.fn.toLowerCase()}.${p.ln.toLowerCase()}@exampel.org`]],
+  ans:4, exp:'In der E-Mail-Adresse steckt ein Tippfehler: „exampel“ statt „example“. Die Mails gehen ins Leere.'}; },
+() => { const p = SXN(); return {d:'user', mode:'field', t:'SU01', title:'Benutzer pflegen: Anzeigen', head:`Benutzer <b>${p.uid}</b> · ${p.n}`, msg:`${p.n} sieht seit gestern alle Zahlen falsch: Komma und Punkt sind vertauscht.`,
+  tabs:[['Adresse',[['Vorname',p.fn],['Nachname',p.ln],['Abteilung','Lager Nürnberg']]],['Festwerte',[['Anmeldesprache','DE'],['Dezimaldarstellung','1,234,567.89'],['Datumsformat','TT.MM.JJJJ'],['Ausgabegerät','DRK_NUE_EG']]]],
+  ans:4, exp:'Die Dezimaldarstellung steht auf dem englischen Format. Für Deutschland passt „1.234.567,89“. Das findet man im Tab Festwerte (oder selbst über SU3).'}; },
+() => { const p = SXN(); return {d:'druck', mode:'field', t:'SU01', title:'Benutzer pflegen: Anzeigen', head:`Benutzer <b>${p.uid}</b> · ${p.n}`, msg:`${p.n} sitzt in München, aber die Ausdrucke kommen in Hamburg raus.`,
+  tabs:[['Adresse',[['Vorname',p.fn],['Nachname',p.ln],['Abteilung','Materialwirtschaft München']]],['Festwerte',[['Anmeldesprache','DE'],['Dezimaldarstellung','1.234.567,89'],['Datumsformat','TT.MM.JJJJ'],['Ausgabegerät','DRK_HAM_3OG']]]],
+  ans:6, exp:'Als Standard-Ausgabegerät ist ein Hamburger Drucker eingetragen. Ein Drucker in München muss in den Festwerten stehen.'}; },
+() => { const e = SXEQ(); return {d:'sk', mode:'field', t:'IE03', title:`Equipment anzeigen: ${e}`, msg:'Beim Auswerten der Altersstruktur ist ein Equipment komisch. Welcher Wert ist falsch?',
+  fields:[['Equipment',e],['Bezeichnung','Weichenantrieb S700K'],['Equipmenttyp','Antrieb'],['Hersteller','Siemens'],['Baujahr','2031'],['Inbetriebnahme','14.05.2019']],
+  ans:4, exp:'Das Baujahr liegt in der Zukunft und nach der Inbetriebnahme. Wahrscheinlich ein Zahlendreher (2013). Stammdaten korrigieren.'}; },
+() => { return {d:'sk', mode:'field', t:'IL03', title:'Technischen Platz anzeigen: WEI-ULM-117', msg:'Der Trupp aus Hamburg bekommt ständig Aufträge für eine Weiche in Ulm.',
+  fields:[['Technischer Platz','WEI-ULM-117'],['Bezeichnung','Weiche 117 Ulm Hbf'],['Standort','Hamburg Hbf'],['Planergruppe','U10 IH-Planung Ulm'],['Verantw. Arbeitsplatz','IH-ULM-1'],['Kostenstelle','4711 IH Ulm']],
+  ans:2, exp:'Der Standort passt nicht zur Weiche in Ulm. Falsche Stammdaten am Objekt führen zu falscher Zuordnung: Standort korrigieren (2nd Level S&K).'}; },
+() => { return {d:'sk', mode:'field', t:'MM03', title:'Material anzeigen: 100552 Weichenantrieb', msg:'Das Ersatzteil taucht in keiner Ersatzteilliste auf. Woran liegt es?',
+  fields:[['Material','100552'],['Bezeichnung','Weichenantrieb S700K'],['Materialart','VERP Verpackung'],['Basismengeneinheit','ST'],['Warengruppe','IH-ANTRIEB'],['Werk','1000']],
+  ans:2, exp:'Ein Weichenantrieb ist keine Verpackung. Ersatzteile haben die Materialart ERSA, sonst fehlen sie in Ersatzteil-Auswertungen.'}; },
+() => { return {d:'pm', mode:'field', t:'IP03', title:'Wartungsplan anzeigen: Jahresinspektion Bahnübergang', msg:'Mein Postfach ist voll mit Inspektionsaufträgen. Jeden Tag kommt ein neuer!',
+  fields:[['Wartungsplan','WP-BUE-DON-04'],['Bezeichnung','Jahresinspektion Bahnübergang'],['Zyklus','1 TAG'],['Auftragsart','PM03 Inspektion'],['Eröffnungshorizont','80 %'],['Startdatum','01.01.2026']],
+  ans:2, exp:'Für eine Jahresinspektion muss der Zyklus 1 JHR (bzw. 12 MON) sein. Mit 1 TAG erzeugt die Terminierung täglich einen Auftrag.'}; },
+() => { const m = SXMEL(); return {d:'pm', mode:'field', t:'IW22', title:`Meldung ändern: ${m}`, msg:'Die Ausfallzeit in meinem Bericht ist negativ. Wie geht das denn?',
+  fields:[['Meldung',m],['Kurztext','Signal dunkel'],['Störungsbeginn',`${dfmt(-2)} 06:40`],['Störungsende',`${dfmt(-3)} 09:10`],['Ausfallzeit','–26,5 H'],['Meldungsstatus','MEAB Abgeschlossen']],
+  ans:3, exp:'Das Störungsende liegt einen Tag vor dem Störungsbeginn. Datum korrigieren, dann stimmt auch die Ausfallzeit.'}; },
+() => { const p = SXN(); return {d:'user', mode:'field', t:'SAP Logon', title:'SAP: Anmeldung', msg:`${p.n} meldet sich an, aber alle Menüs sind auf Englisch.`,
+  fields:[['Mandant','100'],['Benutzer',p.uid],['Kennwort','••••••••'],['Sprache','EN']],
+  ans:3, exp:'Im Anmeldebild steht Sprache EN. Mit DE (oder leer, dann gilt die Standardsprache aus den Festwerten) ist alles wieder deutsch.'}; },
+() => { const p = SXN(); return {d:'user', mode:'field', t:'SAP Logon', title:'SAP: Anmeldung', msg:`${p.n}: „Benutzer existiert nicht“. Ich arbeite aber seit Jahren mit SAP!`,
+  fields:[['Mandant','000'],['Benutzer',p.uid],['Kennwort','••••••••'],['Sprache','DE']],
+  ans:0, exp:'Mandant 000 ist der SAP-Auslieferungsmandant. Der Benutzer existiert nur im Arbeitsmandanten (hier 100).'}; },
+() => { const p = SXN(); return {d:'user', mode:'field', t:'SU01', title:'Benutzer pflegen: Anzeigen', head:`Benutzer <b>${p.uid}</b> · ${p.n}`, msg:`${p.n} hatte gestern den letzten Arbeitstag vor der Rente und kann sich heute noch anmelden. Die Revision fragt nach.`,
+  tabs:[['Adresse',[['Vorname',p.fn],['Nachname',p.ln],['Abteilung','Werkstatt Augsburg']]],['Anmeldedaten',[['Benutzertyp','A Dialog'],['Gültig von','01.03.1998'],['Gültig bis','31.12.9999'],['Sperrstatus','Nicht gesperrt']]]],
+  ans:5, exp:'Nach dem Austritt muss „Gültig bis“ auf den letzten Arbeitstag gesetzt bzw. der Benutzer gesperrt werden. 31.12.9999 heißt: unbegrenzt gültig.'}; },
+
+/* ===== Zeile antippen ===== */
+() => { const r = shuffle([['Z_ISI_TAGESABSCHLUSS','Beendet'],['Z_MM_BESTANDSABGLEICH','Abgebrochen'],['Z_FI_KENNZAHLEN','Beendet'],['Z_IH_TERMINIERUNG','Beendet'],['Z_IDOC_NACHVERARBEITUNG','Aktiv']]);
+  return {d:'fi', mode:'row', t:'SM37', title:'Jobübersicht', msg:'Heute früh stimmen die Bestände nicht. Ist heute Nacht ein Job abgebrochen?', q:'Tippe auf den abgebrochenen Job.',
+  table:{cols:['Jobname','Startzeit','Status'], w:'2.2fr 1fr 1fr', rows:r.map(x=>[x[0], SXTIME(), x[1]])}, ans:r.findIndex(x=>x[1]==='Abgebrochen'), exp:'Der Bestandsabgleich ist abgebrochen. Als Nächstes ins Job-Log schauen, um den Grund zu sehen.'}; },
+() => { const st = shuffle(['53','53','51','53','03']); return {d:'idoc', mode:'row', t:'WE02', title:'IDoc-Liste', msg:'Eine Materialbewegung aus dem Lagersystem fehlt. Welches IDoc hängt?', q:'Tippe auf das fehlerhafte IDoc.',
+  table:{cols:['IDoc','Nachrichtentyp','Status'], w:'1.4fr 1.4fr 1fr', rows:st.map(s=>[String(ri(4471000,4479999)), s==='03'?'ORDERS':'MBGMCR', s+(s==='51'?' 🔴':s==='53'?' 🟢':' 🟢')])}, ans:st.indexOf('51'), exp:'Status 51 heißt „Anwendungsbeleg nicht gebucht“. 53 ist erfolgreich gebucht, 03 erfolgreich versendet.'}; },
+() => { const st = shuffle(['53','64','53','53','03']); return {d:'idoc', mode:'row', t:'WE02', title:'IDoc-Liste', msg:'Kein Fehler zu sehen, aber eine Buchung ist trotzdem nicht da. Welches IDoc wartet noch?', q:'Tippe auf das IDoc, das noch auf Verarbeitung wartet.',
+  table:{cols:['IDoc','Nachrichtentyp','Status'], w:'1.4fr 1.4fr 1fr', rows:st.map(s=>[String(ri(4471000,4479999)), s==='03'?'ORDERS':'MBGMCR', s+(s==='64'?' 🟡':' 🟢')])}, ans:st.indexOf('64'), exp:'Status 64 bedeutet: IDoc bereit zur Übergabe an die Anwendung. Es wurde also noch gar nicht verarbeitet (z. B. weil der Hintergrundjob fehlt).'}; },
+() => { const o = SXORD(), p = SXN(), others = [SXN(), SXN(), SXN()]; const rows = shuffle([[p.uid, `AUFK ${o}`, dfmt(-1)], ...others.map(x=>[x.uid, `AUFK ${SXORD()}`, dfmt(0)])]);
+  return {d:'pm', mode:'row', t:'SM12', title:'Sperreinträge auswählen', msg:`Ich kann Auftrag ${o} nicht ändern, er ist gesperrt. ${p.n} ist aber seit gestern im Urlaub.`, q:`Tippe auf den Sperreintrag zu Auftrag ${o}.`,
+  table:{cols:['Benutzer','Sperrobjekt','Datum'], w:'1.2fr 1.6fr 1fr', rows}, ans:rows.findIndex(r=>r[1].includes(o)), exp:`Die Sperre stammt von ${p.uid} von gestern, wohl eine hängende Sitzung. Nach Rücksprache darf sie in SM12 gelöscht werden.`}; },
+() => { const r = shuffle(['Init','Init','Fehler','Init']); const p = SXN(); return {d:'pm', mode:'row', t:'SM13', title:'Verbuchungsaufträge', msg:'Ich habe meine Rückmeldung gesichert, sie ist aber nirgends zu sehen.', q:'Tippe auf den fehlerhaften Verbuchungsauftrag.',
+  table:{cols:['Benutzer','Transaktion','Status'], w:'1.3fr 1fr 1fr', rows:r.map(s=>[s==='Fehler'?p.uid:SXN().uid, s==='Fehler'?'IW41':rnd(['IW32','MIGO','IW21']), s==='Fehler'?'Fehler 🔴':'Init'])}, ans:r.indexOf('Fehler'), exp:'Die Verbuchung ist abgebrochen. Die Rückmeldung wurde gesichert, aber nie gebucht. Fehler analysieren und die Buchung wiederholen.'}; },
+() => { const tx = shuffle(['MIGO','IW32','SM37','IE03']); return {d:'pm', mode:'row', t:'ST22', title:'ABAP-Laufzeitfehler', msg:'Beim Speichern im Auftrag ist mein SAP abgestürzt.', q:'Tippe auf den Dump aus der Auftragsbearbeitung.',
+  table:{cols:['Zeit','Laufzeitfehler','Transaktion'], w:'1fr 1.8fr 1fr', rows:tx.map(t=>[SXTIME(), rnd(['MESSAGE_TYPE_X','TIME_OUT','DBSQL_DUPLICATE_KEY_ERROR','CONVT_NO_NUMBER']), t])}, ans:tx.indexOf('IW32'), exp:'IW32 ist „Auftrag ändern“. Der Dump-Text hilft bei der Analyse und gehört ins Ticket.'}; },
+() => { const st = shuffle(['Fertig','Fertig','Fehler','In Verarb.']); return {d:'druck', mode:'row', t:'SP01', title:'Ausgabesteuerung: Spoolaufträge', msg:'Mein Auftragspapier kam nie aus dem Drucker.', q:'Tippe auf den Spoolauftrag mit Fehler.',
+  table:{cols:['Spool-Nr.','Titel','Status'], w:'1fr 1.6fr 1fr', rows:st.map(s=>[String(ri(31200,31999)), rnd(['Auftragspapier','Meldungsdruck','Lieferschein','Materialschein']), s+(s==='Fehler'?' 🔴':'')])}, ans:st.indexOf('Fehler'), exp:'Der Spoolauftrag hat Status „Fehler“. Ausgabegerät prüfen und mit „Drucken mit geänderten Parametern“ erneut ausgeben.'}; },
+() => { const r = shuffle([['1000','L001','0'],['1000','L002','0'],['2000','L001','7'],['3000','L005','0']]); return {d:'mm', mode:'row', t:'MMBE', title:'Bestandsübersicht: 100871 Schienenklemme', msg:'Unser Lager hat keine Schienenklemmen mehr. Hat irgendwer noch welche?', q:'Tippe auf den Lagerort mit frei verwendbarem Bestand.',
+  table:{cols:['Werk','Lagerort','Frei verwendbar'], w:'1fr 1fr 1.4fr', rows:r.map(x=>[x[0],x[1],x[2]+' ST'])}, ans:r.findIndex(x=>x[2]!=='0'), exp:'In Werk 2000, Lagerort L001 liegen noch 7 Stück. Eine Umlagerung anfragen geht schneller als eine Neubestellung.'}; },
+() => { const st = shuffle(['FREI','FREI','EROF','TABG']); return {d:'pm', mode:'row', t:'IW38', title:'Liste Aufträge ändern', msg:'Ein Techniker kann auf seinen Auftrag nicht zurückmelden. Welcher ist noch nicht freigegeben?', q:'Tippe auf den Auftrag, der noch nicht freigegeben ist.',
+  table:{cols:['Auftrag','Kurztext','Systemstatus'], w:'1fr 1.8fr 1fr', rows:st.map(s=>[SXORD(), rnd(['Weiche schmieren','Signal prüfen','Isolator tauschen','Kabelschaden beheben']), s])}, ans:st.indexOf('EROF'), exp:'EROF heißt „eröffnet“. Erst nach der Freigabe (FREI) kann zurückgemeldet werden. TABG ist technisch abgeschlossen.'}; },
+() => { const pr = shuffle(['3','4','1','2']); const tx = {'1':'Weiche 117 Ulm: Endlage fehlt','2':'Signal 45 flackert','3':'Kabelkanal Deckel lose','4':'Schild verblasst'}; return {d:'dispo', mode:'row', t:'IW28', title:'Liste Meldungen ändern', msg:'Ich habe genau einen Trupp frei. Welche Meldung geht zuerst raus?', q:'Tippe auf die dringendste Meldung.',
+  table:{cols:['Meldung','Kurztext','Prio'], w:'1.1fr 2fr .6fr', rows:pr.map(p=>[SXMEL(), tx[p], p])}, ans:pr.indexOf('1'), exp:'Priorität 1: Eine Weiche ohne Endlage behindert direkt den Zugbetrieb.'}; },
+() => { const r = shuffle(['ok','ok','lock','ok']); return {d:'user', mode:'row', t:'SUIM', title:'Benutzer nach Anmeldedaten', msg:'Irgendwer aus dem Team kommt nicht ins System. Wer ist gesperrt?', q:'Tippe auf den gesperrten Benutzer.',
+  table:{cols:['Benutzer','Letzte Anmeldung','Sperre'], w:'1.2fr 1.3fr 1fr', rows:r.map(s=>[SXN().uid, s==='lock'?dfmt(-ri(2,6)):dfmt(0), s==='lock'?'🔒 Falschanm.':'–'])}, ans:r.indexOf('lock'), exp:'Der Benutzer ist wegen zu vieler Falschanmeldungen gesperrt. In SU01 entsperren und ein neues Initialkennwort vergeben.'}; },
+() => { const d = shuffle([-6, 4, 11, 25]); return {d:'pm', mode:'row', t:'IP24', title:'Terminübersicht Wartungspläne', msg:'Die Revision fragt, ob wir eine Inspektion verschlafen haben.', q:'Tippe auf den überfälligen Termin.',
+  table:{cols:['Wartungsplan','Plandatum','Status'], w:'1.6fr 1fr 1fr', rows:d.map(x=>[rnd(['WP-BUE-DON-04','WP-SIG-ING-45','WP-STW-AAL-01','WP-WEI-NUE-203']), dfmt(x), 'Terminiert'])}, ans:d.indexOf(-6), exp:'Das Plandatum liegt in der Vergangenheit, der Termin ist aber noch nicht abgerufen. Also überfällig: Auftrag abrufen bzw. Terminierung prüfen.'}; },
+() => { const r = shuffle([0,0,12,0]); return {d:'mm', mode:'row', t:'ME2N', title:'Bestellungen zur Lieferantennummer', msg:'Uns fehlen Schwellenschrauben. Welche Bestellung ist noch offen?', q:'Tippe auf die Bestellung, bei der noch Ware aussteht.',
+  table:{cols:['Bestellung','Material','Offen'], w:'1.2fr 1.6fr 1fr', rows:r.map(x=>[String(ri(4500010000,4500019999)), rnd(['Schwellenschraube','Isolator 25 kV','Schienenklemme']), x+' ST'])}, ans:r.indexOf(12), exp:'Bei dieser Bestellung sind noch 12 Stück offen. Beim Lieferanten nachfragen oder den Liefertermin prüfen.'}; },
+() => { const st = shuffle(['READY','READY','SYSFAIL','RUNNING']); return {d:'idoc', mode:'row', t:'SMQ2', title:'qRFC-Monitor (Eingangsqueue)', msg:'Seit einer Stunde kommen keine Rückmeldungen von der Mobile-App mehr an.', q:'Tippe auf die blockierte Queue.',
+  table:{cols:['Queue','Einträge','Status'], w:'1.8fr .8fr 1fr', rows:st.map(s=>[rnd(['MOB_CONF_01','MOB_NOTIF_02','MOB_ORDER_03','MOB_TIME_04']), String(s==='SYSFAIL'?ri(40,180):ri(0,3)), s])}, ans:st.indexOf('SYSFAIL'), exp:'SYSFAIL heißt: Der erste Eintrag ist mit Fehler abgebrochen und blockiert alle folgenden. Fehler ansehen, beheben, Queue wieder entsperren.'}; },
+() => { const r = shuffle(['ok','ok','ok','toner']); return {d:'druck', mode:'row', t:'SPAD', title:'Ausgabegeräte: Übersicht', msg:'Im Lager Ulm druckt der Drucker nur noch leere Seiten.', q:'Tippe auf das Gerät mit Warnung.',
+  table:{cols:['Ausgabegerät','Standort','Meldung'], w:'1.4fr 1.4fr 1.2fr', rows:r.map(s=>s==='toner'?['DRK_ULM_LAGER','Lager Ulm','⚠️ Toner leer']:[rnd(['DRK_NUE_EG','DRK_AUG_1OG','DRK_MUC_2OG']), rnd(['Nürnberg','Augsburg','München']), 'OK'])}, ans:r.indexOf('toner'), exp:'Toner leer: Das ist kein SAP-Problem, sondern ein Fall für den Druckerservice vor Ort.'}; },
+
+/* ===== Funktion in der Symbolleiste ===== */
+() => { const p = SXN(); return {d:'user', mode:'btn', t:'SU01', title:'Benutzer pflegen', head:`Benutzer <b>${p.uid}</b> · 🔒 Gesperrt wegen Falschanmeldungen`, msg:`${p.n} hat sich fünfmal vertippt und ist jetzt gesperrt. Die Identität ist geprüft.`,
+  tb:['✏️ Ändern','📋 Kopieren','🗑️ Löschen','🔓 Sperren/Entsperren'], ans:3, exp:'Mit „Sperren/Entsperren“ wird die Falschanmeldesperre aufgehoben. Meist gibt man zusätzlich ein neues Initialkennwort.'}; },
+() => { const p = SXN(); return {d:'user', mode:'btn', t:'SU01', title:'Benutzer pflegen', head:`Benutzer <b>${p.uid}</b> · Nicht gesperrt`, msg:`${p.n} hat das Kennwort vergessen. Gesperrt ist der Benutzer nicht.`,
+  tb:['🔓 Sperren/Entsperren','🔑 Kennwort ändern','🗑️ Löschen','👥 Rollen'], ans:1, exp:'Über „Kennwort ändern“ vergibt man ein neues Initialkennwort. Bei der nächsten Anmeldung muss der Benutzer es selbst ändern.'}; },
+() => { const o = SXORD(); return {d:'pm', mode:'btn', t:'IW32', title:`IH-Auftrag ändern: ${o}`, head:'Status: FREI RÜCK (alle Vorgänge endrückgemeldet)', msg:'Die Arbeit ist erledigt und alles ist zurückgemeldet. Was mache ich jetzt mit dem Auftrag?',
+  tb:['🚩 Freigeben','✅ Technisch abschließen','🗑️ Löschvormerkung','🖨️ Drucken'], ans:1, exp:'Ist alles rückgemeldet, wird der Auftrag technisch abgeschlossen (TABG). Danach folgt die kaufmännische Abrechnung.'}; },
+() => { const o = SXORD(); return {d:'pm', mode:'btn', t:'IW32', title:`IH-Auftrag ändern: ${o}`, head:'Status: EROF (eröffnet)', msg:'Mein Techniker sagt, er kann auf diesen Auftrag nichts zurückmelden.',
+  tb:['🚩 Freigeben','✅ Technisch abschließen','🗑️ Löschvormerkung','📄 Kopieren'], ans:0, exp:'Der Auftrag steht noch auf EROF. Erst nach der Freigabe (Fahne) sind Rückmeldungen und Materialentnahmen möglich.'}; },
+() => { const m = SXMEL(); return {d:'pm', mode:'btn', t:'IW22', title:`Meldung ändern: ${m}`, head:'Status: MIAR (in Arbeit) · Auftrag TABG', msg:'Der Auftrag ist abgeschlossen, aber die Meldung steht noch offen in meiner Liste.',
+  tb:['⏸️ Zurückstellen','🛠️ In Arbeit geben','🏁 Meldung abschließen','📋 Auftrag anlegen'], ans:2, exp:'Ist die Arbeit erledigt, schließt man die Meldung ab (MEAB). Dann verschwindet sie aus den offenen Listen.'}; },
+() => { return {d:'fi', mode:'btn', t:'SM37', title:'Jobübersicht', head:'Z_MM_BESTANDSABGLEICH · Status: Abgebrochen', msg:'Der nächtliche Job ist abgebrochen. Wie finde ich raus, warum?',
+  tb:['▶️ Freigeben','🗑️ Löschen','📜 Job-Log','⏹️ Aktiven Job abbrechen'], ans:2, exp:'Im Job-Log steht, an welchem Schritt und mit welcher Meldung der Job abgebrochen ist. Erst analysieren, dann neu einplanen.'}; },
+() => { return {d:'idoc', mode:'btn', t:'BD87', title:'Statusmonitor für ALE-Nachrichten', head:'Status 51 · 1 IDoc · Ursache (Materialsperre) ist behoben', msg:'Das Material ist wieder entsperrt. Wie bekomme ich die Bewegung jetzt gebucht?',
+  tb:['🔄 Verarbeiten','🗑️ Zum Löschen vormerken','✏️ IDoc bearbeiten','🔁 Aktualisieren'], ans:0, exp:'Nach behobener Ursache verarbeitet man das IDoc in BD87 einfach erneut. Löschen würde die Buchung verlieren.'}; },
+() => { const p = SXN(); return {d:'pm', mode:'btn', t:'SM12', title:'Sperreinträge', head:`${p.uid} · AUFK ${SXORD()} · Sitzung hängt (Rücksprache erfolgt)`, msg:`${p.n} bestätigt: Er ist nicht mehr im Auftrag, sein Laptop war nur abgestürzt.`,
+  tb:['🔁 Aktualisieren','🔍 Details','🗑️ Löschen','📊 Liste sichern'], ans:2, exp:'Nach Rücksprache darf der hängende Sperreintrag gelöscht werden. Ohne Rücksprache nie, sonst können Daten verloren gehen.'}; },
+() => { return {d:'druck', mode:'btn', t:'SP01', title:'Spoolauftrag 31455', head:'Ausgabegerät DRK_ULM_LAGER: defekt · Ersatzdrucker DRK_ULM_BUERO', msg:'Der Lagerdrucker ist kaputt. Kann ich mein Papier auf dem Bürodrucker nochmal ausgeben?',
+  tb:['👁️ Anzeigen','🗑️ Löschen','🖨️ Drucken mit geänderten Parametern','🔁 Aktualisieren'], ans:2, exp:'Mit „Drucken mit geänderten Parametern“ wählt man ein anderes Ausgabegerät und gibt denselben Spoolauftrag erneut aus.'}; },
+() => { const [t,d] = sxTp(); return {d:'pm', mode:'btn', t:'IW21', title:'Meldung anlegen: Störmeldung', head:`${t} ${d} · Alle Pflichtfelder gefüllt`, msg:'Ich habe alles eingetragen. Und jetzt?',
+  tb:['🔙 Zurück','💾 Sichern','❌ Abbrechen','🖨️ Drucken'], ans:1, exp:'Sichern (Strg+S) legt die Meldung an und vergibt die Meldungsnummer. Zurück oder Abbrechen verwirft die Eingaben.'}; },
+
+/* ===== Meldung lesen, Lösung wählen ===== */
+() => ({d:'user', mode:'mc', t:'SAP Logon', title:'SAP: Anmeldung', fields:[['Mandant','100'],['Benutzer',SXN().uid],['Kennwort','••••••••'],['Feststelltaste','⇪ AN']], status:['E','Name oder Kennwort ist nicht korrekt (Anmeldung wiederholen)'], msg:'Ich tippe mein Kennwort ganz sicher richtig!',
+  opts:['Feststelltaste ausschalten und nochmal eintippen','Sofort ein neues Kennwort vergeben','Benutzer löschen und neu anlegen','SAP GUI neu installieren'], exp:'Die Feststelltaste ist an. Kennwörter unterscheiden Groß- und Kleinschreibung.'}),
+() => ({d:'user', mode:'mc', t:'SAP Logon', title:'SAP: Neues Kennwort', fields:[['Neues Kennwort','••••••••'],['Wiederholen','••••••••']], status:['E','Wählen Sie ein Kennwort, das sich von Ihren letzten 5 Kennwörtern unterscheidet'], msg:'Mein Kennwort ist abgelaufen. Ich wollte einfach mein altes wieder nehmen.',
+  opts:['Ein neues Kennwort wählen, das noch nie verwendet wurde','Das alte Kennwort mit Leerzeichen am Ende','Den Administrator bitten, die Historie zu löschen','Einfach eine Woche warten'], exp:'SAP merkt sich die letzten Kennwörter (Kennworthistorie). Ein wirklich neues Kennwort wählen.'}),
+() => ({d:'user', mode:'mc', t:'SAP Logon', title:'SAP: Neues Kennwort', fields:[['Neues Kennwort','••••••••'],['Wiederholen','••••••••']], status:['E','Kennwort muss mindestens 1 Sonderzeichen enthalten'], msg:'Das Ändern vom Kennwort klappt nicht, es kommt immer eine rote Meldung.',
+  opts:['Ein Sonderzeichen wie ! oder # einbauen','Nur Kleinbuchstaben verwenden','Das Kennwort kürzer machen','Das Feld „Wiederholen“ leer lassen'], exp:'Die Kennwortregeln verlangen ein Sonderzeichen. Ein Kennwort wie „Weiche#2026“ erfüllt sie.'}),
+() => ({d:'user', mode:'mc', t:'SAP Logon', title:'SAP: Anmeldung', fields:[['Mandant','100'],['Benutzer',SXN().uid],['Kennwort','••••••••']], status:['E','Benutzer ist gesperrt. Wenden Sie sich an Ihren Systemadministrator'], msg:'Ich komme nicht mehr rein. Das Kennwort weiß ich aber wieder!',
+  opts:['Admin entsperrt den Benutzer in SU01 (nach Identitätsprüfung)','Weiter probieren, irgendwann geht es','Einen Kollegen-Account nutzen','Den Rechner neu starten'], exp:'Ein gesperrter Benutzer bleibt gesperrt, egal ob das Kennwort jetzt stimmt. Entsperren geht nur über SU01. Fremde Accounts sind tabu.'}),
+() => ({d:'user', mode:'mc', t:'IW41', title:'Rückmeldung erfassen', fields:[['Auftrag',SXORD()],['Vorgang','0010']], status:['E','Sie haben keine Berechtigung für Transaktion IW41'], msg:'Ich bin neu im Team. Rückmelden geht bei mir nicht.',
+  opts:['SU53 aufrufen und einen Berechtigungsantrag stellen','SAP_ALL beantragen','Die Rückmeldung per Mail an den Kollegen schicken','IW41 im Browser öffnen'], exp:'SU53 zeigt die fehlende Berechtigung. Damit stellt man einen Antrag für die passende Rolle. SAP_ALL gibt es nicht.'}),
+() => { const o = SXORD(), p = SXN(); return {d:'pm', mode:'mc', t:'IW32', title:`IH-Auftrag ändern: ${o}`, fields:[['Auftrag',o],['Kurztext','Signal 45 flackert']], status:['E',`Auftrag ${o} wird gerade von Benutzer ${p.uid} bearbeitet`], msg:'Ich will meinen Auftrag ergänzen, aber SAP lässt mich nicht.',
+  opts:[`Bei ${p.n} nachfragen, ob der Auftrag noch offen ist`,'Den Auftrag löschen und neu anlegen','SAP neu installieren','Den Fehler ignorieren und weiterschreiben'], exp:'Der Auftrag ist gesperrt, weil ihn jemand anderes gerade geöffnet hat. Kurz absprechen. Hängt die Sperre, hilft SM12.'}; },
+() => ({d:'mm', mode:'mc', t:'MIGO', title:'Warenausgang zum Auftrag', fields:[['Bewegungsart','261'],['Material','100871 Schienenklemme'],['Menge','5 ST'],['Lagerort','L001']], status:['E','Defizit von BA Frei verw. 5 ST : 100871 1000 L001'], msg:'Ich will 5 Klemmen entnehmen, aber es kommt eine Fehlermeldung.',
+  opts:['Bestand in MMBE prüfen und ggf. umlagern oder nachbestellen','Menge auf –5 ändern','Bewegungsart 101 verwenden','Den Fehler mit Enter wegklicken'], exp:'Im Lagerort ist kein frei verwendbarer Bestand mehr. MMBE zeigt, wo noch Material liegt.'}),
+() => ({d:'mm', mode:'mc', t:'MIGO', title:'Warenbewegung erfassen', fields:[['Buchungsdatum',dfmt(0)],['Bewegungsart','261']], status:['E',(()=>{ const d = new Date(), f = k => { const x = new Date(d.getFullYear(), d.getMonth()-k, 1); return `${x.getFullYear()}/${String(x.getMonth()+1).padStart(2,'0')}`; }; return `Buchung nur in Perioden ${f(2)} und ${f(1)} möglich (Buchungskreis 1000)`; })()], msg:'Seit heute früh kann niemand im Lager mehr buchen.',
+  opts:['Key-User informieren: Materialbuchungsperiode umsetzen (MMPV)','Buchungsdatum in den Vormonat setzen und weiterbuchen','Bewegungsart wechseln','Alle Buchungen auf Papier sammeln und nie nachtragen'], exp:'Zum Monatswechsel muss die MM-Periode weitergeschaltet werden (MMPV). Das macht der zuständige Key-User bzw. das Rechnungswesen.'}),
+() => { const e = SXEQ(); return {d:'sk', mode:'mc', t:'IW21', title:'Meldung anlegen', fields:[['Equipment',e],['Kurztext','Antrieb defekt']], status:['E',`Equipment ${e} ist zum Löschen vorgemerkt`], msg:'Ich will eine Störung an einem Weichenantrieb melden, aber es geht nicht.',
+  opts:['Prüfen, ob ein Nachfolge-Equipment verbaut ist, und das richtige wählen','Die Meldung ohne Objekt anlegen und nie zuordnen','Das Equipment löschen','Einen neuen Technischen Platz anlegen'], exp:'Ein zum Löschen vorgemerktes Equipment ist meist ausgebaut. Am Technischen Platz nachsehen, welches Equipment jetzt verbaut ist (S&K).'}; },
+() => ({d:'druck', mode:'mc', t:'IW32', title:'Drucken: Auftragspapiere', fields:[['Ausgabegerät','DRK_ULM_LAGR'],['Anzahl','1']], status:['E','Ausgabegerät „DRK_ULM_LAGR“ ist nicht definiert'], msg:'Mein Auftragspapier will nicht drucken.',
+  opts:['Den richtigen Gerätenamen auswählen (F4-Hilfe), z. B. DRK_ULM_LAGER','Den Drucker neu starten','Das Papier abfotografieren','SAP neu installieren'], exp:'Ein Tippfehler im Gerätenamen. Über die F4-Hilfe wählt man ein existierendes Ausgabegerät aus.'}),
+() => ({d:'mobile', mode:'mc', t:'Mobile', title:'ISI Mobile: Synchronisation', fields:[['Gerät','TAB_ULM_07'],['Letzte Synchronisation',`${dfmt(-3)} 16:42`],['Offene Rückmeldungen','14']], status:['W','Synchronisation fehlgeschlagen: keine Netzverbindung'], msg:'Meine Rückmeldungen der letzten Tage sind im SAP nicht da.',
+  opts:['Ins WLAN oder Mobilfunknetz gehen und neu synchronisieren','App löschen und neu installieren','Alle Rückmeldungen nochmal am PC erfassen','Das Tablet ausschalten und warten'], exp:'Die Daten liegen noch auf dem Tablet. Mit Netz synchronisieren. App löschen würde die 14 offenen Rückmeldungen vernichten!'}),
+() => ({d:'pm', mode:'mc', t:'IW31', title:'IH-Auftrag anlegen', fields:[['Auftragsart','PM01'],['Planergruppe','X99'],['Planungswerk','1000']], status:['E','Planergruppe X99 ist im Werk 1000 nicht vorhanden'], msg:'Ich kann keinen Auftrag anlegen, irgendwas mit der Planergruppe.',
+  opts:['Eine gültige Planergruppe per F4-Hilfe auswählen','Planergruppe leer lassen','Ein anderes Werk erfinden','Den Auftrag als Meldung anlegen'], exp:'X99 gibt es im Werk 1000 nicht. Die F4-Hilfe zeigt die gültigen Planergruppen, z. B. A10.'}),
+() => ({d:'fi', mode:'mc', t:'Focused Insights', title:'Dashboard: ISI Systemzustand', fields:[['Verfügbarkeit','🟢 99,9 %'],['Antwortzeit Dialog','🔴 4.800 ms'],['Abgebrochene Jobs','🟢 0'],['IDoc-Fehler','🟢 2']], status:['W','Schwellwert überschritten: Antwortzeit Dialog > 2.000 ms'], msg:'Alle beschweren sich, dass SAP heute super langsam ist.',
+  opts:['Antwortzeiten analysieren (z. B. ST03N/Workload) und die Basis informieren','Alle Benutzer abmelden','Das Dashboard ausblenden','Die Ampel auf Grün stellen'], exp:'Die Dialog-Antwortzeit ist weit über dem Schwellwert. Ursache in der Workload-Analyse suchen und die Basis einbinden.'}),
+];
+function mkSx(P){
+  const X = pickD('sapx', SX)(); let k = 0; const lab = [];
+  const fld = (l, v) => { if (X.mode === 'field'){ lab.push(`${l}: ${v}`); return `<button class="su-f sx-pick" data-ans="${k++}"><label>${l}</label><span>${v}</span></button>`; } return `<div class="su-f"><label>${l}</label><span>${v}</span></div>`; };
+  const tabs = X.tabs || (X.fields ? [['', X.fields]] : []);
+  let h = `<div class="sap sapx"><div class="sap-title">${X.title} <small>(${X.t})</small></div>`;
+  if (X.tb) h += `<div class="sx-tb">${X.tb.map((b,i)=>{ lab.push(b); return `<button class="sx-btn" data-ans="${i}">${b}</button>`; }).join('')}</div>`;
+  if (X.head) h += `<div class="sap-user">${X.head}</div>`;
+  if (tabs.length > 1) h += `<div class="sap-tabs">${tabs.map((t,i)=>`<button data-sutab="x${i}" class="${i?'':'on'}">${t[0]}</button>`).join('')}</div>`;
+  tabs.forEach((t,i)=>{ h += `<div class="sap-pane" data-pane="x${i}"${i?' hidden':''}>${t[1].map(f=>fld(f[0],f[1])).join('')}</div>`; });
+  if (X.table){ const T = X.table, st = `style="grid-template-columns:${T.w}"`;
+    h += `<div class="sap-pane sx-tab"><div class="sx-row sx-th" ${st}>${T.cols.map(c=>`<span>${c}</span>`).join('')}</div>${T.rows.map((r,i)=>{ lab.push(r.join(' · '));
+      return `<button class="sx-row" ${st} data-ans="${i}">${r.map(c=>`<span>${c}</span>`).join('')}</button>`; }).join('')}</div>`; }
+  if (X.status) h += `<div class="sx-status ${X.status[0]==='E'?'e':'w'}">${X.status[0]==='E'?'⛔':'⚠️'} ${X.status[1]}</div>`;
+  h += `<div class="sap-foot">Heute: ${dfmt(0)}</div></div>`;
+  const Q = {field:'Tippe auf das Feld, das nicht stimmt.', row:'Tippe auf die richtige Zeile.', btn:'Tippe oben auf die passende Funktion.', mc:'Was ist die Lösung?'};
+  if (X.mode === 'mc'){ const op = shuffle(X.opts); Object.assign(P, {opts:op, ans:op.indexOf(X.opts[0])}); }
+  else Object.assign(P, {opts:lab, ans:X.ans, noOpts:1});
+  P.dom = X.d; P.dept = rnd(DEP[X.d] || DEP.pm);
+  Object.assign(P, {screen:h, msg:X.msg, q:(X.q || Q[X.mode]) + (tabs.length > 1 ? ' Schau dir auch die anderen Reiter an.' : ''), exp:X.exp, time:P.time + 10});
+}
+
 function mkPuzzle(){
-  const l = S.lvl, type = pickW([['quiz',60],['triage',8],['log',l>=3?10:0],['order',9],['prio',8],['memory',5],['user',14]].filter(x=>x[1]>0));
+  const l = S.lvl, type = pickW([['quiz',60],['triage',8],['log',l>=3?10:0],['order',9],['prio',8],['memory',5],['user',14],['sapx',24]].filter(x=>x[1]>0));
   const tm = Math.max(.65, 1-.015*(l-1)), [chI,ch] = rnd(TK_CH);
   const P = { type, who:rnd(TK_NAMES), chI, ch, time:22*tm + (PK('wiki') ? 5 : 0) + (S.staff.sabine.h && type!=='memory' ? 4 : 0), pos:0 };
   const setD = d => { P.dom = d; P.dept = rnd(DEP[d]); };
@@ -3007,6 +3188,7 @@ function mkPuzzle(){
   if (type==='prio'){ setD('dispo'); const hi = pickD('prio', PRIO_HI), op = shuffle([hi, ...shuffle(PRIO_LO).slice(0,3)]);
     Object.assign(P,{msg:'Ich habe nur noch einen Trupp frei. Welchen Auftrag ziehen wir vor?', q:'Welchen IH-Auftrag disponierst du zuerst?', opts:op, ans:op.indexOf(hi), exp:`„${hi}“ behindert den Zugbetrieb und hat deshalb Vorrang.`}); }
   if (type==='user'){ setD('user'); mkSu(P); }
+  if (type==='sapx') mkSx(P);
   if (type==='memory'){ setD('pm'); const len = Math.min(7, 4+Math.floor(l/5)); Object.assign(P,{dept:'Stellwerk Aalen', msg:'Das Stellwerk verlangt den Freigabecode für die Sperrpause. Merk dir die Signalfolge!', q:'Gib die Signalfolge ein.', seq:Array.from({length:len},()=>Math.floor(Math.random()*4)), time:12+len, exp:''}); }
   P.rew = pickW([['money',4],['turbo',3],['xp',3],['fix',2],['star',1]]);
   return P;
@@ -3038,6 +3220,7 @@ function startTimer(){ TK.t0 = performance.now(); clearInterval(tkInt); tkInt = 
 function renderTicket(){
   const P = TK; let opts = '';
   if (P.type==='memory') opts = `<div class="sw-lamp" id="swLamp">⚫</div><div class="sw-opts four">${SIG.map(([ic,n],i)=>`<button class="btn" data-col="${i}" disabled aria-label="${n}">${ic}</button>`).join('')}</div><p class="sw-seq" id="swSeq"></p>`;
+  else if (P.noOpts) opts = '';
   else if (P.type==='order') opts = `<div class="sw-opts">${P.opts.map((o,i)=>`<button class="btn" data-ord="${i}">${o}</button>`).join('')}</div>`;
   else opts = `<div class="sw-opts ${P.log?'log':''} ${P.opts.length===2?'two':''}">${P.opts.map((o,i)=>`<button class="btn" data-ans="${i}">${o}</button>`).join('')}</div>`;
   panel(`<div class="sw-tk-head"><span class="ch">${P.chI} ${P.ch}</span><span class="dom">${DOMN[P.dom]}</span><span><b>${P.who}</b> · ${P.dept}</span><span class="sec" id="swTkSec">${Math.ceil(P.time)} s</span></div>
