@@ -438,6 +438,18 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 .sm-legal{margin:10px 0 0;text-align:center;font-size:12px;color:#7f88ad}
 .sm-legal a{color:#9aa3c7}
 .sb-x{display:none}
+/* Spielstand sichern */
+.sw-save{position:fixed;inset:0;z-index:60;background:rgba(6,8,14,.7);display:flex;align-items:center;justify-content:center;padding:16px}
+.ss-box{width:min(440px,100%);max-height:100%;overflow:auto;background:#121624;border:1px solid #2b3247;border-radius:16px;padding:14px 16px;color:#e5e7ff;font:14px/1.45 Inter,system-ui,sans-serif;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.ss-p{margin:10px 0 6px;color:#cfd5f0}.ss-p small{color:#8f98bd}
+.ss-code{width:100%;box-sizing:border-box;background:#0a0d16;color:#c7d2fe;border:1px solid #2b3247;border-radius:10px;padding:8px;font:11px/1.35 var(--mono,monospace);resize:vertical;word-break:break-all}
+.ss-row{display:flex;gap:8px;margin-top:8px}.ss-row .btn{flex:1;justify-content:center}
+.sw-save .btn{background:#1b2030;color:#e5e7ff;border:1px solid #2b3247}
+.sw-save .btn.primary{background:linear-gradient(120deg,var(--p),var(--p2));color:#fff;border:0}
+.ss-msg{margin:10px 0 0;font-size:13px;color:#fcd34d}.ss-msg .btn{margin-top:8px;width:100%;justify-content:center}
+/* Antippbarer Hinweis */
+.toast.show.act{pointer-events:auto;cursor:pointer;background:linear-gradient(120deg,#0ea5e9,#6366f1);color:#fff;font-weight:600;animation:swtoastp 1.2s infinite}
+@keyframes swtoastp{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.6)}50%{box-shadow:0 0 0 8px rgba(56,189,248,0)}}
 
 /* terminal */
 #term{position:fixed;right:20px;bottom:20px;width:min(520px,calc(100vw - 32px));height:340px;background:var(--term);color:var(--termtx);border-radius:14px;box-shadow:0 20px 60px -10px rgba(0,0,0,.5);z-index:200;display:none;flex-direction:column;font:13px var(--mono);overflow:hidden;border:1px solid #232838}
@@ -1069,7 +1081,11 @@ let cx = cv.getContext('2d'); const STC = {key:'', cv:null}; const PORT = (cv.pa
 const DPR = Math.min(matchMedia('(pointer: coarse)').matches ? 1.5 : 2, window.devicePixelRatio || 1);
 cv.width = W*DPR; cv.height = H*DPR; cx.setTransform(DPR,0,0,DPR,0,0);
 const ov = $('#swOverlay'), logEl = $('#swLog');
-const toast = m => { if (typeof window.__rwToast === 'function') window.__rwToast(m); };
+let toastFn = null;
+const toast = m => { toastFn = null; const t = document.getElementById('toast'); if (t) t.classList.remove('act'); if (typeof window.__rwToast === 'function') window.__rwToast(m); };
+// Hinweis zum Antippen: öffnet direkt Anruf/Ticket/Team-Moment
+const toastAct = (m, fn) => { if (typeof window.__rwToast !== 'function') return; window.__rwToast(m + '  👆 Hier tippen', 6000); const t = document.getElementById('toast'); if (t){ t.classList.add('act'); toastFn = fn; } };
+document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('#toast'); if (!t || !t.classList.contains('act')) return; const f = toastFn; toastFn = null; t.classList.remove('show','act'); if (f) f(); });
 const rnd = a => a[Math.floor(Math.random()*a.length)];
 const KAT = window.ISI_KAT || {};
 // Ziehen ohne Wiederholung: Jeder Eintrag kommt erst wieder, wenn alle anderen dran waren (gespeichert pro Gerät).
@@ -1084,7 +1100,7 @@ const pickD = (name, arr) => arr[deck(name, arr.length)];
 const APP = !!window.__APP;
 const SND = (() => {
   const SB = APP ? 'sound/' : 'spiel/sound/', LOOP = 50.526;
-  const NAMES = ['click','go','fix','fault','coin','buy','level','badge','right','wrong','ring','start','end'];
+  const NAMES = ['click','go','fix','fault','coin','buy','level','badge','right','wrong','ring','start','end','horst'];
   const GAP = {coin:.4, fault:.6, go:.15, fix:.25, click:.05, ring:1}, VOL = {coin:.55, fault:.7, click:.9, go:.8};
   const def = {mOn: APP, mV: .35, sOn: true, sV: .6};
   let cfg; try { cfg = Object.assign({}, def, JSON.parse(localStorage.getItem('rw-isi-snd')) || {}); } catch(e){ cfg = Object.assign({}, def); }
@@ -1096,7 +1112,9 @@ const SND = (() => {
   function apply(now){ if (!ac) return; const t = ac.currentTime, m = cfg.mOn ? cfg.mV*cfg.mV : 0, s = cfg.sOn ? cfg.sV*cfg.sV : 0;
     if (now){ mg.gain.value = m; sg.gain.value = s; } else { mg.gain.setTargetAtTime(m, t, .12); sg.gain.setTargetAtTime(s, t, .02); } }
   function load(n){ if (buf[n]) return Promise.resolve(buf[n]); if (ld[n]) return ld[n];
-    return ld[n] = fetch(SB + (n==='music' ? 'music' : 'sfx-'+n) + '.mp3').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    const D = window.__SNDDATA, src = D && D[n] ? Promise.resolve().then(() => { const bin = atob(D[n]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; })
+      : fetch(SB + (n==='music' ? 'music' : 'sfx-'+n) + '.mp3').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); });
+    return ld[n] = src
       .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf[n] = b)).catch(() => { delete ld[n]; }); }
   function music(){ if (!ac) return; const want = cfg.mOn && cfg.mV > 0;
     if (want && !mus){ if (!buf.music){ load('music').then(b => { if (b) music(); }); return; }
@@ -1370,8 +1388,8 @@ const ACH = [
  ['sat','🛰️','Satellitenblick','Eine echte Deutschlandkarte freigeschaltet.',s=>['atlas','sat','nachtsat','relief'].some(x=>s.sk.own.includes(x)),1],
  ['top1','🥇','Spitzenreiter','Platz 1 der Bestenliste.',s=>!!s.player && boardRank()===1,3],
  ['kiach','🤖','Mensch und Maschine','Den KI-Assistenten freigeschaltet.',s=>!!s.perks.ki,2],
- ['hero','🦸','Held des Tages','Daniel gerufen.',s=>s.st.heroes>=1,2],
- ['hero10','🦸‍♂️','Daniel-Fanclub','Daniel 10-mal gerufen.',s=>s.st.heroes>=10,3],
+ ['hero','🦸','Held des Tages','Den Chef gerufen.',s=>s.st.heroes>=1,2],
+ ['hero10','🦸‍♂️','Chef-Fanclub','Den Chef 10-mal gerufen.',s=>s.st.heroes>=10,3],
  ['roman20','👑','Chef-Legende','Roman auf Level 20 gebracht: ISI fällt nie mehr aus.',s=>s.staff.roman.l>=20,5],
  ['tk10','🎧','Helpdesk-Held','10 Tickets und Anrufe gelöst.',s=>s.st.tickets>=10,2],
  ['tk50','🧑‍💻','Ticket-Legende','50 Tickets und Anrufe gelöst.',s=>s.st.tickets>=50,4],
@@ -1498,7 +1516,7 @@ function reroute(t){
 }
 function activate(f){ const ft = FT[f.type];
   if (ft.tgt==='train'){ const t = G.trains.find(t=>t.id===f.train); if (!t){ removeFault(f); return; } if (ft.eff==='stop'){ t.st='defect'; t.wait=ft.n; } else t.slow = true; }
-  if (ft.eff==='isi'){ G.isiDown = true; toast((S.daniel ? '🦸 Tipp: Ruf Daniel! ' : '') + '🧩 ISI-Schnittstelle gestört! Frühwarnung und Automatik sind aus, bis jemand sie im HQ repariert.'); }
+  if (ft.eff==='isi'){ G.isiDown = true; toast((S.daniel ? '🦸 Tipp: Ruf den Chef! ' : '') + '🧩 ISI-Schnittstelle gestört! Frühwarnung und Automatik sind aus, bis jemand sie im HQ repariert.'); }
 }
 function spawnFault(){
   if (G.faults.length >= G.d.maxF) return;
@@ -1776,7 +1794,7 @@ const EFF = {block:'Gesperrt: Züge müssen warten, bis repariert ist.', slow:'Z
 function tipAt(x, y){ const tol = 24*K;
   if (G){
     const f = G.faults.find(f=>Math.hypot(f.x-x,f.y-y)<tol);
-    if (f){ const ft = FT[f.type]; if (ft.eff==='isi' && f.st==='on') return `<b>${ft.ic} ${esc(label(f))}</b><br>${EFF.isi}<br><small>Repariere sie im HQ oder ruf oben <b>Daniel</b> (${S.daniel}× im Vorrat).</small>`; return `<b>${ft.ic} ${esc(label(f))}</b><br>${f.st==='fc' ? `ISI-Prognose: tritt in ${Math.ceil(f.fc)} s ein. Schick jetzt jemanden hin, dann wird sie verhindert!` : EFF[ft.eff]}<br><small>${CATN[ft.cat]} · ca. ${ft.rep} s Reparatur · ${f.crew ? esc(f.crew.name)+' ist dran' : 'Tippen, um jemanden zu schicken'}</small>`; }
+    if (f){ const ft = FT[f.type]; if (ft.eff==='isi' && f.st==='on') return `<b>${ft.ic} ${esc(label(f))}</b><br>${EFF.isi}<br><small>Repariere sie im HQ oder ruf oben den <b>Chef</b> (${S.daniel}× im Vorrat).</small>`; return `<b>${ft.ic} ${esc(label(f))}</b><br>${f.st==='fc' ? `ISI-Prognose: tritt in ${Math.ceil(f.fc)} s ein. Schick jetzt jemanden hin, dann wird sie verhindert!` : EFF[ft.eff]}<br><small>${CATN[ft.cat]} · ca. ${ft.rep} s Reparatur · ${f.crew ? esc(f.crew.name)+' ist dran' : 'Tippen, um jemanden zu schicken'}</small>`; }
     if (G.ev && EV[G.ev].node!==undefined){ const ev = EV[G.ev], n = N[ev.node];
       const ei = evIcon(n); if (Math.hypot(ei[0]-x, ei[1]-y) < 22*K){ const near = evInRadius();
         return `<b>${ev.mk} ${ev.n}</b><br>${ev.d}<br><small>Wirkungskreis (gestrichelt): pünktliche Ankünfte in <b>${n.n}</b> ×${String(ev.m).replace('.',',')} Budget${near.length ? `, in ${near.join(', ')} ×${String(1+(ev.m-1)/2).replace('.',',')}` : ''}. Mehr Züge fahren nach ${n.n}.</small>`; } }
@@ -1930,14 +1948,16 @@ function worker(c, now){
   else if (sk!=='astro'){ cx.fillStyle = '#fde68a'; cx.fillRect(-8,1,16,2.2); cx.fillRect(-.8,-6,1.6,16); }
   cx.shadowBlur = 0;
   if (P && P.fem){ cx.fillStyle = P.fem; cx.beginPath(); cx.ellipse(10,-13,4,7,.4,0,7); cx.fill(); }
-  cx.save(); cx.beginPath(); cx.arc(0,-17,12,0,7); cx.closePath();
   const cf = FACES[c.who];
+  if (!cf && c.chef && face.complete && face.naturalWidth){ const hh = 30, hw = hh*face.naturalWidth/face.naturalHeight;
+    cx.save(); cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = 3; cx.drawImage(face, -hw/2, -31, hw, hh); cx.restore(); }
+  else {
+  cx.save(); cx.beginPath(); cx.arc(0,-17,12,0,7); cx.closePath();
   if (cf && cf.complete && cf.naturalWidth){ cx.clip(); const w = cf.naturalWidth, h = cf.naturalHeight, m = Math.min(w,h); cx.drawImage(cf, (w-m)/2, (h-m)/2, m, m, -12,-29,24,24); }
-  else if (c.chef && face.complete && face.naturalWidth){ cx.clip(); const w = face.naturalWidth, h = face.naturalHeight; cx.drawImage(face, w*.36, h*.08, w*.58, h*.58, -12,-29,24,24); }
   else { cx.fillStyle = c.who==='mehmet' ? '#d6a77a' : '#f1c7a3'; cx.fill(); cx.fillStyle = '#1f2937'; cx.beginPath(); cx.arc(-4,-16,1.5,0,7); cx.arc(4,-16,1.5,0,7); cx.fill();
     if (c.who==='mehmet' || c.who==='gerd'){ cx.strokeStyle = c.who==='gerd' ? '#9ca3af' : '#1f2937'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(-4,-11); cx.lineTo(4,-11); cx.stroke(); } }
   cx.restore();
-  cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(0,-17,12,0,7); cx.stroke();
+  cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(0,-17,12,0,7); cx.stroke(); }
   if (sk==='lokf'){ cx.fillStyle = '#1e3a8a'; RR(-12,-33,24,8,3); cx.fill(); cx.fillRect(-13,-26,20,2.6); cx.fillStyle = '#fbbf24'; cx.beginPath(); cx.arc(0,-29,1.8,0,7); cx.fill(); }
   else if (sk==='tracht'){ cx.fillStyle = '#166534'; cx.beginPath(); cx.moveTo(-10,-25); cx.lineTo(-7,-36); cx.lineTo(7,-36); cx.lineTo(10,-25); cx.fill(); cx.beginPath(); cx.ellipse(0,-25,15,3,0,0,7); cx.fill();
     cx.fillStyle = '#78350f'; cx.fillRect(-9,-29,18,2.5); cx.strokeStyle = '#f5f5f4'; cx.lineWidth = 1.6; cx.beginPath(); cx.moveTo(6,-34); cx.quadraticCurveTo(14,-40,12,-47); cx.stroke(); }
@@ -1955,7 +1975,8 @@ function worker(c, now){
   else if (G && G.mode && G.mode!=='home'){ cx.font = '11px system-ui'; cx.textAlign = 'center'; cx.fillText(G.mode==='office' ? (G.t<10 ? '🚗' : '🐌') : '🎉', -15, -28); }
   cx.restore();
 }
-const face = new Image(); { const av = document.querySelector('.avatar'); if (av) face.src = av.src; }
+// Ausgeschnittener Kopf von Roman (freigestellt, transparent) – unabhängig von der Seite, damit er auch in der App da ist
+const face = new Image(); face.src = 'data:image/webp;base64,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';
 
 /* ---- HUD ---- */
 const hc = {};
@@ -1969,8 +1990,8 @@ function hud(){
   const od = G ? overdue() : 0, tot = G ? G.arrived + od : 0; setT('#swPunct', tot ? Math.round(G.onTime/tot*100)+' %' : '–');
   const tot2 = G ? G.crews.length : 1 + STAFF.filter(p=>p.id!=='roman' && S.staff[p.id].h).length + U.crew, busy = G ? G.crews.filter(c=>c.st!=='idle').length : 0; setT('#swCrews', (tot2-busy)+'/'+tot2);
   const isiOn = U.isi1||U.isi2||U.isi3; setH('#swIsi', !isiOn);
-  const hb = !!(G && G.isiDown && !G.sapTook); setH('#swHero', !hb); if (hb) setT('#swHero', G.hero ? '🦸 Daniel ist unterwegs …' : S.daniel ? `🦸 Daniel rufen (${S.daniel}×)` : `🦸 Daniel kaufen (${fmt(heroCost())} €)`);
-  setT('#swIsi', G && G.isiDown ? '🔴 ISI gestört: Schnittstelle reparieren oder Daniel rufen!' : '🟢 ISI aktiv: ' + [U.isi1&&'Frühwarnung',U.isi2&&'Auto-Disposition',U.isi3&&'Analytics',U.isi4&&'KI-Prognose',U.isi5&&'Zwilling'].filter(Boolean).join(' · '));
+  const hb = !!(G && G.isiDown && !G.sapTook); setH('#swHero', !hb); if (hb) setT('#swHero', G.hero ? '🦸 Der Chef ist unterwegs …' : S.daniel ? `🦸 Chef rufen (${S.daniel}×)` : `🦸 Chef-Einsatz kaufen (${fmt(heroCost())} €)`);
+  setT('#swIsi', G && G.isiDown ? '🔴 ISI gestört: Schnittstelle reparieren oder Chef rufen!' : '🟢 ISI aktiv: ' + [U.isi1&&'Frühwarnung',U.isi2&&'Auto-Disposition',U.isi3&&'Analytics',U.isi4&&'KI-Prognose',U.isi5&&'Zwilling'].filter(Boolean).join(' · '));
   const el = $('#swIsi'); if (el) el.classList.toggle('down', !!(G && G.isiDown));
   const src = G || BR, wx = src ? src.wx : 'clear';
   setT('#swWx', `${WX[wx].ic} ${WX[wx].n}` + (G && G.wx2 ? ` → ${WX[G.wx2].ic}` : ''));
@@ -3439,7 +3460,7 @@ function tkStep(dt){
   if (t.n >= maxT) return; t.next -= dt;
   if (t.next <= 0){ t.offer = mkPuzzle(); t.offer.until = G.t + 14; t.n++; sfx('ring'); const o = t.offer;
     if (PK('ki')){ o.ki = G.t + 2.5; log(`🤖 KI-Assistent übernimmt ${o.ch} von ${o.who} …`,'g'); return; }
-    log(`${o.chI} ${o.ch} von ${o.who} (${o.dept}): oben annehmen!`,'y'); toast(`${o.chI} ${o.ch} von ${o.who}! Tippe oben auf „Annehmen“ und hol dir ${rewTxt(o.rew)}.`); }
+    log(`${o.chI} ${o.ch} von ${o.who} (${o.dept}): oben annehmen!`,'y'); toastAct(`${o.chI} ${o.ch} von ${o.who}! Annehmen und ${rewTxt(o.rew)} holen.`, () => openTicket()); }
 }
 function finishInstantFix(){ const f = G.faults.filter(f=>f.st==='on').sort((a,b)=>b.age-a.age)[0]; if (!f) return false;
   const ft = FT[f.type], c = f.crew; if (c){ c.st='idle'; c.f=null; } removeFault(f);
@@ -3893,7 +3914,7 @@ function tmStep(dt){
   const t = G.tm, max = S.lvl>=8 ? 3 : 2; if (S.lvl<2) return;
   if (t.offer){ if (G.t > t.offer.until){ log('🤝 Team-Moment verpasst.','y'); t.offer = null; t.next = 30 + Math.random()*20; } return; }
   if (t.n >= max) return; t.next -= dt;
-  if (t.next <= 0){ const i = Math.random() < .5 ? TM_SCHUH0 + deck('horst', SCHUH.length) : deck('team', TM_N); t.offer = {i, until:G.t+16}; t.n++; sfx('ring'); const kd = TMS[i][2]; toast(kd==='schuh' ? '👞 Horst ist mal wieder gekränkt: Tippe oben auf den blauen Knopf!' : kd==='tech' ? '🖥️ Horst kämpft mit der Technik: Tippe oben auf den blauen Knopf!' : '🤝 Team-Moment: Tippe oben auf den blauen Knopf!'); }
+  if (t.next <= 0){ const i = Math.random() < .5 ? TM_SCHUH0 + deck('horst', SCHUH.length) : deck('team', TM_N); t.offer = {i, until:G.t+16}; t.n++; const kd = TMS[i][2]; sfx(kd==='schuh' || kd==='tech' ? 'horst' : 'ring'); toastAct(kd==='schuh' ? '👞 Horst ist mal wieder gekränkt!' : kd==='tech' ? '🖥️ Horst kämpft mit der Technik!' : '🤝 Team-Moment!', () => openTm()); }
 }
 function openTm(){ if (!G || !G.tm.offer || TK || TMO) return; const [s, opts, kind] = TMS[G.tm.offer.i]; G.tm.offer = null; G.tm.next = 35 + Math.random()*25;
   const sh = kind==='schuh' || kind==='tech'; TMO = {s, sh, opts:shuffle(opts)}; paused = true; $('#swPlay').textContent = sh ? '👞 Gespräch …' : '🤝 Team …';
@@ -3973,13 +3994,13 @@ function setPlayer(v){ v = (v||'').trim().replace(/\s+/g,' ').slice(0,16); if (v
   if (p.saves[v]){ S = merge(fresh(), p.saves[v]); delete p.saves[v]; saveProfs(p); U = S.up; loadFaces(); net(); }
   S.player = v; save(); return true; }
 
-/* ---- Daniel ---- */
+/* ---- Chef (früher Daniel) ---- */
 const heroCost = () => Math.round((2500 + 600*S.lvl) / 50) * 50;
 function callDaniel(){ const f = G.faults.find(f=>f.type==='isi' && f.st==='on'); if (!f) return;
-  S.daniel--; G.hero = {f, t0:G.t}; save(); log('🦸 Daniel ist alarmiert und fliegt los!','g'); toast('🦸 Keine Sorge, Daniel ist unterwegs!'); }
+  S.daniel--; G.hero = {f, t0:G.t}; save(); log('🦸 Der Chef ist alarmiert und fliegt los!','g'); toast('🦸 Keine Sorge, der Chef ist unterwegs!'); }
 function heroArrive(){ const f = G.hero.f; G.hero = null; if (!G.faults.includes(f)) return;
   if (f.crew){ f.crew.st = 'idle'; f.crew.f = null; } removeFault(f); G.repaired++; S.st.repairs++; S.st.heroes++; G.heroFx = {x:f.x, y:f.y, t0:G.t};
-  log('🦸 Daniel hat ISI gerettet! Frühwarnung und Automatik laufen wieder.','g'); toast('🦸 Daniel hat ISI gerettet! Alles läuft wieder.'); checkAch(); save(); }
+  log('🦸 Der Chef hat ISI gerettet! Frühwarnung und Automatik laufen wieder.','g'); toast('🦸 Der Chef hat ISI gerettet! Alles läuft wieder.'); checkAch(); save(); }
 function danielFig(c, fl){
   c.fillStyle = '#16a34a'; c.beginPath(); c.moveTo(-3,-8); c.quadraticCurveTo(-22,-4+fl,-26,8+fl); c.lineTo(-14,6); c.quadraticCurveTo(-8,2,-3,4); c.closePath(); c.fill();
   c.fillStyle = '#1d4ed8'; if (c.roundRect){ c.beginPath(); c.roundRect(-6,-9,14,13,4); c.fill(); } else c.fillRect(-6,-9,14,13);
@@ -4001,10 +4022,10 @@ function drawHero(now){ const h = G.hero, f = h.f, k = Math.min(1, (G.t-h.t0)/1.
   cx.save(); cx.translate(x, y); cx.scale(K*2.3*(x0<0?1:-1), K*2.3);
   danielFig(cx, Math.sin(now/70)*3);
   cx.restore();
-  cx.font = `700 ${11*K}px Inter, sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 3*K; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.strokeText('Daniel', x, y+34*K); cx.fillStyle = '#facc15'; cx.fillText('Daniel', x, y+34*K); }
+  cx.font = `700 ${11*K}px Inter, sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 3*K; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.strokeText('Chef', x, y+34*K); cx.fillStyle = '#facc15'; cx.fillText('Chef', x, y+34*K); }
 
 /* ---- Versteckter Admin-Modus ---- */
-const ADM_H = '1c91704d';
+const ADM_H = 'ebb8ae0b';
 const fnv = t => { let h = 0x811c9dc5; for (const c of t){ h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16); };
 let ADM = false, ADMSPD = 1, ADMNOF = false, ADMV = null, admFails = 0, admLock = 0;
 try { ADM = sessionStorage.getItem('rw-adm')==='1'; } catch(e){}
@@ -4016,19 +4037,19 @@ function admClose(){ const r = ADMV; ADMV = null; if (!r) return;
   else intro(); }
 function admLogin(){ if (TK || TMO || ov.querySelector('[data-sap]')) return; if (ADM){ admMenu(); return; } admView();
   panel(`<h3>🔐 Administrator</h3><p>Bitte Passwort eingeben.</p>
-  <div class="sw-namebox"><input id="swAdmPw" type="password" inputmode="numeric" autocomplete="off" aria-label="Admin-Passwort"><button class="btn primary" data-adm="login">Anmelden</button></div>
+  <div class="sw-namebox"><input id="swAdmPw" type="password" inputmode="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Admin-Passwort"><button class="btn primary" data-adm="login">Anmelden</button></div>
   <p class="sw-hint" id="swAdmMsg"></p><div class="row"><button class="btn" data-adm="close">Abbrechen</button></div>`);
   setTimeout(()=>{ const i = $('#swAdmPw'); if (i) i.focus({preventScroll:true}); }, 50); }
 function admTry(){ const i = $('#swAdmPw'), m = $('#swAdmMsg'); if (!i) return;
   if (Date.now() < admLock){ m.textContent = `Zu viele Versuche. Bitte ${Math.ceil((admLock-Date.now())/1000)} s warten.`; return; }
-  if (fnv('isi-admin:'+i.value)===ADM_H){ ADM = true; admFails = 0; try { sessionStorage.setItem('rw-adm','1'); } catch(e){} toast('🛠️ Admin-Modus aktiv'); admMenu(); }
+  if (fnv('isi-admin:'+i.value.trim().toLowerCase())===ADM_H){ ADM = true; admFails = 0; try { sessionStorage.setItem('rw-adm','1'); } catch(e){} toast('🛠️ Admin-Modus aktiv'); admMenu(); }
   else { admFails++; i.value = ''; i.classList.add('err'); if (admFails>=5){ admLock = Date.now()+30000; admFails = 0; m.textContent = 'Zu viele Fehlversuche. 30 s gesperrt.'; } else m.textContent = 'Falsches Passwort.'; } }
 function admMenu(){ admView(); const g = !!G;
   const B = (id, t, dis) => `<button class="btn${dis?'':' '}" data-adm="${id}" ${dis?'disabled':''}>${t}</button>`;
   panel(`<h3>🛠️ Admin-Modus</h3><p class="sw-hint">Nur für dich. Änderungen wirken sofort auf den Spielstand dieses Geräts.</p>
   <h4 class="sw-h4">Spielstand</h4>
   <div class="adm-row"><input id="swAdmLvl" type="number" min="1" max="99" value="${S.lvl}" aria-label="Level"><button class="btn primary" data-adm="lvl">Level setzen</button></div>
-  <div class="adm-grid">${B('m10','+10.000 €')}${B('m100','+100.000 €')}${B('st10','+10 ⭐')}${B('st50','+50 ⭐')}${B('soc','+20 🤝')}${B('dan','+5 Daniel')}${B('all','🔓 Alles freischalten')}${B('team','👥 Team auf Level 20')}${B('retry','✅ Wiederholpflicht aufheben')}${B('board','🗑️ Bestenliste zurücksetzen')}</div>
+  <div class="adm-grid">${B('m10','+10.000 €')}${B('m100','+100.000 €')}${B('st10','+10 ⭐')}${B('st50','+50 ⭐')}${B('soc','+20 🤝')}${B('dan','+5 Chef-Einsätze')}${B('all','🔓 Alles freischalten')}${B('team','👥 Team auf Level 20')}${B('retry','✅ Wiederholpflicht aufheben')}${B('board','🗑️ Bestenliste zurücksetzen')}</div>
   <h4 class="sw-h4">Laufende Schicht ${g?'':'<small>(erst eine Schicht starten)</small>'}</h4>
   <div class="adm-grid">${B('isi','🧩 ISI-Störung auslösen',!g)}${B('tk','📞 Ticket jetzt',!g)}${B('tm','🤝 Team-Moment jetzt',!g)}${B('sap','📨 SAP-Frage jetzt',!g)}${B('win','🏁 Schicht sofort gewinnen',!g)}${B('nof', ADMNOF ? '🛡️ Störungen: AUS' : '🛡️ Störungen: AN')}${B('spd', `⏩ Tempo: ×${ADMSPD}`)}</div>
   <h4 class="sw-h4">Nächste Schicht</h4>
@@ -4165,7 +4186,7 @@ function shopRender(t){
   let body = '';
   if (tab==='upg'){
     if (S.lvl>=15) body += `<div class="sw-item prest"><div class="ic">🏗️</div><div><b>Generalsanierung (Prestige ${S.pres+1})</b><small>Fang bei Level 1 neu an. Du behältst Sterne, Skins, Erfolge und dein Team (mit halbem Level). Dafür gibt es dauerhaft <b>+20 % Budget und Erfahrung</b> pro Prestige, mehr Startbudget und den Skin „Legende“.</small></div><button class="btn primary" data-a="prestige">${presArm?'Wirklich? Tippen!':'🏗️ Sanieren'}</button></div>`;
-    body += `<div class="sw-item dnl"><img class="sw-dnl" src="${danielIcon()}" alt="Daniel"><div><b>Daniel</b> <span class="lv">Vorrat: ${S.daniel}×</span><small>Ist ISI gestört, rufst du Daniel: Er fliegt ein und bringt die ISI-Schnittstelle sofort wieder zum Laufen. Jeder Kauf ist ein Einsatz, du kannst ihn beliebig oft kaufen.</small></div><button class="btn ${S.money>=heroCost()?'primary':''}" data-hero="1" ${S.money>=heroCost()?'':'disabled'}>${fmt(heroCost())} €</button></div>`;
+    body += `<div class="sw-item dnl"><img class="sw-dnl" src="${danielIcon()}" alt="Chef"><div><b>Chef</b> <span class="lv">Vorrat: ${S.daniel}×</span><small>Ist ISI gestört, rufst du den Chef: Er fliegt ein und bringt die ISI-Schnittstelle sofort wieder zum Laufen. Jeder Kauf ist ein Einsatz, du kannst ihn beliebig oft kaufen.</small></div><button class="btn ${S.money>=heroCost()?'primary':''}" data-hero="1" ${S.money>=heroCost()?'':'disabled'}>${fmt(heroCost())} €</button></div>`;
     if (S.lvl<15) body += `<p>🏗️ Ab Level 15 kannst du eine <b>Generalsanierung</b> (Prestige) starten, für dauerhafte Boni.</p>`;
     body += UPG.map(it=>{ const have = U[it.id], max = it.cost.length, done = have>=max, cost = it.cost[Math.min(have,max-1)], need = it.lv[Math.min(have,max-1)],
       locked = S.lvl < need || (it.req && !U[it.req]), afford = S.money >= cost;
@@ -4281,7 +4302,7 @@ ov.addEventListener('click', e=>{
     if (S.st.events>=5) aw('party');
     save(); showBrief(); return; }
   if (ds.perk){ const k = PERKS.find(x=>x.id===ds.perk); if (S.soc>=k.c){ S.soc -= k.c; S.perks[k.id] = (S.perks[k.id]||0) + 1; award('perk'); save(); toast(`${k.ic} Perk eingelöst: ${k.n}!`); shop(); } return; }
-  if (ds.hero){ const c = heroCost(); if (S.money>=c){ S.money -= c; S.daniel++; save(); toast(`🦸 Daniel steht bereit! Vorrat: ${S.daniel}×`); shop(); } return; }
+  if (ds.hero){ const c = heroCost(); if (S.money>=c){ S.money -= c; S.daniel++; save(); toast(`🦸 Der Chef steht bereit! Vorrat: ${S.daniel}×`); shop(); } return; }
   if (ds.reset){ delete S.custom[ds.reset]; loadFaces(); if (G) G.crews.forEach(c=>{ if (c.who===ds.reset) c.name = nm(ds.reset); }); save(); shop(); return; }
   if (ds.tab){ presArm = false; shop(ds.tab); return; }
   if (ds.buy){ const it = UPG.find(i=>i.id===ds.buy), cost = it.cost[U[it.id]]; if (S.money>=cost){ S.money -= cost; U[it.id]++; save();
@@ -4361,14 +4382,52 @@ cv.addEventListener('pointerdown', e=>{
   if (G.sel){ G.sel = null; log('Auswahl aufgehoben.','y'); return; }
   tapTip(e);
 });
+/* ---- Spielstand sichern / wiederherstellen (Code zum Kopieren) ---- */
+const SAVEIO = (() => {
+  const enc = s => btoa(unescape(encodeURIComponent(s))), dec = s => decodeURIComponent(escape(atob(s)));
+  function exportCode(){ const d = {}; for (let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if (/^rw-/.test(k)) d[k] = localStorage.getItem(k); }
+    return 'ISI1:' + enc(JSON.stringify({v:1, t:new Date().toISOString(), d})); }
+  function parse(code){ const c = String(code || '').replace(/\s+/g, ''); if (!/^ISI1:/.test(c)) throw new Error('kein ISI-Code');
+    const o = JSON.parse(dec(c.slice(5))); if (!o || o.v !== 1 || typeof o.d !== 'object') throw new Error('ungültig'); return o; }
+  function apply(o){ Object.keys(o.d).forEach(k => { if (/^rw-/.test(k) && typeof o.d[k] === 'string') localStorage.setItem(k, o.d[k]); }); }
+  function copy(ta){ const v = ta.value; const done = () => toast('📋 Code kopiert. Bewahre ihn z. B. in einer Notiz oder Mail an dich selbst auf.');
+    ta.focus(); ta.select(); try { ta.setSelectionRange(0, v.length); } catch(e){}
+    let ok = false; try { ok = document.execCommand('copy'); } catch(e){}
+    if (ok) done(); else if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, () => toast('Bitte den markierten Code lange antippen und „Kopieren“ wählen.'));
+    else toast('Bitte den markierten Code lange antippen und „Kopieren“ wählen.'); }
+  function open(){ let m = document.getElementById('swSave'); if (m) m.remove();
+    m = document.createElement('div'); m.id = 'swSave'; m.className = 'sw-save';
+    let st = null; try { st = JSON.parse(localStorage.getItem('rw-isi-teamspiel-v2')); } catch(e){}
+    const info = st ? `Level ${st.lvl || 1}${st.player ? ' · ' + esc(st.player) : ''} · ${(st.stars || 0)} ⭐` : 'noch kein Spielstand';
+    m.innerHTML = `<div class="ss-box" role="dialog" aria-label="Spielstand sichern">
+      <div class="sm-head"><b>💾 Spielstand</b><button type="button" class="sm-x" data-s="x" aria-label="Schließen">✕</button></div>
+      <p class="ss-p"><b>Sichern:</b> Kopiere diesen Code und heb ihn gut auf (Notiz, Mail an dich selbst). Damit holst du deinen Spielstand nach einer Neuinstallation oder auf einem anderen Gerät zurück.<br><small>Aktuell: ${info}</small></p>
+      <textarea class="ss-code" id="swSaveOut" readonly rows="3">${exportCode()}</textarea>
+      <div class="ss-row"><button type="button" class="btn primary" data-s="copy">📋 Code kopieren</button></div>
+      <p class="ss-p"><b>Wiederherstellen:</b> Gespeicherten Code hier einfügen.</p>
+      <textarea class="ss-code" id="swSaveIn" rows="3" placeholder="ISI1:…"></textarea>
+      <div class="ss-row"><button type="button" class="btn" data-s="load">📂 Spielstand laden</button></div>
+      <p class="ss-msg" id="swSaveMsg" aria-live="polite"></p></div>`;
+    document.body.appendChild(m);
+    let pend = null;
+    m.addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b){ if (e.target === m) m.remove(); return; } const k = b.dataset.s, msg = m.querySelector('#swSaveMsg');
+      if (k === 'x') m.remove();
+      if (k === 'copy') copy(m.querySelector('#swSaveOut'));
+      if (k === 'load'){ try { const o = parse(m.querySelector('#swSaveIn').value); const s = o.d['rw-isi-teamspiel-v2'] ? JSON.parse(o.d['rw-isi-teamspiel-v2']) : null;
+          pend = o; msg.innerHTML = `Gefunden: ${s ? `Level ${s.lvl || 1}${s.player ? ' · ' + esc(s.player) : ''} · ${s.stars || 0} ⭐` : 'Einstellungen'} (gesichert ${new Date(o.t).toLocaleDateString('de-DE')}).<br>Dein aktueller Spielstand wird dabei <b>ersetzt</b>. <button type="button" class="btn primary" data-s="ok">Ja, laden</button>`; }
+        catch(err){ msg.textContent = '⚠️ Das ist kein gültiger Spielstand-Code. Bitte den kompletten Code einfügen (er beginnt mit „ISI1:“).'; } }
+      if (k === 'ok' && pend){ apply(pend); msg.textContent = '✅ Spielstand geladen. Das Spiel startet neu …'; setTimeout(() => location.reload(), 700); } }); }
+  return { open, exportCode, parse };
+})();
 /* ---- Menü: Sound-Regler (+ in der App: Bestenliste, Name, Rechtliches) ---- */
 { const sw = $('#sw'), mb = document.createElement('button'); mb.type = 'button'; mb.className = 'btn sw-mbtn'; mb.id = 'swMenuBtn';
   mb.title = APP ? 'Menü' : 'Sound-Einstellungen'; mb.setAttribute('aria-label', mb.title); mb.textContent = APP ? '☰' : '🔊';
   if (APP) $('.sw-hud').appendChild(mb); else $('.sw-bar').insertBefore(mb, $('#swIsi'));
   const m = document.createElement('div'); m.className = 'sw-menu'; m.id = 'swMenu'; m.hidden = true;
-  m.innerHTML = `<div class="sm-head"><b>${APP ? 'Menü' : 'Sound'}</b><button type="button" class="sm-x" data-m="x" aria-label="Schließen">✕</button></div>
+  m.innerHTML = `<div class="sm-head"><b>${APP ? 'Menü' : 'Sound & Spielstand'}</b><button type="button" class="sm-x" data-m="x" aria-label="Schließen">✕</button></div>
    <div class="sm-row"><label class="sm-tg"><input type="checkbox" data-snd="mOn"><i></i>🎵 Musik</label><input type="range" min="0" max="100" step="5" data-snd="mV" aria-label="Lautstärke Musik"></div>
    <div class="sm-row"><label class="sm-tg"><input type="checkbox" data-snd="sOn"><i></i>🔔 Effekte</label><input type="range" min="0" max="100" step="5" data-snd="sV" aria-label="Lautstärke Effekte"></div>
+   <div class="sm-links"><button type="button" class="btn" data-m="save">💾 Spielstand sichern / laden</button></div>
    ${APP ? `<div class="sm-links"><button type="button" class="btn" data-m="board">🏆 Bestenliste</button><button type="button" class="btn" data-m="name">👤 Name ändern</button></div>
    <p class="sm-legal"><a href="datenschutz.html">Datenschutz</a> · <a href="https://wagnerroman.de/#impressum">Impressum</a></p>` : ''}`;
   sw.appendChild(m);
@@ -4383,7 +4442,10 @@ cv.addEventListener('pointerdown', e=>{
   document.addEventListener('pointerdown', e => { if (!m.hidden && !m.contains(e.target) && !mb.contains(e.target)) close(); });
   m.addEventListener('click', e => { const a = e.target.closest('[data-m]'); if (!a) return; const k = a.dataset.m; close();
     if (k === 'board') document.body.classList.add('sb-open');
-    if (k === 'name') openRename(); });
+    if (k === 'name') openRename();
+    if (k === 'save') SAVEIO.open(); });
+  // Admin-Zugang in der App: 5× schnell auf die Überschrift „Menü“ tippen (wie 5× auf 🚦 auf der Website)
+  if (APP){ let ac = 0, at = 0; m.querySelector('.sm-head b').addEventListener('click', () => { clearTimeout(at); at = setTimeout(() => { ac = 0; }, 2500); if (++ac >= 5){ ac = 0; close(); admLogin(); } }); }
   if (APP){ const SH = {'Schicht':'Zeit','Pünktlich':'Pünktl.','Team frei':'Team'}; document.querySelectorAll('.sw-stat span').forEach(e => { const t = e.textContent.trim(); if (SH[t]) e.textContent = SH[t]; });
     const bx = document.createElement('button'); bx.type = 'button'; bx.className = 'sb-x'; bx.textContent = '✕ Schließen'; document.body.appendChild(bx);
     bx.addEventListener('click', () => document.body.classList.remove('sb-open'));
