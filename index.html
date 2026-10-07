@@ -461,6 +461,34 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%)}
 .meteor{position:fixed;z-index:430;font-size:34px;pointer-events:none}
 .crater{position:fixed;z-index:429;border-radius:50%;border:3px solid var(--a);pointer-events:none}
+
+/* Leitsatz */
+.motto{padding:64px 0 0}
+.motto-k{font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--p);margin-bottom:14px}
+.motto-q{margin:0;font-family:var(--disp);font-weight:600;font-size:clamp(22px,3.4vw,38px);line-height:1.25;letter-spacing:-.01em;max-width:960px;border-left:4px solid var(--p);padding:4px 0 4px 22px}
+.motto-q span{background:linear-gradient(120deg,var(--p),var(--p2));-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Token-Gag */
+.tokenline{display:inline-flex;align-items:center;gap:10px;margin:12px 0 4px;font:13px/1.4 var(--mono);color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:6px 14px;cursor:help}
+.tk-bar{display:inline-block;width:70px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.tk-bar i{display:block;height:100%;width:93%;background:linear-gradient(90deg,var(--ok),var(--a),var(--bad));animation:tkdrain 6s ease-in-out infinite alternate}
+@keyframes tkdrain{from{width:96%}to{width:12%}}
+/* Meteor-Hinweis */
+.meteor-link{position:relative;font-weight:700;color:var(--a);border-bottom:2px dotted var(--a);animation:mglow 1.8s ease-in-out infinite;padding:0 2px;border-radius:4px}
+@keyframes mglow{0%,100%{text-shadow:0 0 0 transparent;background:transparent}50%{text-shadow:0 0 12px rgba(251,146,60,.95);background:rgba(251,146,60,.14)}}
+.meteor-link::after{content:"Klick mich!";position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;font:700 11px/1 var(--mono);color:#fff;background:#ea580c;padding:5px 8px;border-radius:999px;box-shadow:0 6px 16px -6px rgba(234,88,12,.8);animation:mbob 1.8s ease-in-out infinite;pointer-events:none}
+.meteor-link.done::after{content:"Nochmal? ☄️"}
+@keyframes mbob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+/* Meteor-Einschlag (Vollbild) */
+.mt-fx{position:fixed;inset:0;z-index:440;pointer-events:none;overflow:hidden}
+.mt-rock{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff7ed 0,#fdba74 18%,#ea580c 45%,#7c2d12 75%);box-shadow:0 0 60px 30px rgba(251,146,60,.8),0 0 140px 80px rgba(239,68,68,.45)}
+.mt-trail{position:absolute;height:60px;transform-origin:0 50%;border-radius:999px;background:linear-gradient(90deg,rgba(251,146,60,0),rgba(253,186,116,.9) 70%,#fff7ed);filter:blur(6px)}
+.mt-flash{position:absolute;inset:0;background:radial-gradient(circle at var(--x) var(--y),#fff 0,#fef3c7 12%,#fb923c 30%,rgba(239,68,68,.6) 55%,rgba(0,0,0,0) 80%)}
+.mt-ring{position:absolute;border-radius:50%;border:10px solid rgba(253,186,116,.85);box-shadow:0 0 40px rgba(251,146,60,.9)}
+.mt-spark{position:absolute;width:10px;height:10px;border-radius:50%;background:#fde68a;box-shadow:0 0 12px #fb923c}
+.mt-smoke{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(251,146,60,.55),rgba(234,88,12,.25) 45%,rgba(0,0,0,0) 70%)}
+.mt-text{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--disp);font-weight:800;font-size:clamp(34px,8vw,96px);color:#fff;text-shadow:0 0 30px #ea580c,0 6px 0 #7c2d12;white-space:nowrap}
+body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
+@keyframes bigshake{10%,90%{transform:translate(-4px,2px)}20%,80%{transform:translate(8px,-6px)}30%,50%,70%{transform:translate(-14px,10px) rotate(-.5deg)}40%,60%{transform:translate(14px,-10px) rotate(.5deg)}}
 </style>
 </head>
 <body>
@@ -513,6 +541,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
   <div class="scrollhint"><div class="mouse"></div>scrollen</div>
 </header>
 
+
 <div class="wrap">
   <div class="stats">
     <div class="stat reveal"><div class="v"><span data-count="0" id="itYears">0</span><small> J.</small></div><div class="l">Erfahrung in der IT</div></div>
@@ -522,13 +551,20 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
   </div>
 </div>
 
+<section class="motto" aria-label="Leitsatz">
+  <div class="wrap reveal">
+    <div class="motto-k">Mein Leitsatz</div>
+    <blockquote class="motto-q">„Technik baut man in Tagen. KI-Agenten in Stunden. Was Zeit braucht, sind <span>Freigaben</span>, <span>Governance</span> – und der Mut, alte Denkmuster loszulassen.“</blockquote>
+  </div>
+</section>
+
 <section id="about">
   <div class="wrap">
     <div class="sec-head reveal"><div class="num">01 / Über mich</div><h2>IT mit Bankerblick</h2></div>
     <div class="about">
       <div class="reveal">
         <p>Seit August 2022 bin ich <b>Fachreferent</b> bei der Deutschen Bahn. Mein Fokus liegt auf <b>SAP-Stammdaten und Konfiguration</b>, <b>BW</b> und <b>Monitoring</b>: Ich sorge dafür, dass Jobs, IDocs und Schnittstellen zuverlässig laufen, auch dann, wenn keiner hinschaut.</p>
-        <p>Im Projekt <b>Focused Insights</b> habe ich die Überwachung von BW- und S&amp;K-Jobs mit aufgebaut. Ich habe Testfälle für die <b>Testautomatisierung</b> nach Releases entwickelt und bearbeite Incidents im 1st Level. Für S&amp;K, allgemeine ISI-Themen und Focused Insights bin ich auch 2nd Level. Dazu kommen Berechtigungen und Customizing.</p>
+        <p>Im Projekt <b>Focused Insights</b> habe ich die Überwachung von BW- und S&amp;K-Jobs mit aufgebaut. Ich habe Testfälle für die <b>Testautomatisierung</b> nach Releases entwickelt und bearbeite Incidents im 1st Level. Für S&amp;K, allgemeine ISI-Themen und Focused Insights bin ich auch 2nd Level. Dazu kommt das Customizing.</p>
         <p>Angefangen habe ich als <b>Bankkaufmann</b>. Daher kommt mein Blick für Kunden, Zahlen und saubere Prozesse. Heute verbinde ich das mit Technik und zuletzt besonders mit <b>generativer KI</b> und KI-Agenten.</p>
       </div>
       <div class="reveal">
@@ -572,7 +608,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
         <h3>Fachreferent S&amp;K/BW <span class="tag">aktuell</span></h3>
         <div class="org">Deutsche Bahn · Vollzeit · Remote</div>
         <ul><li>Qualitätssicherung und Monitoring für S&amp;K, Mobile, MM, BW und Schnittstellen (Jobs, IDocs)</li><li>Projekt Focused Insights: Überwachung für BW- und S&amp;K-Jobs eingeführt</li><li>Projekt Testautomatisierung: Testfälle nach Releases konstruiert</li></ul>
-        <details><summary>Mehr Aufgaben</summary><ul><li>Incidents im 1st Level, für S&amp;K, allgemeine ISI-Themen und Focused Insights auch im 2nd Level</li><li>Berechtigungsverwaltung SAP/DEBI</li><li>Customizing SAP S&amp;K</li></ul></details>
+        <details><summary>Mehr Aufgaben</summary><ul><li>Incidents im 1st Level, für S&amp;K, allgemeine ISI-Themen und Focused Insights auch im 2nd Level</li><li>Customizing SAP S&amp;K</li></ul></details>
       </div></div>
       <div class="phase">Abschnitt: SAP &amp; IT</div>
       <div class="stop reveal"><div class="card"><div class="when">02/2022 – 06/2022</div><h3>AMS-Berater</h3><div class="org">abat</div><ul><li>Application Management Services im SAP-Umfeld</li></ul></div></div>
@@ -665,6 +701,7 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 
 <footer>
   <div class="wrap">© <span id="yr"></span> Roman Wagner · Gebaut mit HTML, CSS &amp; KI-Unterstützung · Gehostet auf GitHub Pages<br>
+  <div class="tokenline" title="Rate limit: noch nicht erreicht">🪙 Mein einziges Limit sind meine Token.<span class="tk-bar"><i></i></span></div>
   <button class="egg" id="eggTip"><span id="eggTxt">Tipp: ↑ ↑ ↓ ↓ ← → ← → B A</span></button>
   <div class="transparency" id="ki-hinweis"><b>KI-Transparenzhinweis:</b> Das Porträtfoto auf dieser Seite ist KI-generiert bzw. mit KI bearbeitet. Texte und Programmcode wurden mit Unterstützung von KI (Claude) erstellt und von mir inhaltlich geprüft. Terminal und Monitoring-Demo sind keine KI-Chatbots und zeigen nur fest hinterlegte bzw. simulierte Inhalte.</div>
   <p class="legal-links"><a href="#impressum">Impressum</a> · <a href="#datenschutz">Datenschutz</a></p>
@@ -865,13 +902,34 @@ function filterCerts(){ const q=$('#certSearch').value.trim().toLowerCase(); let
 $('#certSearch').addEventListener('input',filterCerts); filterCerts();
 
 /* ---------- Meteor über Nördlingen ---------- */
-async function meteor(){ const tgt=$('#noerd').getBoundingClientRect(), tx=tgt.left+tgt.width/2, ty=tgt.top+tgt.height/2;
-  toast('☄️ Nördlingen liegt im Ries, einem Meteoritenkrater von vor rund 15 Millionen Jahren.',4500);
-  const m=document.createElement('div'); m.className='meteor'; m.textContent='☄️'; document.body.appendChild(m);
-  await m.animate([{left:(innerWidth+60)+'px',top:'-80px',transform:'rotate(-20deg) scale(.6)'},{left:(tx-17)+'px',top:(ty-17)+'px',transform:'rotate(-20deg) scale(1.4)'}],{duration:900,easing:'cubic-bezier(.5,0,1,1)',fill:'forwards'}).finished; m.remove();
-  if(!reduce){ document.body.classList.add('shake'); setTimeout(()=>document.body.classList.remove('shake'),600); }
-  for(let i=0;i<3;i++){ const c=document.createElement('div'); c.className='crater'; c.style.left=tx+'px'; c.style.top=ty+'px'; document.body.appendChild(c);
-    c.animate([{width:'0px',height:'0px',marginLeft:'0',marginTop:'0',opacity:1},{width:'260px',height:'260px',marginLeft:'-130px',marginTop:'-130px',opacity:0}],{duration:900,delay:i*140,easing:'ease-out'}).onfinish=()=>c.remove(); } }
+async function meteor(){ const el=$('#noerd'), tgt=el.getBoundingClientRect(), tx=tgt.left+tgt.width/2, ty=tgt.top+tgt.height/2;
+  if (window.__mtBusy) return; window.__mtBusy=1; el.classList.add('done');
+  const fx=document.createElement('div'); fx.className='mt-fx'; document.body.appendChild(fx);
+  const W=innerWidth, H=innerHeight, sx=Math.min(W-40, tx+W*.55), sy=-60;
+  if (reduce){ toast('☄️ Einschlag! Nördlingen liegt im Ries, einem Meteoritenkrater von vor rund 15 Millionen Jahren.',5000); fx.remove(); window.__mtBusy=0; return; }
+  // Anflug
+  const ang=Math.atan2(ty-sy, tx-sx), dist=Math.hypot(tx-sx, ty-sy);
+  const trail=document.createElement('div'); trail.className='mt-trail'; fx.appendChild(trail);
+  const rock=document.createElement('div'); rock.className='mt-rock'; fx.appendChild(rock);
+  const dur=1300;
+  trail.animate([{left:sx+'px',top:(sy-30)+'px',width:'0px',transform:`rotate(${ang+Math.PI}rad)`},{left:tx+'px',top:(ty-30)+'px',width:Math.min(dist,700)+'px',transform:`rotate(${ang+Math.PI}rad)`}],{duration:dur,easing:'cubic-bezier(.45,.05,.85,.6)',fill:'forwards'});
+  await rock.animate([{left:sx+'px',top:sy+'px',transform:'scale(.35) rotate(0deg)'},{left:tx+'px',top:ty+'px',transform:'scale(1.15) rotate(540deg)'}],{duration:dur,easing:'cubic-bezier(.45,.05,.85,.6)',fill:'forwards'}).finished;
+  rock.remove(); trail.remove();
+  // Explosion
+  document.body.classList.add('bigshake'); setTimeout(()=>document.body.classList.remove('bigshake'),950);
+  const fl=document.createElement('div'); fl.className='mt-flash'; fl.style.setProperty('--x',tx+'px'); fl.style.setProperty('--y',ty+'px'); fx.appendChild(fl);
+  fl.animate([{opacity:0,transform:'scale(.2)'},{opacity:1,transform:'scale(1)',offset:.12},{opacity:.85,transform:'scale(1.6)',offset:.4},{opacity:0,transform:'scale(2.4)'}],{duration:1600,easing:'ease-out',fill:'forwards'});
+  const R=Math.hypot(W,H)*1.1;
+  for(let i=0;i<4;i++){ const r=document.createElement('div'); r.className='mt-ring'; r.style.left=tx+'px'; r.style.top=ty+'px'; fx.appendChild(r);
+    r.animate([{width:'0px',height:'0px',marginLeft:'0px',marginTop:'0px',opacity:1,borderWidth:'18px'},{width:R*2+'px',height:R*2+'px',marginLeft:-R+'px',marginTop:-R+'px',opacity:0,borderWidth:'2px'}],{duration:1300+i*250,delay:i*160,easing:'cubic-bezier(.1,.7,.3,1)',fill:'forwards'}); }
+  for(let i=0;i<70;i++){ const p=document.createElement('div'); p.className='mt-spark'; p.style.left=tx+'px'; p.style.top=ty+'px'; const sz=4+Math.random()*12; p.style.width=p.style.height=sz+'px'; fx.appendChild(p);
+    const a=Math.random()*Math.PI*2, d=200+Math.random()*Math.max(W,H)*.7; p.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+120}px) scale(.2)`,opacity:0}],{duration:900+Math.random()*900,easing:'cubic-bezier(.1,.8,.3,1)',fill:'forwards'}); }
+  for(let i=0;i<14;i++){ const m=document.createElement('div'); m.className='mt-smoke'; const sz=160+Math.random()*260; m.style.width=m.style.height=sz+'px'; m.style.left=(tx-sz/2)+'px'; m.style.top=(ty-sz/2)+'px'; fx.appendChild(m);
+    const a=Math.random()*Math.PI*2, d=80+Math.random()*260; m.animate([{transform:'scale(.2)',opacity:0},{opacity:.9,offset:.2},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d-120}px) scale(1.6)`,opacity:0}],{duration:2200+Math.random()*900,delay:200,easing:'ease-out',fill:'forwards'}); }
+  const t=document.createElement('div'); t.className='mt-text'; t.textContent='💥 RIES!'; fx.appendChild(t);
+  t.animate([{transform:'translate(-50%,-50%) scale(.2)',opacity:0},{transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.25},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.7},{transform:'translate(-50%,-50%) scale(1.1)',opacity:0}],{duration:2000,delay:150,fill:'forwards'});
+  toast('☄️ Einschlag! Nördlingen liegt im Ries, einem Meteoritenkrater von vor rund 15 Millionen Jahren.',5000);
+  setTimeout(()=>{ fx.remove(); window.__mtBusy=0; }, 3400); }
 $('#noerd').onclick=meteor; $('#noerd').onkeydown=e=>{ if(e.key==='Enter') meteor(); };
 
 /* ---------- ZUG-CRASH ---------- */
@@ -961,13 +1019,14 @@ const cmds={
  kontakt:()=>say('LinkedIn: https://www.linkedin.com/in/roman-w-1940b232'),
  hinweis:()=>say('KI-Transparenz: Porträt KI-generiert, Texte/Code KI-unterstützt und geprüft. Terminal & Demo sind keine KI-Chatbots.'),
  theme:()=>{ $('#themeBtn').click(); say('Farbmodus gewechselt.'); }, clear:()=>{ out.textContent=''; }, exit:()=>toggleTerm(false),
- sudo:()=>say('Netter Versuch 😄 Berechtigungen verwalte ich hier selbst.'), ls:()=>say('ueber-mich.txt  werdegang/  skills.json  weiterbildung/  monitoring.log')
+ sudo:()=>say('Netter Versuch 😄 Root-Rechte gibt es hier nur gegen Kaffee.'), ls:()=>say('ueber-mich.txt  werdegang/  skills.json  weiterbildung/  monitoring.log')
 };
 const hist=[]; let hi=0;
 inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const v=inp.value.trim(); inp.value=''; if(!v) return; hist.push(v); hi=hist.length; say('$ '+v); const c=v.toLowerCase().split(' ')[0]; (cmds[c]||(()=>say(`Befehl "${c}" nicht gefunden. Tippe "help".`)))(); }
   else if(e.key==='ArrowUp'){ if(hi>0){hi--;inp.value=hist[hi];} e.preventDefault(); } else if(e.key==='ArrowDown'){ if(hi<hist.length-1){hi++;inp.value=hist[hi];} else {hi=hist.length;inp.value='';} } else if(e.key==='Escape') toggleTerm(false); });
 })();
 </script>
+<script src="isi-katalog.js"></script>
 <script>
 /* ---------- ISI Teamspiel – Spiel ---------- */
 (() => {
@@ -979,6 +1038,15 @@ cv.width = W*DPR; cv.height = H*DPR; cx.setTransform(DPR,0,0,DPR,0,0);
 const ov = $('#swOverlay'), logEl = $('#swLog');
 const toast = m => { if (typeof window.__rwToast === 'function') window.__rwToast(m); };
 const rnd = a => a[Math.floor(Math.random()*a.length)];
+const KAT = window.ISI_KAT || {};
+// Ziehen ohne Wiederholung: Jeder Eintrag kommt erst wieder, wenn alle anderen dran waren (gespeichert pro Gerät).
+const DECKS = (()=>{ try { return JSON.parse(localStorage.getItem('rw-isi-decks')) || {}; } catch(e){ return {}; } })();
+function deck(name, n){ if (!n) return 0; let d = DECKS[name]; if (!d || d.n!==n){ d = {n, used: d ? d.used.filter(i=>i<n) : []}; }
+  if (d.used.length >= n) d.used = d.used.slice(-Math.min(20, Math.floor(n/2)));
+  const used = new Set(d.used); let i, k = 0; do { i = Math.floor(Math.random()*n); } while (used.has(i) && ++k < 60);
+  if (used.has(i)){ const free = []; for (let j=0;j<n;j++) if (!used.has(j)) free.push(j); i = free[Math.floor(Math.random()*free.length)]; }
+  d.used.push(i); DECKS[name] = d; try { localStorage.setItem('rw-isi-decks', JSON.stringify(DECKS)); } catch(e){} return i; }
+const pickD = (name, arr) => arr[deck(name, arr.length)];
 const fmt = n => Math.round(n).toLocaleString('de-DE');
 const RR = (x,y,w,h,r) => { cx.beginPath(); if (cx.roundRect) cx.roundRect(x,y,w,h,r); else cx.rect(x,y,w,h); };
 
@@ -1071,7 +1139,9 @@ const PZ = {
  skip:{ic:'💼', n:'Absagen, die Arbeit ruft', d:'Störungen warten schließlich nicht.', fx:'💼 Du bleibst am Schreibtisch. Alles läuft normal, aber die Stimmung ist etwas gedämpft.', tag:'💼 abgesagt', m:1}
 };
 const PZ_FREQ = ['einmal im Monat','zweimal im Monat','jede Woche','mehrmals pro Woche','jeden Tag'];
-const PARTIES = ['Teamfrühstück','Weißwurstfrühstück','Weihnachtsfeier','Sommerfest','Grillabend','Bowlingabend','Kegelabend','Biergarten-Abend'];
+const PARTIES = ['Teamfrühstück','Weißwurstfrühstück','Weihnachtsfeier','Sommerfest','Grillabend','Bowlingabend','Kegelabend','Biergarten-Abend'].concat(KAT.PARTIES || []);
+function pickParty(r){ const p = pickD('party', PARTIES); r.host = nm(rnd(STAFF.filter(x=>x.id!=='roman')).id);
+  if (Array.isArray(p)){ r.party = p[0]; r.invite = p[1]; } else { r.party = p; r.invite = ''; } }
 const BADGES = [
  ['prio','🎯','Prioritäten richtig gesetzt','Bei der Präsenzpflicht auf Homeoffice und Ergebnisse gesetzt.'],
  ['teamplayer','🤝','Teamplayer','Bei der Präsenzpflicht Homeoffice plus Team-Events gewählt.'],
@@ -1304,8 +1374,8 @@ function brief(){ const l = S.lvl;
   let wx = l>=6 ? pickW(wxw) : 'clear'; if (ev==='sturmtief') wx = 'storm';
   let wx2 = null; if (l>=9 && Math.random()<.35){ wx2 = pickW(wxw.filter(w=>w[0]!==wx)); }
   const r = { wx, wx2, ev, mis: l>=2 ? mkMission() : null };
-  if (ev==='einladung'){ r.party = rnd(PARTIES); r.host = nm(rnd(STAFF.filter(p=>p.id!=='roman')).id); }
-  if (ev==='praesenz'){ r.pzStage = Math.min(4, S.pz.stage); r.pzAgain = S.pz.last>=4; }
+  if (ev==='einladung') pickParty(r);
+  if (ev==='praesenz'){ r.pzStage = Math.min(4, S.pz.stage); r.pzAgain = S.pz.last>=4; if (KAT.PZ_WHY) r.pzWhy = pickD('pzwhy', KAT.PZ_WHY); }
   return r; }
 
 function mkCrews(){ const list = [];
@@ -1318,7 +1388,7 @@ function mkCrews(){ const list = [];
     c.x = N[DEPOT].x + (k-(inRow-1)/2)*26*K; c.y = N[DEPOT].y + (PORT ? 80 + r*36 : 100 + r*44)*K; });
   return list; }
 function newShift(){
-  if (BR || true){ const b0 = BR; if (b0) S.lastBrief = JSON.parse(JSON.stringify({wx:b0.wx, wx2:b0.wx2, ev:b0.ev, mis:b0.mis, party:b0.party, host:b0.host, pzStage:b0.pzStage, choice:b0.choice, sapq:b0.sapq})); }
+  if (BR || true){ const b0 = BR; if (b0) S.lastBrief = JSON.parse(JSON.stringify({wx:b0.wx, wx2:b0.wx2, ev:b0.ev, mis:b0.mis, party:b0.party, invite:b0.invite, host:b0.host, pzWhy:b0.pzWhy, pzStage:b0.pzStage, choice:b0.choice, sapq:b0.sapq})); }
   net(); const map = S.sk.map; applyLayout(isGeo(map) ? 'geo' : 'base'); const b = BR || brief(); BR = null; const d = diff(S.lvl);
   const fest = (S.perks.fest||0) > 0; if (fest) S.perks.fest--;
   const sapq = S.lvl>=8 && (b.sapq || !S.seen.sapq || S.st.shifts >= (S.sapNext||0));
@@ -3192,7 +3262,7 @@ const PRIO_LO = ['Graffiti am Technikhaus entfernen','Leuchtmittel im Lagerraum 
 const SIG = [['🟢','Grün'],['🟡','Gelb'],['🔴','Rot'],['⚪','Weiß']];
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; };
 const RECENT = [];
-function pickQ(){ for (let k=0;k<30;k++){ const i = Math.floor(Math.random()*QB.length); if (!RECENT.includes(i)){ RECENT.push(i); if (RECENT.length>25) RECENT.shift(); return QB[i]; } } return rnd(QB); }
+function pickQ(){ return pickD('quiz', QB); }
 /* ---- SU01-Rätsel: Warum ist der Benutzer gesperrt? ---- */
 const SU_FIRST = ['Jonas','Lena','Markus','Sabrina','Tobias','Julia','Stefan','Anna','Florian','Katrin','Andreas','Melanie'];
 const SU_LAST = ['Huber','Brunner','Stadler','Wimmer','Fischer','Lechner','Hartl','Zeller','Pichler','Ebner','Reiter','Kraus'];
@@ -3241,13 +3311,13 @@ function mkPuzzle(){
   const P = { type, who:rnd(TK_NAMES), chI, ch, time:22*tm + (PK('wiki') ? 5 : 0) + (S.staff.sabine.h && type!=='memory' ? 4 : 0), pos:0 };
   const setD = d => { P.dom = d; P.dept = rnd(DEP[d]); };
   if (type==='quiz'){ const [d,m,q,o,e] = pickQ(), op = shuffle(o); setD(d); Object.assign(P,{msg:m, q, opts:op, ans:op.indexOf(o[0]), exp:e}); }
-  if (type==='triage'){ const [m,a,e] = rnd(TRIAGE); setD('triage'); Object.assign(P,{msg:m, q:'Wer ist zuständig?', opts:['1st Level','2nd Level','AM (Application Management)'], ans:a, exp:e}); }
-  if (type==='log'){ const [d,m,noise,root,fol,e] = rnd(LOGS); setD(d); const ri = 1 + Math.floor(Math.random()*2), lines = noise.slice();
+  if (type==='triage'){ const [m,a,e] = pickD('triage', TRIAGE); setD('triage'); Object.assign(P,{msg:m, q:'Wer ist zuständig?', opts:['1st Level','2nd Level','AM (Application Management)'], ans:a, exp:e}); }
+  if (type==='log'){ const [d,m,noise,root,fol,e] = pickD('logs', LOGS); setD(d); const ri = 1 + Math.floor(Math.random()*2), lines = noise.slice();
     lines.splice(ri,0,root); lines.splice(ri+1,0,fol); lines.push(rnd(['INFO  Wiederholung für 02:30 geplant','WARN  Benachrichtigung an Bereitschaft gesendet','INFO  Job beendet mit Fehlern']));
     let mi = 10; const o = lines.map(t=>{ mi += 1+Math.floor(Math.random()*3); return `02:${String(mi).padStart(2,'0')} ${t}`; });
     Object.assign(P,{log:1, msg:`${m} Hier ist das Log:`, q:'Tippe auf die Ursache (den ersten Fehler).', opts:o, ans:ri, exp:e}); }
-  if (type==='order'){ const [d,m,steps] = rnd(ORDERS); setD(d); Object.assign(P,{msg:m, q:'Tippe die Schritte in der richtigen Reihenfolge an.', steps, opts:shuffle(steps), time:P.time+6, exp:steps.join(' → ')}); }
-  if (type==='prio'){ setD('dispo'); const hi = rnd(PRIO_HI), op = shuffle([hi, ...shuffle(PRIO_LO).slice(0,3)]);
+  if (type==='order'){ const [d,m,steps] = pickD('orders', ORDERS); setD(d); Object.assign(P,{msg:m, q:'Tippe die Schritte in der richtigen Reihenfolge an.', steps, opts:shuffle(steps), time:P.time+6, exp:steps.join(' → ')}); }
+  if (type==='prio'){ setD('dispo'); const hi = pickD('prio', PRIO_HI), op = shuffle([hi, ...shuffle(PRIO_LO).slice(0,3)]);
     Object.assign(P,{msg:'Ich habe nur noch einen Trupp frei. Welchen Auftrag ziehen wir vor?', q:'Welchen IH-Auftrag disponierst du zuerst?', opts:op, ans:op.indexOf(hi), exp:`„${hi}“ behindert den Zugbetrieb und hat deshalb Vorrang.`}); }
   if (type==='user'){ setD('user'); mkSu(P); }
   if (type==='memory'){ setD('pm'); const len = Math.min(7, 4+Math.floor(l/5)); Object.assign(P,{dept:'Stellwerk Aalen', msg:'Das Stellwerk verlangt den Freigabecode für die Sperrpause. Merk dir die Signalfolge!', q:'Gib die Signalfolge ein.', seq:Array.from({length:len},()=>Math.floor(Math.random()*4)), time:12+len, exp:''}); }
@@ -3707,6 +3777,9 @@ const SCHUH = [
  ["Im ISI-Support wurde ein Ticket an Horst mit dem Kommentar „Bitte übernehmen, mir fehlt die Rolle“ weitergegeben. Horst glaubt, man schiebe ihm ungeliebte Arbeit zu.",[["Das Ticket bearbeiten, weil er die nötige Berechtigung hat","good",4,"Nicht jeder hat alle Rollen. Horst kann helfen, weil er sie hat."],["Das Ticket zurückschieben: „Mir fehlt die Lust“","bad",0,"Der Kunde wartet. Und Lust ist keine Rolle."],["Die Rolle für den Kollegen selbst beantragen","ok",0,"Gut gemeint, aber das Ticket wartet trotzdem."],["📋 Sich gleich mit dem Betriebsrat kurzschließen, statt erst mit den Kollegen zu reden","br",0,"Der Betriebsrat findet, Rollenmangel sei ein fairer Grund für eine Übergabe. Er rät Horst, das Ticket zu erledigen und die Rollenvergabe im Team anzusprechen."]],"schuh"],
  ["Die Teamleitung bucht Horst ein Hotel in Frankfurt neben der Autobahn. Horst glaubt, man spare an ihm.",[["Nachfragen, ob es Alternativen gibt","good",3,"Das Hotel liegt nahe am Schulungsort. Die Reisestelle bucht nach Vorgaben, nicht nach Sympathie."],["Die Reise absagen","bad",0,"Dann verpasst er eine spannende Schulung."],["Ohropax kaufen und das Beste daraus machen","ok",1,"Pragmatisch. Und er schläft sogar gut."],["📋 Sich gleich mit dem Betriebsrat kurzschließen, statt erst mit den Kollegen zu reden","br",0,"Der Betriebsrat schaut in die Reiserichtlinie und stellt fest: Das Hotel entspricht den Vorgaben. Er schenkt Horst seine Ohrstöpsel."]],"schuh"]
 ];
+if (KAT.TMS) TMS.push(...KAT.TMS);
+if (KAT.SCHUH) SCHUH.push(...KAT.SCHUH);
+const TM_N = TMS.length;
 TMS.push(...SCHUH);
 const TM_SCHUH0 = TMS.length - SCHUH.length;
 let TMO = null;
@@ -3715,11 +3788,11 @@ function tmStep(dt){
   const t = G.tm, max = S.lvl>=8 ? 3 : 2; if (S.lvl<2) return;
   if (t.offer){ if (G.t > t.offer.until){ log('🤝 Team-Moment verpasst.','y'); t.offer = null; t.next = 30 + Math.random()*20; } return; }
   if (t.n >= max) return; t.next -= dt;
-  if (t.next <= 0){ const i = Math.random() < .4 ? TM_SCHUH0 + Math.floor(Math.random()*SCHUH.length) : Math.floor(Math.random()*TM_SCHUH0); t.offer = {i, until:G.t+16}; t.n++; toast(TMS[i][2]==='schuh' ? '👞 Horst ist mal wieder gekränkt: Tippe oben auf den blauen Knopf!' : '🤝 Team-Moment: Tippe oben auf den blauen Knopf!'); }
+  if (t.next <= 0){ const i = Math.random() < .5 ? TM_SCHUH0 + deck('horst', SCHUH.length) : deck('team', TM_N); t.offer = {i, until:G.t+16}; t.n++; const kd = TMS[i][2]; toast(kd==='schuh' ? '👞 Horst ist mal wieder gekränkt: Tippe oben auf den blauen Knopf!' : kd==='tech' ? '🖥️ Horst kämpft mit der Technik: Tippe oben auf den blauen Knopf!' : '🤝 Team-Moment: Tippe oben auf den blauen Knopf!'); }
 }
 function openTm(){ if (!G || !G.tm.offer || TK || TMO) return; const [s, opts, kind] = TMS[G.tm.offer.i]; G.tm.offer = null; G.tm.next = 35 + Math.random()*25;
-  const sh = kind==='schuh'; TMO = {s, sh, opts:shuffle(opts)}; paused = true; $('#swPlay').textContent = sh ? '👞 Gespräch …' : '🤝 Team …';
-  panel(`<h3>${sh ? '👞 Horst hat’s in den falschen Hals bekommen' : '🤝 Team-Moment'}</h3><blockquote class="sw-quote">${esc(tmText(s))}</blockquote><p><b>${sh ? 'Was sollte Horst jetzt machen?' : 'Wie reagierst du als Führungskraft?'}</b></p>
+  const sh = kind==='schuh' || kind==='tech'; TMO = {s, sh, opts:shuffle(opts)}; paused = true; $('#swPlay').textContent = sh ? '👞 Gespräch …' : '🤝 Team …';
+  panel(`<h3>${kind==='tech' ? '🖥️ Horst und die Technik' : sh ? '👞 Horst hat’s in den falschen Hals bekommen' : '🤝 Team-Moment'}</h3><blockquote class="sw-quote">${esc(tmText(s))}</blockquote><p><b>${sh ? 'Was sollte Horst jetzt machen?' : 'Wie reagierst du als Führungskraft?'}</b></p>
   <div class="sw-shop">${TMO.opts.map((o,k)=>`<button class="sw-item sw-choice" data-tmc="${k}"><span><b>${esc(tmText(o[0]))}</b></span></button>`).join('')}</div>`); }
 function resolveTm(k){ const o = TMO.opts[k], sh = TMO.sh; TMO = null; const [txt, q, soc, why] = o;
   if (q==='good'){ G.mor = {m:1.25, until:G.t+25}; S.st.helped++; if (sh) S.st.klaer = (S.st.klaer||0) + 1; }
@@ -3738,7 +3811,7 @@ function resolveTm(k){ const o = TMO.opts[k], sh = TMO.sh; TMO = null; const [tx
 /* ---- SAP-Support-Frage ---- */
 function askSap(){ paused = true; $('#swPlay').textContent = '📨 Entscheidung …';
   panel(`<h3>📨 Mail aus der Konzernzentrale</h3>
-  <blockquote class="sw-quote">„Um Kosten zu sparen, prüfen wir, ob <b>SAP</b> künftig den kompletten ISI-Support übernimmt. Ihr Team wäre dann ‚entlastet‘. Bitte entscheiden Sie bis heute Mittag.“</blockquote>
+  <blockquote class="sw-quote">„${KAT.SAP_MAILS && Math.random()<.92 ? pickD('sapmail', KAT.SAP_MAILS) : 'Um Kosten zu sparen, prüfen wir, ob <b>SAP</b> künftig den kompletten ISI-Support übernimmt. Ihr Team wäre dann ‚entlastet‘. Bitte entscheiden Sie bis heute Mittag.'}“</blockquote>
   <p>Soll SAP den Support übernehmen?</p>
   <div class="sw-shop"><button class="sw-item sw-choice" data-sap="yes"><span class="ic">🏢</span><span><b>Ja, SAP soll den Support übernehmen</b><small>Klingt nach weniger Arbeit.</small></span></button>
   <button class="sw-item sw-choice" data-sap="no"><span class="ic">💪</span><span><b>Nein, der Support bleibt in unserem Team</b><small>Wir kennen ISI und das Netz am besten.</small></span></button></div>`); }
@@ -3882,7 +3955,7 @@ function admAct(k){
   if (k==='nof') ADMNOF = !ADMNOF;
   if (k==='spd') ADMSPD = ADMSPD===1 ? 2 : ADMSPD===2 ? 4 : 1;
   if (k==='npz') admNext(b=>{ b.ev = 'praesenz'; b.pzStage = Math.min(4, S.pz.stage); });
-  if (k==='nein') admNext(b=>{ b.ev = 'einladung'; b.party = rnd(PARTIES); b.host = nm(rnd(STAFF.filter(p=>p.id!=='roman')).id); });
+  if (k==='nein') admNext(b=>{ b.ev = 'einladung'; pickParty(b); });
   if (k==='nsap') admNext(b=>{ b.sapq = true; });
   if (k==='nwiesn') admNext(b=>{ b.ev = 'wiesn'; });
   if (k==='nstorm') admNext(b=>{ b.wx = 'storm'; });
@@ -3921,9 +3994,9 @@ function showBrief(){
   if (b.ev && EV[b.ev].choices && !b.choice){
     const st = b.pzStage||0, freq = PZ_FREQ[st];
     const head = b.ev==='praesenz' ? `<h3>📢 Rundschreiben der Konzernleitung</h3><div class="sw-pzbar">${PZ_FREQ.map((f,i)=>`<span class="${i<=st?'on':''}">${f}</span>`).join('')}</div>
-    <blockquote class="sw-quote">„${st===0 ? 'Ab sofort gilt Präsenzpflicht' : st===4 && b.pzAgain ? 'Wir erinnern nochmals an die Präsenzpflicht' : 'Die Präsenzpflicht wird verschärft'}: Alle Mitarbeitenden arbeiten <b>${freq}</b> im Büro.“</blockquote>
+    <blockquote class="sw-quote">„${st===0 ? 'Ab sofort gilt Präsenzpflicht' : st===4 && b.pzAgain ? 'Wir erinnern nochmals an die Präsenzpflicht' : 'Die Präsenzpflicht wird verschärft'}: Alle Mitarbeitenden arbeiten <b>${freq}</b> im Büro${b.pzWhy ? `, weil ${esc(b.pzWhy)}` : ''}.“</blockquote>
     <p>Als Führungskraft entscheidest du, wie ernst du diese Vorgabe nimmst und wie du sie für dein Team auslegst. Deine Entscheidung gilt für diese Schicht.</p>`
-    : `<h3>🥨 Einladung: ${b.party}</h3><blockquote class="sw-quote">„Morgen früh ist ${b.party} im Depot Nördlingen. Kommst du auch, Chef?“ – ${b.host}</blockquote><p>Gehst du mit deinem Team hin?</p>`;
+    : `<h3>🥨 Einladung: ${b.party}</h3><blockquote class="sw-quote">„${b.invite ? esc(tmText(b.invite)) : `Morgen früh ist ${b.party} im Depot Nördlingen. Kommst du auch, Chef?`}“ – ${b.host}</blockquote><p>Gehst du mit deinem Team hin?</p>`;
     panel(`${head}
     <div class="sw-shop">${EV[b.ev].choices.map(k=>[k,PZ[k]]).map(([k,o])=>`<button class="sw-item sw-choice" data-pz="${k}"><span class="ic">${o.ic}</span><span><b>${k==='office' ? `Wortwörtlich umsetzen: alle ${freq} ins Büro` : o.n}</b><small>${o.d}</small></span></button>`).join('')}</div>`);
     return; }
@@ -3940,7 +4013,7 @@ function showBrief(){
 function go(){ newShift(); hidePanel(); paused = false; $('#swPlay').textContent = '⏸ Pause'; log(`Schicht gestartet · Ziel ${G.d.goal} % · ${G.trains.length} Züge`,'g');
   if (PK('kaffee')) G.crews.forEach(c=>{ c.boost = 10; });
   if (G.fest) log('🎊 Sommerfest-Laune: alle 40 % schneller!','g');
-  if (G.mode){ toast(PZ[G.mode].fx); if (G.mode==='office') log('🚗 Alle stehen im Stau auf dem Weg ins Büro …','e'); }
+  if (G.mode){ toast(PZ[G.mode].fx); if (G.mode==='office'){ log('🚗 Alle stehen im Stau auf dem Weg ins Büro …','e'); if (KAT.OFFICE_FAIL){ const f = pickD('officefail', KAT.OFFICE_FAIL); setTimeout(()=>{ if (G) log('🏢 '+f,'e'); }, 6000); setTimeout(()=>{ if (G && KAT.OFFICE_FAIL) log('🏢 '+pickD('officefail', KAT.OFFICE_FAIL),'e'); }, 30000); } } }
   else if (G.ev) toast(`${EV[G.ev].ic} ${EV[G.ev].n}: ${EV[G.ev].d}`); }
 function endShift(){
   paused = true; const od = overdue(); G.arrived += od; const lost = !!G.sapTook, p = G.arrived ? Math.round(G.onTime/G.arrived*100) : 0, ok = !lost && p >= G.d.goal;
@@ -3977,6 +4050,12 @@ function endShift(){
 let tab = 'upg', presArm = false;
 const TABS = [['upg','🛒 Upgrades'],['team','👥 Team'],['net','🗺️ Netz'],['perk','🤝 Perks'],['skin','🎨 Skins'],['ach','🏆 Erfolge'],['lex','📖 Lexikon']];
 function shop(t){
+  const same = ov.classList.contains('show') && !!ov.querySelector('[data-tab]') && (!t || t===tab);
+  const pan = ov.querySelector('.sw-panel'), keep = same ? {o:ov.scrollTop, p:pan ? pan.scrollTop : 0, y:scrollY} : null;
+  shopRender(t);
+  if (keep){ ov.scrollTop = keep.o; const p2 = ov.querySelector('.sw-panel'); if (p2) p2.scrollTop = keep.p; if (Math.abs(scrollY-keep.y)>2) scrollTo(0, keep.y); }
+}
+function shopRender(t){
   if (t) tab = t; const running = !!G; paused = true;
   let body = '';
   if (tab==='upg'){
