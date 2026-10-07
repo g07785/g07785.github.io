@@ -470,12 +470,17 @@ footer{padding:40px 0 70px;color:var(--muted);font-size:14px;text-align:center}
 /* Token-Gag */
 .tokenline{display:inline-flex;align-items:center;gap:10px;margin:12px 0 4px;font:13px/1.4 var(--mono);color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:6px 14px;cursor:help}
 .tk-bar{display:inline-block;width:70px;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
-.tk-bar i{display:block;height:100%;width:93%;background:linear-gradient(90deg,var(--ok),var(--a),var(--bad));animation:tkdrain 6s ease-in-out infinite alternate}
-@keyframes tkdrain{from{width:96%}to{width:12%}}
+.tk-bar i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(.93);background:linear-gradient(90deg,var(--ok),var(--a),var(--bad))}
+.tokenline.anim-on .tk-bar i{animation:tkdrain 6s ease-in-out infinite alternate}
+@keyframes tkdrain{from{transform:scaleX(.96)}to{transform:scaleX(.12)}}
 /* Meteor-Hinweis */
-.meteor-link{position:relative;font-weight:700;color:var(--a);border-bottom:2px dotted var(--a);animation:mglow 1.8s ease-in-out infinite;padding:0 2px;border-radius:4px}
-@keyframes mglow{0%,100%{text-shadow:0 0 0 transparent;background:transparent}50%{text-shadow:0 0 12px rgba(251,146,60,.95);background:rgba(251,146,60,.14)}}
-.meteor-link::after{content:"Klick mich!";position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;font:700 11px/1 var(--mono);color:#fff;background:#ea580c;padding:5px 8px;border-radius:999px;box-shadow:0 6px 16px -6px rgba(234,88,12,.8);animation:mbob 1.8s ease-in-out infinite;pointer-events:none}
+.meteor-link{position:relative;font-weight:700;color:var(--a);border-bottom:2px dotted var(--a);padding:0 2px;border-radius:4px}
+.meteor-link::before{content:"";position:absolute;inset:-4px -6px;border-radius:8px;background:rgba(251,146,60,.22);box-shadow:0 0 16px rgba(251,146,60,.75);opacity:0;pointer-events:none}
+.meteor-link.anim-on::before{animation:mglow 1.8s ease-in-out infinite}
+@keyframes mglow{0%,100%{opacity:0}50%{opacity:1}}
+.meteor-link::after{content:"Klick mich!";position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);white-space:nowrap;font:700 11px/1 var(--mono);color:#fff;background:#ea580c;padding:5px 8px;border-radius:999px;box-shadow:0 6px 16px -6px rgba(234,88,12,.8);pointer-events:none}
+.meteor-link.anim-on::after{animation:mbob 1.8s ease-in-out infinite}
+header.hero:not(.anim-on) *,header.hero:not(.anim-on) *::before,header.hero:not(.anim-on) *::after,.contact:not(.anim-on)::before{animation-play-state:paused!important}
 .meteor-link.done::after{content:"Nochmal? ☄️"}
 @keyframes mbob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
 /* Meteor-Einschlag (Vollbild) */
@@ -543,8 +548,8 @@ window.__rwToast = (m,ms=2800) => { const t=document.getElementById('toast'); t.
 (() => {
 const $ = s => document.querySelector(s);
 const cv = $('#swCanvas'); if (!cv) return;
-const cx = cv.getContext('2d'), PORT = (cv.parentElement.clientWidth || innerWidth) < 620, W = PORT ? 600 : 1000, H = PORT ? 1000 : 600, K = PORT ? 1.6 : 1;
-const DPR = Math.min(2, window.devicePixelRatio || 1);
+let cx = cv.getContext('2d'); const STC = {key:'', cv:null}; const PORT = (cv.parentElement.clientWidth || innerWidth) < 620, W = PORT ? 600 : 1000, H = PORT ? 1000 : 600, K = PORT ? 1.6 : 1;
+const DPR = Math.min(matchMedia('(pointer: coarse)').matches ? 1.5 : 2, window.devicePixelRatio || 1);
 cv.width = W*DPR; cv.height = H*DPR; cx.setTransform(DPR,0,0,DPR,0,0);
 const ov = $('#swOverlay'), logEl = $('#swLog');
 const toast = m => { if (typeof window.__rwToast === 'function') window.__rwToast(m); };
@@ -1220,12 +1225,17 @@ const C = { wait:'#f59e0b', bad:'#ef4444', ok:'#4ade80', isi:'#22c55e', run:'#8b
 function draw(now){
   if (!G){ net(); applyLayout(isGeo(S.sk.map) ? 'geo' : 'base'); }
   const th = curMap(), T = THEMES[th] || THEMES.nacht;
+  const bgK = th+'|'+(T.geo ? getBg(th).state : '')+'|'+N.map(n=>ACT[n.i]?1:0).join('')+'|'+N.map(n=>Math.round(n.x)+','+Math.round(n.y)).join(';');
+  if (STC.key !== bgK){ STC.key = bgK; const sc = STC.cv || (STC.cv = document.createElement('canvas')); sc.width = W*DPR; sc.height = H*DPR; const keep = cx; cx = sc.getContext('2d'); cx.setTransform(DPR,0,0,DPR,0,0); cx.clearRect(0,0,W,H);
   if (T.geo){ const bg = getBg(th); cx.drawImage(bg.cv, 0, 0, W, H);
-    cx.font = `${10*K}px Inter, system-ui, sans-serif`; cx.textAlign = 'left'; cx.fillStyle = 'rgba(0,0,0,.45)'; const cr = bg.state==='consent' ? 'Satellitenbild erst nach Zustimmung im Shop (Skins)' : bg.state==='load' ? 'Satellitenbild wird geladen …' : bg.state==='fail' ? 'Satellitenbild nicht erreichbar, Ersatzkarte' : T.credit;
-    const tw = cx.measureText(cr).width; cx.fillRect(4, H-17*K, tw+10, 14*K); cx.fillStyle = '#fff'; cx.fillText(cr, 9, H-6*K); }
-  else { cx.fillStyle = T.bg; cx.fillRect(0,0,W,H);
-    cx.strokeStyle = T.grid; cx.lineWidth = 1; cx.beginPath(); for (let x=0;x<W;x+=40){ cx.moveTo(x,0); cx.lineTo(x,H); } for (let y=0;y<H;y+=40){ cx.moveTo(0,y); cx.lineTo(W,y); } cx.stroke(); }
-  N.forEach(n=>{ if (ACT[n.i]){ const q = lmPos(n); landmark(n.i, q[0], q[1], K*(T.geo ? 1.15 : 1.35)); } });
+      cx.font = `${10*K}px Inter, system-ui, sans-serif`; cx.textAlign = 'left'; cx.fillStyle = 'rgba(0,0,0,.45)'; const cr = bg.state==='consent' ? 'Satellitenbild erst nach Zustimmung im Shop (Skins)' : bg.state==='load' ? 'Satellitenbild wird geladen …' : bg.state==='fail' ? 'Satellitenbild nicht erreichbar, Ersatzkarte' : T.credit;
+      const tw = cx.measureText(cr).width; cx.fillRect(4, H-17*K, tw+10, 14*K); cx.fillStyle = '#fff'; cx.fillText(cr, 9, H-6*K); }
+    else { cx.fillStyle = T.bg; cx.fillRect(0,0,W,H);
+      cx.strokeStyle = T.grid; cx.lineWidth = 1; cx.beginPath(); for (let x=0;x<W;x+=40){ cx.moveTo(x,0); cx.lineTo(x,H); } for (let y=0;y<H;y+=40){ cx.moveTo(0,y); cx.lineTo(W,y); } cx.stroke(); }
+    N.forEach(n=>{ if (ACT[n.i]){ const q = lmPos(n); landmark(n.i, q[0], q[1], K*(T.geo ? 1.15 : 1.35)); } });
+  
+    cx = keep; }
+  cx.drawImage(STC.cv, 0, 0, W, H);
   drawEvent(now);
   const fl = G ? G.faults : [];
   E.forEach(e=>{ const A = N[e.a], B = N[e.b], on = actE(e);
