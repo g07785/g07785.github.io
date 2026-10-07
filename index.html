@@ -706,7 +706,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
     <div class="sw-layout"><div class="sw reveal" id="sw">
       <div class="sw-hud">
         <div class="sw-rank"><span class="sw-lvl" id="swLvl">1</span><div><div class="sw-rank-top"><b id="swRank">Azubi</b><button type="button" class="sw-me" id="swMe" title="Namen ändern">👤 <span id="swMeName">Name</span> ✏️</button></div><div class="sw-xp"><i id="swXp"></i></div></div></div>
-        <div class="sw-stat"><span>Schicht</span><b id="swTime">1:30</b></div>
+        <div class="sw-stat"><span id="swTimeL">Uhrzeit</span><b id="swTime">00:00</b></div>
         <div class="sw-stat"><span>Pünktlich</span><b id="swPunct">–</b></div>
         <div class="sw-stat"><span>Budget</span><b id="swMoney">0 €</b></div>
         <div class="sw-stat"><span>Sterne</span><b id="swStars">0 ⭐</b></div>
@@ -1442,7 +1442,7 @@ function mit(id){ let m = 1;
 
 /* ---- Schicht ---- */
 const diff = l => { const r = nReg(); return { trains: Math.min(3+l,10) + r, every: Math.max(.6, 4.6*Math.pow(.88,l-1)) / (1+.1*r), maxF: Math.min(16, 3+Math.floor(l/2)+r), goal: Math.min(92, 70+3*(l-1)) }; };
-const shiftLen = l => 90 + Math.min(30, 3*(l-1));
+const shiftLen = l => 120;   // eine Schicht = ein ganzer Tag (24 h in 2 Minuten)
 let G = null, BR = null, raf = 0, last = 0, paused = true, nextId = 1;
 function pickW(list){ let r = Math.random()*list.reduce((a,b)=>a+b[1],0); for (const [k,v] of list){ if ((r-=v) <= 0) return k; } return list[list.length-1][0]; }
 function mkMission(){ const l = S.lvl, P = [];
@@ -1824,6 +1824,34 @@ function tipShort(x, y){ const tol = 24*K;
 
 /* ---- Zeichnen ---- */
 const C = { wait:'#f59e0b', bad:'#ef4444', ok:'#4ade80', isi:'#22c55e', run:'#8b8cff' };
+/* ---- Tageszeit: 24 h pro Schicht, Nacht → Sonnenaufgang → Mittag → Sonnenuntergang ---- */
+const dayHour = () => G ? Math.max(0, Math.min(24, G.t / G.T * 24)) : 0;
+const dayIcon = h => h < 5 || h >= 21 ? '🌙' : h < 7.5 ? '🌅' : h < 18 ? '☀️' : '🌇';
+const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x-a)/(b-a))); return t*t*(3-2*t); };
+function dayNight(now){ if (!G) return; const h = dayHour();
+  const dark = .5 * (1 - smooth(4.5, 7.5, h)) + .5 * smooth(18.5, 21.5, h);          // Nacht
+  const warm = Math.max(0, 1 - Math.abs(h - 6.3)/1.6) + Math.max(0, 1 - Math.abs(h - 19.6)/1.6);  // Morgen-/Abendrot
+  if (dark > .01){ cx.fillStyle = `rgba(6,10,38,${dark.toFixed(3)})`; cx.fillRect(0,0,W,H); }
+  if (warm > .01){ const g = cx.createLinearGradient(0, 0, 0, H); const a = (.22*warm).toFixed(3);
+    g.addColorStop(0, `rgba(251,146,60,${a})`); g.addColorStop(.55, `rgba(244,114,182,${(.10*warm).toFixed(3)})`); g.addColorStop(1, 'rgba(244,114,182,0)'); cx.fillStyle = g; cx.fillRect(0,0,W,H); }
+  // Stadtlichter bei Dunkelheit
+  if (dark > .08){ cx.save(); cx.globalCompositeOperation = 'lighter';
+    N.forEach(n => { if (!ACT[n.i]) return; const r = (HQ.includes(n.i) ? 44 : 32)*K, g = cx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r);
+      g.addColorStop(0, `rgba(253,224,71,${(.55*dark).toFixed(3)})`); g.addColorStop(1, 'rgba(253,224,71,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(n.x, n.y, r, 0, 7); cx.fill(); });
+    cx.restore(); }
+  // Sonne (6–20 Uhr) bzw. Mond (20–6 Uhr) wandern über den Himmel
+  const sun = h >= 5.5 && h <= 20.5, u = sun ? (h - 5.5)/15 : ((h + 24 - 20.5) % 24)/9;
+  const x = (.08 + .84*u) * W, y = (PORT ? 26 : 22)*K + (1 - Math.sin(Math.PI*u)) * (PORT ? 34 : 26)*K;
+  const edge = Math.min(1, Math.sin(Math.PI*u) * 3); if (edge <= 0) return;
+  cx.save(); cx.globalAlpha = .9*edge;
+  if (sun){ const r = 11*K, g = cx.createRadialGradient(x, y, r*.4, x, y, r*3); const low = warm > .3;
+    g.addColorStop(0, low ? 'rgba(251,146,60,.55)' : 'rgba(253,224,71,.5)'); g.addColorStop(1, 'rgba(253,224,71,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r*3, 0, 7); cx.fill();
+    cx.fillStyle = low ? '#fb923c' : '#fde047'; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill(); }
+  else { const r = 9*K; cx.fillStyle = 'rgba(226,232,240,.25)'; cx.beginPath(); cx.arc(x, y, r*2.2, 0, 7); cx.fill();
+    cx.fillStyle = '#e2e8f0'; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill(); cx.fillStyle = 'rgba(6,10,38,.9)'; cx.beginPath(); cx.arc(x + r*.45, y - r*.25, r*.85, 0, 7); cx.fill();
+    cx.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 14; i++){ const sx = ((i*97 + 13) % 100)/100*W, sy = ((i*53 + 7) % 23 + 2)*K*3, tw = .4 + .6*Math.abs(Math.sin(now/700 + i)); cx.globalAlpha = .7*edge*tw; cx.fillRect(sx, sy, 1.6*K, 1.6*K); } }
+  cx.restore(); }
+
 function draw(now){
   if (!G){ net(); applyLayout(isGeo(S.sk.map) ? 'geo' : 'base'); }
   const th = curMap(), T = THEMES[th] || THEMES.nacht;
@@ -1838,6 +1866,7 @@ function draw(now){
   
     cx = keep; }
   cx.drawImage(STC.cv, 0, 0, W, H);
+  dayNight(now);
   drawEvent(now);
   const fl = G ? G.faults : [];
   E.forEach(e=>{ const A = N[e.a], B = N[e.b], on = actE(e);
@@ -1986,7 +2015,8 @@ function hud(){
   setT('#swLvl', String(S.lvl)); setT('#swRank', rank(S.lvl) + (S.pres ? ` · 🏅${S.pres}` : '')); $('#swXp').style.width = Math.min(100,S.xp/xpNeed(S.lvl)*100)+'%';
   setT('#swMeName', S.player || 'Name'); setH('#swAdmChip', !ADM);
   setT('#swMoney', fmt(S.money)+' €'); setT('#swStars', fmt(S.stars)+' ⭐'); setT('#swSoc', `🤝 ${S.soc} Social`);
-  const rest = G ? Math.max(0, G.T-G.t) : shiftLen(S.lvl); setT('#swTime', Math.floor(rest/60)+':'+String(Math.floor(rest%60)).padStart(2,'0'));
+  const hd = dayHour(), mi = Math.min(24*60-1, Math.floor(hd*60)); setT('#swTime', String(Math.floor(mi/60)).padStart(2,'0')+':'+String(mi%60).padStart(2,'0'));
+  { const L = $('#swTimeL'); if (L){ L._b = L._b || L.textContent; setT('#swTimeL', dayIcon(hd)+' '+L._b); } }
   const od = G ? overdue() : 0, tot = G ? G.arrived + od : 0; setT('#swPunct', tot ? Math.round(G.onTime/tot*100)+' %' : '–');
   const tot2 = G ? G.crews.length : 1 + STAFF.filter(p=>p.id!=='roman' && S.staff[p.id].h).length + U.crew, busy = G ? G.crews.filter(c=>c.st!=='idle').length : 0; setT('#swCrews', (tot2-busy)+'/'+tot2);
   const isiOn = U.isi1||U.isi2||U.isi3; setH('#swIsi', !isiOn);
@@ -4131,7 +4161,7 @@ function showBrief(){
    <div><span>Wetter</span><b>${WX[b.wx].ic} ${WX[b.wx].n}${b.wx2?` → ${WX[b.wx2].ic} ${WX[b.wx2].n}`:''}</b><small>${b.wx2 ? 'Zur Halbzeit schlägt das Wetter um! ' : ''}${WX[b.wx2||b.wx].d}</small></div>
    <div><span>Ereignis</span><b>${b.ev ? EV[b.ev].ic+' '+(b.party||EV[b.ev].n) : '🚉 Normalbetrieb'}</b><small>${b.choice ? PZ[b.choice].fx : b.ev ? EV[b.ev].d : S.lvl<7 ? 'Ereignisse gibt es ab Level 7.' : 'Heute ist alles ruhig. Vielleicht.'}</small></div>
    <div><span>Mission · +2 ⭐</span><b>${b.mis ? '🎯 '+b.mis.txt : '–'}</b><small>${b.mis ? 'Schaffst du sie, gibt es 2 Sterne extra.' : 'Missionen gibt es ab Level 2.'}</small></div>
-   <div><span>Schichtziel</span><b>${d.goal} % pünktlich</b><small>Schichtdauer ${Math.floor(shiftLen(S.lvl)/60)}:${String(shiftLen(S.lvl)%60).padStart(2,'0')} min · ⭐⭐⭐ ab ${Math.min(98,d.goal+10)} %</small></div>
+   <div><span>Schichtziel</span><b>${d.goal} % pünktlich</b><small>Ein ganzer Tag von 00:00 bis 24:00 in 2 min · ⭐⭐⭐ ab ${Math.min(98,d.goal+10)} %</small></div>
   </div>
   ${b.newB && b.newB.length ? `<p class="sw-badge-new">🎖️ Neues Badge: ${b.newB.join(', ')}</p>` : ''}${b.soc ? `<p class="sw-badge-new">🤝 +${b.soc} Social-Punkte</p>` : ''}${(S.perks.fest||0) > 0 ? '<p class="sw-badge-new">🎊 Sommerfest geplant: Diese Schicht arbeiten alle 40 % schneller!</p>' : ''}
   <div class="row"><button class="btn primary" data-a="go">▶ Los geht's</button><button class="btn" data-a="shop">🛒 Shop</button></div>`);
@@ -4446,7 +4476,7 @@ const SAVEIO = (() => {
     if (k === 'save') SAVEIO.open(); });
   // Admin-Zugang in der App: 5× schnell auf die Überschrift „Menü“ tippen (wie 5× auf 🚦 auf der Website)
   if (APP){ let ac = 0, at = 0; m.querySelector('.sm-head b').addEventListener('click', () => { clearTimeout(at); at = setTimeout(() => { ac = 0; }, 2500); if (++ac >= 5){ ac = 0; close(); admLogin(); } }); }
-  if (APP){ const SH = {'Schicht':'Zeit','Pünktlich':'Pünktl.','Team frei':'Team'}; document.querySelectorAll('.sw-stat span').forEach(e => { const t = e.textContent.trim(); if (SH[t]) e.textContent = SH[t]; });
+  if (APP){ const SH = {'Uhrzeit':'Zeit','Pünktlich':'Pünktl.','Team frei':'Team'}; document.querySelectorAll('.sw-stat span').forEach(e => { const t = e.textContent.trim(); if (SH[t]) e.textContent = SH[t]; });
     const bx = document.createElement('button'); bx.type = 'button'; bx.className = 'sb-x'; bx.textContent = '✕ Schließen'; document.body.appendChild(bx);
     bx.addEventListener('click', () => document.body.classList.remove('sb-open'));
     // Spielfeld füllt den freien Platz, Seitenverhältnis bleibt erhalten
