@@ -583,6 +583,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
         <a class="btn" href="https://www.linkedin.com/in/roman-w-1940b232" target="_blank" rel="noopener">LinkedIn ↗</a>
       </div>
     </div>
+<div class="hero-right">
     <div class="hero-card mono" aria-hidden="true">
       <div class="bar"><i></i><i></i><i></i><span>roman.config.js</span></div>
 <pre><span class="k">const</span> roman = {
@@ -597,9 +598,51 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
 };
 <span class="c">// Tipp: Das Logo oben links mag Klicks.</span></pre>
     </div>
+    <div class="hero-live" id="agenten">
+      <div class="hl-head"><span class="hl-dot" id="agDot"></span><span id="agLive">KI-Agenten · Live</span><a class="hl-more" href="https://agenten-live.kopfwetterroman.workers.dev/" target="_blank" rel="noopener" title="Großansicht">⤢</a></div>
+      <div class="hl-task" id="agAufgabe">Verbinde mit meinem PC …</div>
+      <div class="hl-office" id="agOffice"><iframe src="https://agenten-live.kopfwetterroman.workers.dev/" title="Pixel-Büro mit meinen KI-Agenten (Live-Ansicht)" loading="lazy" tabindex="-1" scrolling="no"></iframe><div class="hl-off">💤 Mein PC schläft gerade – die Agenten machen Pause.</div></div>
+      <div class="hl-note">Vier KI-Agenten, die <b>komplett lokal auf meinem PC</b> laufen – live. Nur Status und Überschrift werden übertragen.</div>
+    </div>
+  </div>
   </div>
   <div class="scrollhint"><div class="mouse"></div>scrollen</div>
 </header>
+<style>
+.hero-right{display:flex;flex-direction:column;gap:16px;min-width:0}
+.hero-live{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px;box-shadow:var(--shadow)}
+.hero-live .hl-head{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--p);text-transform:uppercase;letter-spacing:.06em;padding:2px 4px}
+.hero-live .hl-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.hero-live .hl-dot.on{background:var(--ok);animation:pulse 2s infinite}
+.hero-live .hl-more{margin-left:auto;text-decoration:none;color:var(--muted);font-size:15px;line-height:1}
+.hero-live .hl-more:hover{color:var(--p)}
+.hero-live .hl-task{font-family:var(--disp);font-weight:600;font-size:17px;line-height:1.3;margin:6px 4px 10px;word-break:break-word}
+.hero-live .hl-office{position:relative;width:100%;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:#1b1b26}
+.hero-live .hl-office iframe{position:absolute;left:0;top:0;width:640px;height:400px;border:0;transform-origin:0 0;pointer-events:none}
+.hero-live .hl-off{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:16px;color:#e5e7eb;background:rgba(10,12,18,.72);font-family:var(--mono);font-size:13px}
+.hero-live .hl-office.offline .hl-off{display:grid}
+.hero-live .hl-note{color:var(--muted);font-size:12.5px;margin:8px 4px 2px;line-height:1.45}
+@media(max-width:900px){.hero{padding-bottom:96px}.hero-right{margin-top:4px}}
+</style>
+<script>
+(function(){
+  var API="https://agenten-live.kopfwetterroman.workers.dev", el=function(i){return document.getElementById(i)};
+  var box=el("agOffice"), fr=box.querySelector("iframe");
+  function fit(){ var w=box.clientWidth; if(w) fr.style.transform="scale("+(w/640)+")"; }
+  fit(); window.addEventListener("resize",fit); if(window.ResizeObserver) new ResizeObserver(fit).observe(box);
+  function tick(){
+    fetch(API+"/api/live",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
+      var on=!!d.online;
+      el("agDot").className="hl-dot"+(on?" on":"");
+      el("agLive").textContent=on?(d.aktiv?"KI-Agenten · Live · arbeiten":"KI-Agenten · Live · bereit"):"KI-Agenten · PC offline";
+      el("agAufgabe").textContent=on?(d.aufgabe||"Die Agenten warten auf den nächsten Auftrag"):"Mein PC schläft gerade";
+      box.classList.toggle("offline",!on);
+    }).catch(function(){});
+  }
+  tick(); setInterval(function(){ if(!document.hidden) tick(); },5000);
+})();
+</script>
+
 
 
 <div class="wrap">
@@ -748,58 +791,10 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
   </div>
 </section>
 
-<section id="agenten" class="alt">
-  <div class="wrap">
-    <div class="sec-head reveal"><div class="num">08 / KI-Agenten live</div><h2>Meine KI-Agenten – live</h2><p class="lead">Ein Team aus vier KI-Agenten läuft <b>komplett lokal auf meinem eigenen PC</b>, ohne Cloud-KI. Hier siehst du in Echtzeit, woran sie gerade arbeiten: Jede Figur im Pixel-Büro ist ein echter Agent. Aufträge bekommen sie von mir per Sprachnachricht vom Handy.</p></div>
-    <div class="ag-now reveal" aria-live="polite">
-      <div class="ag-txt"><div class="ag-lbl"><i class="ag-dot" id="agDot"></i><span id="agLive">Live-Ansicht</span> · gerade in Arbeit</div><h3 id="agAufgabe">Verbinde mit meinem PC …</h3></div>
-      <a class="btn primary" href="https://agenten-live.kopfwetterroman.workers.dev/" target="_blank" rel="noopener">Großansicht ↗</a>
-    </div>
-    <div class="ag-office reveal" id="agOffice">
-      <iframe src="https://agenten-live.kopfwetterroman.workers.dev/" title="Pixel-Büro mit meinen KI-Agenten (Live-Ansicht)" loading="lazy"></iframe>
-      <div class="ag-off"><div>💤 Mein PC schläft gerade.<br>Sobald er wieder läuft, siehst du die Agenten hier live.</div></div>
-    </div>
-    <p class="ag-note">Nur Ansicht: Übertragen werden ausschließlich Status und eine kurze Überschrift, die die Agenten selbst formulieren – keine Inhalte. Befehle nehmen die Agenten nur von mir an.</p>
-  </div>
-</section>
-<style>
-#agenten .ag-now{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin-bottom:16px}
-#agenten .ag-txt{flex:1 1 320px;min-width:0}
-#agenten .ag-lbl{font-family:var(--mono);font-size:12px;color:var(--p);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px}
-#agenten .ag-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
-#agenten .ag-dot.on{background:var(--ok);animation:pulse 2s infinite}
-#agenten h3{font-size:clamp(20px,2.6vw,28px);line-height:1.2;margin:6px 0 0;word-break:break-word}
-#agenten .ag-office{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#1b1b26;aspect-ratio:16/10}
-#agenten .ag-office iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-#agenten .ag-off{position:absolute;inset:0;display:none;place-items:center;text-align:center;color:#e5e7eb;background:rgba(10,12,18,.72);font-family:var(--mono);font-size:14px;padding:20px}
-#agenten .ag-office.offline .ag-off{display:grid}
-#agenten .ag-note{color:var(--muted);font-size:14px;margin:12px 0 0}
-@media (max-width:640px){#agenten .ag-office{aspect-ratio:4/5}}
-</style>
-<script>
-(function(){
-  var API="https://agenten-live.kopfwetterroman.workers.dev", el=function(i){return document.getElementById(i)}, timer=null;
-  function tick(){
-    fetch(API+"/api/live",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
-      var on=!!d.online;
-      el("agDot").className="ag-dot"+(on?" on":"");
-      el("agLive").textContent=on?(d.aktiv?"Live · arbeitet":"Live · bereit"):"PC offline";
-      el("agAufgabe").textContent=on?(d.aufgabe||"Die Agenten warten auf den nächsten Auftrag"):"Mein PC schläft gerade – die Agenten machen Pause";
-      el("agOffice").classList.toggle("offline",!on);
-    }).catch(function(){});
-  }
-  var sec=document.getElementById("agenten");
-  new IntersectionObserver(function(es){es.forEach(function(e){
-    if(e.isIntersecting&&!timer){tick();timer=setInterval(tick,5000)}
-    else if(!e.isIntersecting&&timer){clearInterval(timer);timer=null}
-  })},{rootMargin:"200px"}).observe(sec);
-})();
-</script>
-
 <section id="contact">
   <div class="wrap">
     <div class="contact reveal">
-      <div class="num">09 / Kontakt</div>
+      <div class="num">08 / Kontakt</div>
       <h2>Nächster Halt: ein Gespräch?</h2>
       <p class="lead" style="margin:0 auto">Ob SAP-Stammdaten, Monitoring oder KI im Arbeitsalltag: Ich freue mich über Nachrichten.</p>
       <div class="cta"><a class="btn primary" href="https://www.linkedin.com/in/roman-w-1940b232" target="_blank" rel="noopener">Auf LinkedIn schreiben ↗</a><button class="btn" id="openTerm2">Terminal öffnen &gt;_</button></div>
