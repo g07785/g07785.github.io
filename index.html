@@ -557,7 +557,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
   <div class="wrap">
     <a class="logo" href="#top"><span id="logoRW">RW</span>Roman Wagner</a>
     <div class="navlinks">
-      <a href="#about">Über mich</a><a href="#monitor">Live-Demo</a><a href="#journey">Werdegang</a><a href="#skills">Kenntnisse</a><a href="#certs">Weiterbildung</a><a href="#spiel">Spiel</a><a href="#contact">Kontakt</a>
+      <a href="#about">Über mich</a><a href="#monitor">Live-Demo</a><a href="#journey">Werdegang</a><a href="#skills">Kenntnisse</a><a href="#certs">Weiterbildung</a><a href="#spiel">Spiel</a><a href="#agenten">KI-Agenten live</a><a href="#contact">Kontakt</a>
     </div>
     <div class="navright">
       <button class="iconbtn" id="padBtn" aria-label="Gamepad öffnen" title="Geheimcode eingeben">🎮</button>
@@ -748,10 +748,58 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
   </div>
 </section>
 
+<section id="agenten" class="alt">
+  <div class="wrap">
+    <div class="sec-head reveal"><div class="num">08 / KI-Agenten live</div><h2>Meine KI-Agenten – live</h2><p class="lead">Ein Team aus vier KI-Agenten läuft <b>komplett lokal auf meinem eigenen PC</b>, ohne Cloud-KI. Hier siehst du in Echtzeit, woran sie gerade arbeiten: Jede Figur im Pixel-Büro ist ein echter Agent. Aufträge bekommen sie von mir per Sprachnachricht vom Handy.</p></div>
+    <div class="ag-now reveal" aria-live="polite">
+      <div class="ag-txt"><div class="ag-lbl"><i class="ag-dot" id="agDot"></i><span id="agLive">Live-Ansicht</span> · gerade in Arbeit</div><h3 id="agAufgabe">Verbinde mit meinem PC …</h3></div>
+      <a class="btn primary" href="https://agenten-live.kopfwetterroman.workers.dev/" target="_blank" rel="noopener">Großansicht ↗</a>
+    </div>
+    <div class="ag-office reveal" id="agOffice">
+      <iframe src="https://agenten-live.kopfwetterroman.workers.dev/" title="Pixel-Büro mit meinen KI-Agenten (Live-Ansicht)" loading="lazy"></iframe>
+      <div class="ag-off"><div>💤 Mein PC schläft gerade.<br>Sobald er wieder läuft, siehst du die Agenten hier live.</div></div>
+    </div>
+    <p class="ag-note">Nur Ansicht: Übertragen werden ausschließlich Status und eine kurze Überschrift, die die Agenten selbst formulieren – keine Inhalte. Befehle nehmen die Agenten nur von mir an.</p>
+  </div>
+</section>
+<style>
+#agenten .ag-now{display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 22px;margin-bottom:16px}
+#agenten .ag-txt{flex:1 1 320px;min-width:0}
+#agenten .ag-lbl{font-family:var(--mono);font-size:12px;color:var(--p);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:8px}
+#agenten .ag-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+#agenten .ag-dot.on{background:var(--ok);animation:pulse 2s infinite}
+#agenten h3{font-size:clamp(20px,2.6vw,28px);line-height:1.2;margin:6px 0 0;word-break:break-word}
+#agenten .ag-office{position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#1b1b26;aspect-ratio:16/10}
+#agenten .ag-office iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+#agenten .ag-off{position:absolute;inset:0;display:none;place-items:center;text-align:center;color:#e5e7eb;background:rgba(10,12,18,.72);font-family:var(--mono);font-size:14px;padding:20px}
+#agenten .ag-office.offline .ag-off{display:grid}
+#agenten .ag-note{color:var(--muted);font-size:14px;margin:12px 0 0}
+@media (max-width:640px){#agenten .ag-office{aspect-ratio:4/5}}
+</style>
+<script>
+(function(){
+  var API="https://agenten-live.kopfwetterroman.workers.dev", el=function(i){return document.getElementById(i)}, timer=null;
+  function tick(){
+    fetch(API+"/api/live",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
+      var on=!!d.online;
+      el("agDot").className="ag-dot"+(on?" on":"");
+      el("agLive").textContent=on?(d.aktiv?"Live · arbeitet":"Live · bereit"):"PC offline";
+      el("agAufgabe").textContent=on?(d.aufgabe||"Die Agenten warten auf den nächsten Auftrag"):"Mein PC schläft gerade – die Agenten machen Pause";
+      el("agOffice").classList.toggle("offline",!on);
+    }).catch(function(){});
+  }
+  var sec=document.getElementById("agenten");
+  new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting&&!timer){tick();timer=setInterval(tick,5000)}
+    else if(!e.isIntersecting&&timer){clearInterval(timer);timer=null}
+  })},{rootMargin:"200px"}).observe(sec);
+})();
+</script>
+
 <section id="contact">
   <div class="wrap">
     <div class="contact reveal">
-      <div class="num">08 / Kontakt</div>
+      <div class="num">09 / Kontakt</div>
       <h2>Nächster Halt: ein Gespräch?</h2>
       <p class="lead" style="margin:0 auto">Ob SAP-Stammdaten, Monitoring oder KI im Arbeitsalltag: Ich freue mich über Nachrichten.</p>
       <div class="cta"><a class="btn primary" href="https://www.linkedin.com/in/roman-w-1940b232" target="_blank" rel="noopener">Auf LinkedIn schreiben ↗</a><button class="btn" id="openTerm2">Terminal öffnen &gt;_</button></div>
@@ -787,7 +835,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
       <p>Verantwortlich für die Datenverarbeitung auf dieser Website ist:<br>Roman Wagner, Am Hohen Weg 4a, 86720 Nördlingen<br>E-Mail: <a href="mailto:romanwagner85@gmail.com">romanwagner85@gmail.com</a></p>
 
       <h4>2. Das Wichtigste in Kürze</h4>
-      <p>Diese Website setzt <b>keine Cookies</b>, nutzt <b>kein Tracking</b>, <b>keine Analyse-Tools</b>, <b>keine Werbung</b> und <b>kein Kontaktformular</b>. Schriftarten sind lokal eingebunden. Personenbezogene Daten werden nur in dem Umfang verarbeitet, der für die Bereitstellung der Website technisch nötig ist (siehe Hosting). Was du im Spiel eingibst, bleibt in deinem Browser auf deinem Gerät.</p>
+      <p>Diese Website setzt <b>keine Cookies</b>, nutzt <b>kein Tracking</b>, <b>keine Analyse-Tools</b>, <b>keine Werbung</b> und <b>kein Kontaktformular</b>. Schriftarten sind lokal eingebunden. Personenbezogene Daten werden nur in dem Umfang verarbeitet, der für die Bereitstellung der Website technisch nötig ist (siehe Hosting und Live-Ansicht der KI-Agenten). Was du im Spiel eingibst, bleibt in deinem Browser auf deinem Gerät.</p>
 
       <h4>3. Hosting über GitHub Pages</h4>
       <p>Diese Website wird bei GitHub Pages gehostet. Anbieter ist die GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. Wenn du die Website aufrufst, verarbeitet GitHub technisch notwendige Daten, insbesondere deine IP-Adresse, Datum und Uhrzeit des Abrufs, die aufgerufene Datei, Browser- und Betriebssysteminformationen sowie ggf. die zuvor besuchte Seite. GitHub speichert nach eigenen Angaben die IP-Adressen von Besuchern von GitHub-Pages-Seiten zu Sicherheitszwecken. Auf diese Verarbeitung habe ich keinen Einfluss, und ich erhalte keine dieser Daten.</p>
@@ -804,17 +852,20 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
       <h4>5. Satellitenkarten im Spiel (NASA)</h4>
       <p>Im Spiel kannst du optional die Karten „Satellit“, „Relief“ oder „Lichter bei Nacht“ auswählen. Nur wenn du einer solchen Karte ausdrücklich zustimmst, lädt dein Browser ein Kartenbild direkt von Servern der US-Raumfahrtbehörde NASA (Global Imagery Browse Services, GIBS) in den USA. Dabei wird technisch bedingt deine IP-Adresse an die NASA übermittelt. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Für die Übermittlung in die USA gilt Art. 49 Abs. 1 lit. a DSGVO. Für die NASA als US-Behörde gibt es keinen Angemessenheitsbeschluss, sodass US-Behörden auf die Daten zugreifen könnten. Du kannst die Einwilligung jederzeit widerrufen, indem du eine andere Karte wählst. Alle anderen Karten, auch die „Deutschlandkarte“, sind lokal in der Seite enthalten und laden nichts nach.</p>
 
-      <h4>6. Links zu anderen Websites</h4>
+      <h4>6. Live-Ansicht meiner KI-Agenten (Cloudflare)</h4>
+      <p>Im Bereich „KI-Agenten live“ zeigt die Website, woran meine lokal laufenden KI-Agenten gerade arbeiten. Das Pixel-Büro und der Status werden von einem kleinen Dienst bei Cloudflare ausgeliefert (agenten-live.kopfwetterroman.workers.dev). Sobald du diesen Bereich ansiehst, lädt dein Browser die Ansicht von dort und fragt alle paar Sekunden den aktuellen Stand ab (Cloudflare Workers; Anbieter: Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA). Dabei verarbeitet Cloudflare technisch notwendige Daten, insbesondere deine IP-Adresse, Datum und Uhrzeit sowie Browser-Informationen. Ich speichere keine Besucherdaten und setze keine Cookies; gespeichert wird dort nur der Status meiner eigenen Agenten.</p>
+      <p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Mein berechtigtes Interesse liegt darin, mein Projekt live und kostenfrei vorzuführen. Die Daten können in die USA übermittelt werden. Cloudflare ist nach dem EU-U.S. Data Privacy Framework zertifiziert (Art. 45 DSGVO). Weitere Informationen: <a href="https://www.cloudflare.com/de-de/privacypolicy/" target="_blank" rel="noopener">Datenschutzerklärung von Cloudflare</a>.</p>
+      <h4>7. Links zu anderen Websites</h4>
       <p>Auf dieser Seite gibt es Links zu anderen Anbietern, etwa zu LinkedIn. Es handelt sich um einfache Links. Es werden keine Inhalte dieser Anbieter eingebunden und beim Aufruf dieser Seite keine Daten an sie übertragen. Erst wenn du einen Link anklickst, gelten die Datenschutzbestimmungen des jeweiligen Anbieters.</p>
 
-      <h4>7. Kontakt per E-Mail</h4>
+      <h4>8. Kontakt per E-Mail</h4>
       <p>Wenn du mir eine E-Mail schreibst, verarbeite ich deine Angaben, um deine Anfrage zu beantworten (Art. 6 Abs. 1 lit. b bzw. lit. f DSGVO). Ich lösche die Daten, sobald sie dafür nicht mehr nötig sind und keine gesetzlichen Aufbewahrungspflichten bestehen.</p>
 
-      <h4>8. Deine Rechte</h4>
+      <h4>9. Deine Rechte</h4>
       <p>Du hast das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch gegen Verarbeitungen auf Grundlage berechtigter Interessen (Art. 21). Erteilte Einwilligungen kannst du jederzeit mit Wirkung für die Zukunft widerrufen (Art. 7 Abs. 3). Wende dich dafür einfach per E-Mail an mich.</p>
       <p>Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren. Zuständig für mich ist das Bayerische Landesamt für Datenschutzaufsicht (BayLDA), Promenade 18, 91522 Ansbach, <a href="https://www.lda.bayern.de" target="_blank" rel="noopener">www.lda.bayern.de</a>.</p>
 
-      <h4>9. Stand</h4>
+      <h4>10. Stand</h4>
       <p>Oktober 2026</p>
     </div>
   </details>
