@@ -632,11 +632,11 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
   fit(); window.addEventListener("resize",fit); if(window.ResizeObserver) new ResizeObserver(fit).observe(box);
   function tick(){
     fetch(API+"/api/live",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
-      var on=!!d.online;
-      el("agDot").className="hl-dot"+(on?" on":"");
-      el("agLive").textContent=on?(d.aktiv?"KI-Agenten · Live · arbeiten":"KI-Agenten · Live · bereit"):"KI-Agenten · PC offline";
-      el("agAufgabe").textContent=on?(d.aufgabe||"Die Agenten warten auf den nächsten Auftrag"):"Mein PC schläft gerade";
-      box.classList.toggle("offline",!on);
+      var on=!!d.online, rep=!!d.wiederholung;
+      el("agDot").className="hl-dot"+(on&&!rep?" on":"");
+      el("agLive").textContent=rep?(on?"KI-Agenten · Wiederholung des letzten Auftrags":"KI-Agenten · PC schläft · Wiederholung"):(on?(d.aktiv?"KI-Agenten · Live · arbeiten":"KI-Agenten · Live · bereit"):"KI-Agenten · PC offline");
+      el("agAufgabe").textContent=rep?("↻ "+(d.aufgabe||"Letzter Auftrag")):(on?(d.aufgabe||"Die Agenten warten auf den nächsten Auftrag"):"Mein PC schläft gerade");
+      box.classList.toggle("offline",!on&&!rep);
     }).catch(function(){});
   }
   tick(); setInterval(function(){ if(!document.hidden) tick(); },5000);
@@ -648,7 +648,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
 <div class="wrap">
   <div class="stats">
     <div class="stat reveal"><div class="v"><span data-count="0" id="itYears">0</span><small> J.</small></div><div class="l">Erfahrung in der IT</div></div>
-    <div class="stat reveal"><div class="v"><span data-count="17">0</span></div><div class="l">Weiterbildungen 2026</div></div>
+    <div class="stat reveal"><div class="v"><span data-count="27">0</span></div><div class="l">Weiterbildungen 2026</div></div>
     <div class="stat reveal"><div class="v"><span data-count="35">0</span></div><div class="l">Kenntnisse</div></div>
     <div class="stat reveal"><div class="v"><span data-count="3">0</span></div><div class="l">Sprachen</div></div>
   </div>
@@ -741,7 +741,7 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
 
 <section id="certs">
   <div class="wrap">
-    <div class="sec-head reveal"><div class="num">05 / Weiterbildung</div><h2>Neugier mit Nachweis</h2><p class="lead">Allein im September 2026 habe ich 17 Kurse abgeschlossen, mit Schwerpunkt generative KI, KI-Agenten, Microsoft Copilot und Cloud.</p></div>
+    <div class="sec-head reveal"><div class="num">05 / Weiterbildung</div><h2>Neugier mit Nachweis</h2><p class="lead">Allein im September 2026 habe ich 17 Kurse abgeschlossen, mit Schwerpunkt generative KI, KI-Agenten, Microsoft Copilot und Cloud. Im Oktober kamen 10 Abzeichen der Claude Academy von Anthropic dazu, darunter Claude Code und das Model Context Protocol.</p></div>
     <div class="cert-tools reveal"><input class="search" id="certSearch" type="search" placeholder="Weiterbildung suchen, z. B. „Agent“ oder „Azure“"><div class="filters" id="certFilters" style="margin:0"></div></div>
     <div class="mono" id="certCount" style="margin-bottom:12px;font-size:13px;color:var(--muted)"></div>
     <div class="certs" id="certGrid"></div>
@@ -1003,14 +1003,14 @@ cats.forEach(c=>skills[c].forEach(s=>{ const [n,b]=s.split('|'); const el=docume
 cats.forEach(c=>{ const n=skills[c].length, d=document.createElement('div'); d.className='sg reveal'; d.innerHTML=`<div class="n">${n}</div><div class="t">${c}</div><div class="meter"><i data-w="${Math.round(n/total*100)}%"></i></div>`; $('#groups').appendChild(d); io.observe(d); });
 
 /* ---------- Weiterbildung ---------- */
-const certs=[['AWS Certified Generative AI Developer – Professional (AIP-C01) Cert Prep','LinkedIn Learning','Cloud',1],['Microsoft Azure KI-Grundwissen: Workloads und Machine Learning auf Azure','LinkedIn Learning','Cloud',1],['Generative KI und KI-Agenten entwickeln','LinkedIn Learning','KI'],['Grundwissen Generative KI','Microsoft & LinkedIn','KI'],['KI-Agenten verstehen und nutzen im Business-Alltag','LinkedIn Learning','KI'],['Vom Prompt zum KI-Agenten – Tipps & Tricks','LinkedIn Learning','KI'],['Prompt Engineering – Grundlagen','LinkedIn Learning','KI'],['KI-Transformation für Organisationen','LinkedIn Learning','KI'],['Künstliche Intelligenz (KI) – Grundlagen','LinkedIn Learning','KI'],['Wie KI denkt','LinkedIn Learning','KI'],['Ethik im Zeitalter generativer KI','LinkedIn Learning','KI'],['Was ist generative KI?','LinkedIn Learning','KI'],['Generative KI: Die Entwicklung einer durchdachten Online-Suche','LinkedIn Learning','KI'],['Copilot für Microsoft 365: Die Kunst des Prompt-Schreibens','LinkedIn Learning','Microsoft'],['Copilot in Microsoft Teams: KI-unterstützte Zusammenarbeit','LinkedIn Learning','Microsoft'],['Microsoft 365 Copilot kennenlernen','LinkedIn Learning','Microsoft'],['Ihre Arbeit optimieren mit Microsoft Copilot','LinkedIn Learning','Microsoft']];
-const icon={KI:'AI',Cloud:'☁',Microsoft:'M'}, grid=$('#certGrid'), cf=$('#certFilters'); let certCat='Alle';
-certs.forEach(([t,i,c,f])=>{ const d=document.createElement('div'); d.className='cert reveal'+(f?' featured':''); d.dataset.cat=c; d.dataset.q=(t+' '+i+' '+c).toLowerCase();
-  d.innerHTML=`<div class="ic">${icon[c]}</div><h4>${t}</h4><div class="meta">${i} · Sep. 2026 · ${c}</div>`;
+const certs=[['Introduction to Model Context Protocol','Anthropic · Claude Academy','Claude',1,'Okt. 2026','https://academy.claude.com/verify/36dc34123512d2edbcf7e6831f90e912'],['Introduction to Claude Tag','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/6123a9f51d699057cc966e2bf9fb7410'],['Introduction to Claude Cowork','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/8db26e1232fc420b0dc736392036fd24'],['Claude Platform 101','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/7dd820c45779c514d3e190d79578a03d'],['Claude Code 101','Anthropic · Claude Academy','Claude',1,'Okt. 2026','https://academy.claude.com/verify/d0bea22c7b2debaaf6dc1a8952352657'],['Claude 101','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/66256d60106b6bd04e67cc3b32542ef6'],['AI Fluency for students','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/866f2db9f6f710bead0f9ffab71fc4dc'],['AI Fluency for small businesses','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/bae9a260dfe1a38281bb493287214142'],['AI Fluency for nonprofits','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/dd1d8f6e6a7b4ac93c58354d07a2fba2'],['AI Fluency for pK–12 educators','Anthropic · Claude Academy','Claude',0,'Okt. 2026','https://academy.claude.com/verify/193b7458cad7b7b00fb5ab72ebf38af4'],['AWS Certified Generative AI Developer – Professional (AIP-C01) Cert Prep','LinkedIn Learning','Cloud',1],['Microsoft Azure KI-Grundwissen: Workloads und Machine Learning auf Azure','LinkedIn Learning','Cloud',1],['Generative KI und KI-Agenten entwickeln','LinkedIn Learning','KI'],['Grundwissen Generative KI','Microsoft & LinkedIn','KI'],['KI-Agenten verstehen und nutzen im Business-Alltag','LinkedIn Learning','KI'],['Vom Prompt zum KI-Agenten – Tipps & Tricks','LinkedIn Learning','KI'],['Prompt Engineering – Grundlagen','LinkedIn Learning','KI'],['KI-Transformation für Organisationen','LinkedIn Learning','KI'],['Künstliche Intelligenz (KI) – Grundlagen','LinkedIn Learning','KI'],['Wie KI denkt','LinkedIn Learning','KI'],['Ethik im Zeitalter generativer KI','LinkedIn Learning','KI'],['Was ist generative KI?','LinkedIn Learning','KI'],['Generative KI: Die Entwicklung einer durchdachten Online-Suche','LinkedIn Learning','KI'],['Copilot für Microsoft 365: Die Kunst des Prompt-Schreibens','LinkedIn Learning','Microsoft'],['Copilot in Microsoft Teams: KI-unterstützte Zusammenarbeit','LinkedIn Learning','Microsoft'],['Microsoft 365 Copilot kennenlernen','LinkedIn Learning','Microsoft'],['Ihre Arbeit optimieren mit Microsoft Copilot','LinkedIn Learning','Microsoft']];
+const icon={KI:'AI',Cloud:'☁',Microsoft:'M',Claude:'✳'}, grid=$('#certGrid'), cf=$('#certFilters'); let certCat='Alle';
+certs.forEach(([t,i,c,f,dt,url])=>{ const d=document.createElement('div'); d.className='cert reveal'+(f?' featured':''); d.dataset.cat=c; d.dataset.q=(t+' '+i+' '+c).toLowerCase();
+  d.innerHTML=`<div class="ic">${icon[c]}</div><h4>${t}</h4><div class="meta">${i} · ${dt||'Sep. 2026'} · ${c}${url?` · <a href="${url}" target="_blank" rel="noopener">Nachweis ↗</a>`:''}</div>`;
   if(!reduce&&!touch){ d.addEventListener('pointermove',e=>{ const r=d.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5; d.style.transform=`perspective(700px) rotateY(${x*8}deg) rotateX(${-y*8}deg) translateY(-3px)`; }); d.addEventListener('pointerleave',()=>d.style.transform=''); }
   grid.appendChild(d); io.observe(d); });
 function filterCerts(){ const q=$('#certSearch').value.trim().toLowerCase(); let n=0; grid.querySelectorAll('.cert').forEach(d=>{ const ok=(certCat==='Alle'||d.dataset.cat===certCat)&&(!q||d.dataset.q.includes(q)); d.classList.toggle('hide',!ok); if(ok){n++;d.classList.add('in');} }); $('#certCount').textContent=n+' von '+certs.length+' Weiterbildungen'; }
-['Alle','KI','Microsoft','Cloud'].forEach((c,i)=>{ const b=document.createElement('button'); b.className='chip'+(i?'':' on'); b.textContent=c; b.onclick=()=>{ cf.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); certCat=c; filterCerts(); }; cf.appendChild(b); });
+['Alle','Claude','KI','Microsoft','Cloud'].forEach((c,i)=>{ const b=document.createElement('button'); b.className='chip'+(i?'':' on'); b.textContent=c; b.onclick=()=>{ cf.querySelectorAll('.chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); certCat=c; filterCerts(); }; cf.appendChild(b); });
 $('#certSearch').addEventListener('input',filterCerts); filterCerts();
 
 /* ---------- Meteor über Nördlingen ---------- */
