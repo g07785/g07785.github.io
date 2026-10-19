@@ -603,17 +603,99 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
       <div class="hl-task" id="agAufgabe">Verbinde mit meinem PC …</div>
       <div class="hl-office" id="agOffice"><iframe src="https://agenten-live.kopfwetterroman.workers.dev/" title="Pixel-Büro mit meinen KI-Agenten (Live-Ansicht)" loading="lazy" tabindex="-1" scrolling="no"></iframe><div class="hl-off">💤 Mein PC schläft gerade – die Agenten machen Pause.</div></div>
       <div class="hl-note">Ein <b>Netzwerk aus PCs</b>, auf denen KI-Agenten-Teams arbeiten. Freunde und Bekannte können beitreten: Wer seine Rechenleistung für andere bereitstellt, sammelt <b>Punkte</b> und setzt sie für eigene Projekte ein – <b>anonym und verschlüsselt</b>.</div>
-      <button type="button" class="hl-mehr" id="netzInfoAuf" aria-haspopup="dialog">So funktioniert das Netzwerk</button>
+      <div class="hl-aktion"><button type="button" class="hl-cta" data-netz="form">Jetzt mitmachen →</button><button type="button" class="hl-mehr" id="netzInfoAuf" data-netz="info" aria-haspopup="dialog">So funktioniert das Netzwerk</button></div>
+      <div class="hl-meine" id="meineBew" hidden></div>
       <dialog class="netz-dialog" id="netzInfo" aria-labelledby="netzInfoTitel">
-        <div class="nd-kopf"><h3 id="netzInfoTitel">So funktioniert das Netzwerk</h3><button type="button" class="nd-zu" id="netzInfoZu" aria-label="Schließen">✕</button></div>
-        <p class="nd-lead">Ein Netzwerk aus PCs, auf denen KI-Agenten-Teams arbeiten – und das mit jedem PC stärker wird, der dazukommt.</p>
-        <ul class="nd-liste">
-          <li><b>Eigenes Team auf jedem PC</b>Recherche, Programmieren, Texte, Bilder, Videos – die KI-Modelle laufen direkt auf der Grafikkarte, ohne Cloud-KI.</li>
-          <li><b>Gemeinsam schneller</b>Ist ein PC ausgelastet, übernimmt ein freier PC im Netz einen Teil der Arbeit.</li>
-          <li><b>Punkte statt Geld</b>1 Punkt = 1 Minute Grafikkarten-Rechenzeit. Wer für andere rechnet, bekommt Punkte; wer Hilfe nutzt, gibt sie aus. Eigene PCs kosten nichts.</li>
-          <li><b>Anonym &amp; gesichert</b>Aufträge werden Ende-zu-Ende-verschlüsselt übertragen, im Netz erscheinen nur Decknamen. Inhalte, Dateien und Ergebnisse bleiben auf den beteiligten PCs – die Zentrale kennt nur Zahlen. Beitritt nur mit Einladung.</li>
-        </ul>
-        <p class="nd-fuss">Oben auf der Seite siehst du live mein eigenes Team. Übertragen werden dafür nur Status und Überschrift.</p>
+        <button type="button" class="nd-zu" id="netzInfoZu" aria-label="Schließen">✕</button>
+        <!-- Ansicht 1: Infos -->
+        <section class="nd-ansicht" data-ansicht="info">
+          <div class="nd-held">
+            <div class="nd-eyebrow">Agenten-Netzwerk</div>
+            <h3 id="netzInfoTitel">Dein eigenes KI-Team – und ein Netzwerk, das mitwächst</h3>
+            <p>Auf jedem PC im Netzwerk arbeitet ein Team aus KI-Agenten. Wer gerade Rechenleistung übrig hat, hilft den anderen – und sammelt dafür Punkte für eigene Projekte.</p>
+            <svg class="nd-netz" viewBox="0 0 520 210" role="img" aria-label="Grafik: PCs im Netzwerk tauschen über die Zentrale Rechenzeit und Punkte">
+              <defs><radialGradient id="ndGlow"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+              <g class="nd-linien">
+                <path id="ndL1" d="M260 105 L80 50"/><path id="ndL2" d="M260 105 L95 165"/><path id="ndL3" d="M260 105 L440 48"/><path id="ndL4" d="M260 105 L430 168"/><path id="ndL5" d="M80 50 Q 260 -10 440 48"/>
+              </g>
+              <g class="nd-pakete">
+                <circle r="4"><animateMotion dur="2.6s" repeatCount="indefinite"><mpath href="#ndL1"/></animateMotion></circle>
+                <circle r="4"><animateMotion dur="3.1s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#ndL3"/></animateMotion></circle>
+                <circle r="4"><animateMotion dur="2.9s" repeatCount="indefinite"><mpath href="#ndL4"/></animateMotion></circle>
+                <circle r="4" class="nd-punkt"><animateMotion dur="3.6s" repeatCount="indefinite"><mpath href="#ndL5"/></animateMotion></circle>
+                <circle r="4" class="nd-punkt"><animateMotion dur="3.3s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#ndL2"/></animateMotion></circle>
+              </g>
+              <g class="nd-zentrale"><circle cx="260" cy="105" r="34"/><path d="M260 86 l14 6 v10 c0 10 -6 16 -14 20 c-8 -4 -14 -10 -14 -20 v-10z" class="nd-schild"/><text x="260" y="157">Zentrale</text></g>
+              <g class="nd-pc" transform="translate(80 50)"><rect x="-34" y="-22" width="68" height="40" rx="8"/><circle cx="-14" cy="-2" r="4"/><circle cx="0" cy="-2" r="4" class="an"/><circle cx="14" cy="-2" r="4"/><text y="34">Dein PC</text></g>
+              <g class="nd-pc" transform="translate(95 165)"><rect x="-34" y="-22" width="68" height="40" rx="8"/><circle cx="-14" cy="-2" r="4" class="an"/><circle cx="0" cy="-2" r="4"/><circle cx="14" cy="-2" r="4"/><text y="34">Partner-PC</text></g>
+              <g class="nd-pc" transform="translate(440 48)"><rect x="-34" y="-22" width="68" height="40" rx="8"/><circle cx="-14" cy="-2" r="4"/><circle cx="0" cy="-2" r="4"/><circle cx="14" cy="-2" r="4" class="an"/><text y="34">Partner-PC</text></g>
+              <g class="nd-pc" transform="translate(430 168)"><rect x="-34" y="-22" width="68" height="40" rx="8"/><circle cx="-14" cy="-2" r="4" class="an"/><circle cx="0" cy="-2" r="4" class="an"/><circle cx="14" cy="-2" r="4"/><text y="34">Partner-PC</text></g>
+            </svg>
+            <div class="nd-legende"><span><i class="l-auf"></i>Aufträge, Ende-zu-Ende verschlüsselt</span><span><i class="l-pkt"></i>Punkte für Rechenzeit</span></div>
+          </div>
+
+          <h4>So funktioniert's</h4>
+          <ol class="nd-schritte">
+            <li><span class="nd-nr">1</span><b>Bewerben</b>Name und E-Mail angeben – dauert eine Minute.</li>
+            <li><span class="nd-nr">2</span><b>Freischalten</b>Ich prüfe die Bewerbung. Du bekommst eine E-Mail mit deinem persönlichen Starter.</li>
+            <li><span class="nd-nr">3</span><b>Loslegen</b>Doppelklick, die Installation läuft von selbst. Dann deinem Team per Telegram Aufträge geben.</li>
+          </ol>
+
+          <h4>Was dein Team kann</h4>
+          <div class="nd-kacheln">
+            <div><span>🔎</span><b>Recherche</b>sucht, liest und fasst zusammen</div>
+            <div><span>💻</span><b>Programmieren</b>Apps, Spiele, Webseiten – mit Tests</div>
+            <div><span>✍️</span><b>Texte</b>Briefe, Posts, Bücher</div>
+            <div><span>🎨</span><b>Bilder</b>Grafiken und Illustrationen</div>
+            <div><span>🎬</span><b>Videos</b>kurze Clips und Erklärvideos</div>
+            <div><span>🎵</span><b>Musik</b>eigene Songs und Melodien</div>
+          </div>
+          <p class="nd-klein">Steuern per Sprachnachricht oder Text über Telegram – vom Handy, von unterwegs. Die KI-Modelle laufen direkt auf deiner Grafikkarte, ohne Cloud-KI und ohne Abo.</p>
+
+          <h4>Punkte statt Geld</h4>
+          <div class="nd-punkte">
+            <div class="nd-p-plus"><b>+ Punkte</b>Dein PC rechnet für andere, wenn du ihn gerade nicht brauchst – per Schalter jederzeit an oder aus.</div>
+            <div class="nd-p-minus"><b>− Punkte</b>Andere PCs helfen deinem Team, wenn bei dir viel los ist. Deine eigenen PCs kosten nichts.</div>
+          </div>
+          <p class="nd-klein"><b>1 Punkt = 1 Minute Grafikkarten-Rechenzeit.</b> Zum Start bekommst du 500 Punkte geschenkt.</p>
+
+          <h4>Anonym &amp; gesichert</h4>
+          <ul class="nd-sicher">
+            <li><span>🔒</span>Aufträge werden Ende-zu-Ende-verschlüsselt übertragen.</li>
+            <li><span>🕶️</span>Im Netz erscheinen nur Decknamen wie „Partner-PC 3F2A“.</li>
+            <li><span>💾</span>Inhalte, Dateien und Ergebnisse bleiben auf den beteiligten PCs – die Zentrale kennt nur Zahlen.</li>
+            <li><span>✋</span>Beitritt nur mit Freischaltung. Du entscheidest selbst, wann dein PC mitrechnet.</li>
+          </ul>
+
+          <h4>Das brauchst du</h4>
+          <div class="nd-chips"><span>Windows 10 / 11</span><span>NVIDIA-Grafikkarte, ab 8 GB empfohlen</span><span>ca. 60 GB frei</span><span>Telegram auf dem Handy</span></div>
+
+          <div class="nd-cta"><button type="button" class="hl-cta gross" data-netz="form">Jetzt bewerben →</button><span class="nd-klein">Kostenlos · dauert eine Minute</span></div>
+          <p class="nd-fuss">Oben auf der Seite siehst du live mein eigenes Team. Übertragen werden dafür nur Status und Überschrift.</p>
+        </section>
+
+        <!-- Ansicht 2: Bewerbung -->
+        <section class="nd-ansicht" data-ansicht="form" hidden>
+          <div class="nd-eyebrow">Bewerbung</div>
+          <h3>Mitmachen im Agenten-Netzwerk</h3>
+          <p class="nd-klein">Ich schaue mir jede Bewerbung selbst an. Wenn alles passt, bekommst du eine E-Mail mit deinem persönlichen Starter und einer Schritt-für-Schritt-Anleitung.</p>
+          <form id="bewForm" class="nd-form" novalidate>
+            <label><span>Name</span><input name="name" autocomplete="name" required maxlength="60" placeholder="Vor- und Nachname"></label>
+            <label><span>E-Mail</span><input name="email" type="email" autocomplete="email" required maxlength="120" placeholder="du@beispiel.de"></label>
+            <label><span>Grafikkarte <em>(optional)</em></span><input name="gpu" maxlength="80" placeholder="z. B. RTX 3060 12 GB"></label>
+            <label><span>Nachricht <em>(optional)</em></span><textarea name="nachricht" maxlength="600" rows="3" placeholder="Was möchtest du mit deinem Team machen?"></textarea></label>
+            <label class="nd-honig" aria-hidden="true">Webseite<input name="website" tabindex="-1" autocomplete="off"></label>
+            <label class="nd-check"><input type="checkbox" name="zustimmung"> <span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Bewerbung gespeichert werden (Details im <a href="#datenschutz" data-netz-zu>Datenschutz</a>, Punkt 6a).</span></label>
+            <div class="nd-fehler" id="bewFehler" role="alert"></div>
+            <div class="nd-cta"><button type="submit" class="hl-cta gross" id="bewSenden">Bewerbung absenden</button><button type="button" class="hl-mehr" data-netz="info">← zurück</button></div>
+          </form>
+        </section>
+
+        <!-- Ansicht 3: Status -->
+        <section class="nd-ansicht" data-ansicht="status" hidden>
+          <div class="nd-eyebrow">Deine Bewerbung</div>
+          <div id="bewStatus"></div>
+        </section>
       </dialog>
     </div>
   </div>
@@ -634,27 +716,106 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
 .hero-live .hl-off{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:16px;color:#e5e7eb;background:rgba(10,12,18,.72);font-family:var(--mono);font-size:13px}
 .hero-live .hl-office.offline .hl-off{display:grid}
 .hero-live .hl-note{color:var(--muted);font-size:12.5px;margin:8px 4px 2px;line-height:1.45}
-.hero-live .hl-mehr{display:inline-flex;align-items:center;gap:7px;margin:6px 4px 2px;padding:0;border:0;background:none;cursor:pointer;color:var(--p);font-family:var(--mono);font-size:12px;letter-spacing:.03em}
-.hero-live .hl-mehr:before{content:"i";display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid currentColor;border-radius:50%;font-size:10.5px;font-weight:700;line-height:1}
-.hero-live .hl-mehr:hover{text-decoration:underline;text-underline-offset:3px}
-.netz-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--line);border-radius:18px;padding:22px 24px 18px;background:var(--card);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.netz-dialog::backdrop{background:rgba(10,12,20,.55);backdrop-filter:blur(4px)}
+.hero-live .hl-aktion{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:8px 4px 2px}
+.hl-cta{display:inline-block;text-decoration:none!important;border:0;cursor:pointer;font:600 13.5px/1 var(--disp,inherit);color:#fff;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,var(--p),var(--p2));box-shadow:0 8px 22px -10px var(--p)}
+.hl-cta:hover{filter:brightness(1.08)}.hl-cta.gross{font-size:15px;padding:13px 22px}.hl-cta:disabled{opacity:.6;cursor:wait}
+.hl-mehr{display:inline-flex;align-items:center;gap:7px;padding:0;border:0;background:none;cursor:pointer;color:var(--p);font-family:var(--mono);font-size:12px;letter-spacing:.03em}
+.hl-mehr:before{content:"i";display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid currentColor;border-radius:50%;font-size:10.5px;font-weight:700;line-height:1}
+.nd-cta .hl-mehr:before{content:none}.hl-mehr:hover{text-decoration:underline;text-underline-offset:3px}
+.hero-live .hl-meine{margin:8px 4px 0;font-size:12.5px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--bg2);cursor:pointer}
+.netz-dialog{width:min(680px,calc(100vw - 24px));max-height:calc(100vh - 40px);overflow:auto;border:1px solid var(--line);border-radius:20px;padding:0;background:var(--card);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.netz-dialog::backdrop{background:rgba(10,12,20,.6);backdrop-filter:blur(4px)}
 .netz-dialog[open]{animation:ndAuf .22s ease-out}@keyframes ndAuf{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-.netz-dialog .nd-kopf{display:flex;align-items:center;gap:12px;margin-bottom:6px}
-.netz-dialog h3{margin:0;flex:1;font-family:var(--disp);font-size:20px;line-height:1.25}
-.netz-dialog .nd-zu{border:1px solid var(--line);background:none;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
-.netz-dialog .nd-zu:hover{color:var(--text);border-color:var(--p)}
-.netz-dialog .nd-lead{margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.5}
-.netz-dialog .nd-liste{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.netz-dialog .nd-liste li{border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px;line-height:1.5;color:var(--muted);background:var(--bg2)}
-.netz-dialog .nd-liste b{display:block;color:var(--text);font-size:14.5px;margin-bottom:2px}
-.netz-dialog .nd-fuss{margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
+.nd-zu{position:sticky;top:12px;float:right;margin:12px 12px -44px 0;z-index:3;border:1px solid var(--line);background:var(--card);color:var(--muted);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:14px}
+.nd-zu:hover{color:var(--text);border-color:var(--p)}
+.nd-ansicht{padding:26px 28px 24px}
+.nd-held{margin:-26px -28px 8px;padding:28px 28px 18px;background:radial-gradient(120% 90% at 20% 0%,var(--p-soft),transparent 70%)}
+.nd-eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--p);margin-bottom:6px}
+.netz-dialog h3{margin:0 40px 8px 0;font-family:var(--disp);font-size:24px;line-height:1.2}
+.nd-held p{margin:0;color:var(--muted);font-size:15px;line-height:1.55}
+.nd-netz{display:block;width:100%;height:auto;margin:14px 0 4px}
+.nd-linien path{fill:none;stroke:var(--p);stroke-opacity:.35;stroke-width:1.6;stroke-dasharray:5 6}
+.nd-pakete circle{fill:var(--p)}.nd-pakete .nd-punkt{fill:var(--a)}
+.nd-zentrale circle{fill:var(--card);stroke:var(--p);stroke-width:2}.nd-schild{fill:var(--p)}
+.nd-netz text{font:600 12px var(--mono,monospace);fill:var(--muted);text-anchor:middle}
+.nd-pc rect{fill:var(--card);stroke:var(--line);stroke-width:1.5}.nd-pc circle{fill:var(--line)}.nd-pc circle.an{fill:var(--ok)}
+.nd-legende{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted)}.nd-legende i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.nd-legende .l-auf{background:var(--p)}.nd-legende .l-pkt{background:var(--a)}
+.netz-dialog h4{margin:22px 0 10px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.nd-schritte{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.nd-schritte li{position:relative;border:1px solid var(--line);border-radius:14px;padding:14px 14px 13px;font-size:13.5px;line-height:1.5;color:var(--muted);background:var(--bg2)}
+.nd-schritte b{display:block;color:var(--text);font-size:15px;margin:8px 0 3px}
+.nd-nr{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--p),var(--p2))}
+.nd-kacheln{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nd-kacheln div{border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:12.5px;color:var(--muted);line-height:1.4}
+.nd-kacheln span{font-size:20px;display:block;margin-bottom:4px}.nd-kacheln b{display:block;color:var(--text);font-size:14px}
+.nd-klein{font-size:13px;color:var(--muted);line-height:1.55;margin:10px 0 0}
+.nd-punkte{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nd-punkte div{border-radius:14px;padding:13px 14px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.nd-punkte b{display:block;font-size:17px;margin-bottom:3px}
+.nd-p-plus{background:color-mix(in srgb,var(--ok) 12%,transparent);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}.nd-p-plus b{color:var(--ok)}
+.nd-p-minus{background:color-mix(in srgb,var(--a) 12%,transparent);border:1px solid color-mix(in srgb,var(--a) 35%,transparent)}.nd-p-minus b{color:var(--a)}
+.nd-sicher{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.nd-sicher li{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--muted)}.nd-sicher span{font-size:17px;line-height:1.3}
+.nd-chips{display:flex;flex-wrap:wrap;gap:8px}.nd-chips span{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;background:var(--bg2)}
+.nd-cta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:22px}
+.nd-fuss{margin:16px 0 0;font-size:12px;color:var(--muted)}
+.nd-form{display:grid;gap:12px;margin-top:16px}
+.nd-form label{display:grid;gap:5px;font-size:13px;font-weight:600}.nd-form em{font-weight:400;color:var(--muted);font-style:normal}
+.nd-form input,.nd-form textarea{font:inherit;font-size:15px;font-weight:400;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.nd-form input:focus,.nd-form textarea:focus{outline:2px solid var(--p);outline-offset:1px;border-color:transparent}
+.nd-form .nd-check{display:flex;gap:10px;align-items:flex-start;font-weight:400;color:var(--muted);line-height:1.5}.nd-check input{margin-top:3px;width:17px;height:17px;accent-color:var(--p)}
+.nd-honig{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden}
+.nd-fehler{color:var(--bad);font-size:13.5px;min-height:1px}
+.nd-status{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--bg2);margin-top:12px}
+.nd-status .gross{font-size:22px;font-family:var(--disp);font-weight:700;margin:4px 0 6px}
+.nd-status code{font-family:var(--mono);font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:2px 6px;word-break:break-all}
+@media(max-width:640px){.nd-ansicht{padding:22px 18px 20px}.nd-held{margin:-22px -18px 8px;padding:24px 18px 14px}.nd-schritte,.nd-kacheln{grid-template-columns:1fr 1fr}.nd-schritte{grid-template-columns:1fr}.nd-punkte{grid-template-columns:1fr}.netz-dialog h3{font-size:21px}}
 .hero{padding:40px 0 72px}   /* 19.10.: Luft oben/unten - die Agenten-Karte stiess unten an und wurde abgeschnitten */
 @media(max-width:900px){.hero{padding:24px 0 96px}.hero-right{margin-top:4px}}
 </style>
-<script>(function(){var d=document.getElementById("netzInfo"),a=document.getElementById("netzInfoAuf"),z=document.getElementById("netzInfoZu");if(!d||!a)return;
-a.onclick=function(){if(d.showModal)d.showModal();else d.setAttribute("open","")};z.onclick=function(){d.close?d.close():d.removeAttribute("open")};
-d.addEventListener("click",function(e){var r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()})})();</script>
+<script>(function(){
+var Z="https://agenten-zentrale.kopfwetterroman.workers.dev", d=document.getElementById("netzInfo"); if(!d) return;
+var LS="az-bewerbung"; function merk(t){try{if(t)localStorage.setItem(LS,t);return localStorage.getItem(LS)}catch(e){return t||null}}
+function ansicht(n){d.querySelectorAll(".nd-ansicht").forEach(function(a){a.hidden=a.dataset.ansicht!==n});d.scrollTop=0}
+function auf(n){ansicht(n);if(!d.open){if(d.showModal)d.showModal();else d.setAttribute("open","")}if(n==="form")setTimeout(function(){var i=d.querySelector("#bewForm input[name=name]");if(i)i.focus()},60)}
+function zu(){d.close?d.close():d.removeAttribute("open")}
+document.addEventListener("click",function(e){var b=e.target.closest("[data-netz]");if(b){e.preventDefault();auf(b.dataset.netz)}if(e.target.closest("[data-netz-zu]"))zu()});
+document.getElementById("netzInfoZu").onclick=zu;
+d.addEventListener("click",function(e){if(e.target===d)zu()});
+function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+var f=document.getElementById("bewForm"),fe=document.getElementById("bewFehler"),bt=document.getElementById("bewSenden");
+f.addEventListener("submit",function(e){e.preventDefault();fe.textContent="";
+  var w={name:f.name.value.trim(),email:f.email.value.trim(),gpu:f.gpu.value.trim(),nachricht:f.nachricht.value.trim(),website:f.website.value,zustimmung:f.zustimmung.checked};
+  if(w.name.length<2){fe.textContent="Bitte gib deinen Namen an.";f.name.focus();return}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(w.email)){fe.textContent="Bitte gib eine gültige E-Mail-Adresse an.";f.email.focus();return}
+  if(!w.zustimmung){fe.textContent="Bitte bestätige den Datenschutz-Hinweis.";return}
+  bt.disabled=true;bt.textContent="Wird gesendet …";
+  fetch(Z+"/bewerbung",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(w)}).then(function(r){return r.json()}).then(function(r){
+    bt.disabled=false;bt.textContent="Bewerbung absenden";
+    if(!r.ok){fe.textContent=r.fehler||"Das hat nicht geklappt. Bitte später nochmal.";return}
+    merk(r.token);f.reset();zeige(r.token,true);karte();
+  }).catch(function(){bt.disabled=false;bt.textContent="Bewerbung absenden";fe.textContent="Keine Verbindung – bitte später nochmal versuchen."})});
+function zeige(t,neu){auf("status");var box=document.getElementById("bewStatus");box.innerHTML='<p class="nd-klein">Lade den Stand …</p>';
+  var link=location.origin+location.pathname+"#bewerbung="+encodeURIComponent(t);
+  fetch(Z+"/bewerbung/status?t="+encodeURIComponent(t)).then(function(r){return r.json()}).then(function(s){
+    if(s.fehler){box.innerHTML='<div class="nd-status"><div class="gross">Nicht gefunden</div><p class="nd-klein">Diese Bewerbung gibt es nicht (mehr). Du kannst dich einfach neu bewerben.</p><div class="nd-cta"><button class="hl-cta" data-netz="form">Neu bewerben</button></div></div>';return}
+    var vor=esc(String(s.name||"").split(" ")[0]);
+    if(s.status==="angenommen"){box.innerHTML='<h3>Willkommen, '+vor+'! 🎉</h3><div class="nd-status"><div class="gross">Freigeschaltet</div><p class="nd-klein">Auf deinem Konto liegen '+esc(s.startpunkte||500)+' Startpunkte. Die genaue Anleitung steht auch in deiner E-Mail.</p>'+
+      '<div class="nd-cta"><a class="hl-cta gross" href="'+Z+'/bewerbung/starter?t='+encodeURIComponent(t)+'">⬇ Starter herunterladen</a><a class="hl-mehr" href="'+Z+'/bewerbung/anleitung?t='+encodeURIComponent(t)+'">Anleitung (PDF)</a></div>'+
+      '<ol class="nd-klein" style="padding-left:18px;margin-top:14px"><li>Starter herunterladen (dein Zugangscode ist schon drin), im Browser „Behalten“ wählen.</li><li>Doppelklick. Bei „Der Computer wurde durch Windows geschützt“: <b>Weitere Informationen → Trotzdem ausführen</b>.</li><li>Installation laufen lassen, einmal Administrator-Rechte mit „Ja“ bestätigen.</li><li>Am Ende Telegram verbinden – das Fenster führt dich durch.</li></ol>'+
+      '<p class="nd-klein">Zugangscode (falls abgefragt): <code>'+esc(s.zugangscode)+'</code></p></div>';return}
+    if(s.status==="abgelehnt"){box.innerHTML='<h3>Danke für dein Interesse</h3><div class="nd-status"><p class="nd-klein">Im Moment kann ich dich leider nicht ins Netzwerk aufnehmen. Melde dich gern später nochmal.</p></div>';return}
+    box.innerHTML='<h3>'+(neu?"Danke, "+vor+"! ✉️":"Hallo "+vor+"!")+'</h3><div class="nd-status"><div class="gross">In Prüfung</div><p class="nd-klein">Deine Bewerbung ist angekommen. Ich schaue sie mir an – sobald du freigeschaltet bist, bekommst du eine E-Mail mit deinem persönlichen Starter und der Anleitung.</p>'+
+      '<p class="nd-klein">Deinen Stand siehst du jederzeit hier (in diesem Browser gemerkt) oder über deinen persönlichen Link:<br><code>'+esc(link)+'</code></p></div>';
+  }).catch(function(){box.innerHTML='<p class="nd-klein">Der Stand kann gerade nicht geladen werden. Bitte später nochmal.</p>'})}
+function karte(){var t=merk(),el=document.getElementById("meineBew");if(!t||!el)return;
+  fetch(Z+"/bewerbung/status?t="+encodeURIComponent(t)).then(function(r){return r.json()}).then(function(s){if(s.fehler){return}
+    el.hidden=false;el.innerHTML=s.status==="angenommen"?"🎉 Du bist freigeschaltet – <b>hier geht’s zur Installation</b>":(s.status==="abgelehnt"?"Deine Bewerbung: leider abgelehnt":"⏳ Deine Bewerbung ist in Prüfung – Stand ansehen");
+    el.onclick=function(){zeige(t)}}).catch(function(){})}
+var h=location.hash.match(/^#bewerbung=([\w-]+)/);if(h){merk(h[1]);setTimeout(function(){zeige(h[1])},300)}
+karte();
+})();</script>
 <script>
 (function(){
   var API="https://agenten-live.kopfwetterroman.workers.dev", el=function(i){return document.getElementById(i)};
@@ -881,6 +1042,9 @@ d.addEventListener("click",function(e){var r=d.getBoundingClientRect();if(e.clie
       <h4>6. Live-Ansicht meiner KI-Agenten (Cloudflare)</h4>
       <p>Im Bereich „KI-Agenten live“ zeigt die Website, woran meine KI-Agenten gerade arbeiten. Das Pixel-Büro und der Status werden von einem kleinen Dienst bei Cloudflare ausgeliefert (agenten-live.kopfwetterroman.workers.dev). Sobald du diesen Bereich ansiehst, lädt dein Browser die Ansicht von dort und fragt alle paar Sekunden den aktuellen Stand ab (Cloudflare Workers; Anbieter: Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA). Dabei verarbeitet Cloudflare technisch notwendige Daten, insbesondere deine IP-Adresse, Datum und Uhrzeit sowie Browser-Informationen. Ich speichere keine Besucherdaten und setze keine Cookies; gespeichert wird dort nur der Status meiner eigenen Agenten.</p>
       <p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Mein berechtigtes Interesse liegt darin, mein Projekt live und kostenfrei vorzuführen. Die Daten können in die USA übermittelt werden. Cloudflare ist nach dem EU-U.S. Data Privacy Framework zertifiziert (Art. 45 DSGVO). Weitere Informationen: <a href="https://www.cloudflare.com/de-de/privacypolicy/" target="_blank" rel="noopener">Datenschutzerklärung von Cloudflare</a>.</p>
+      <h4>6a. Bewerbung für das Agenten-Netzwerk</h4>
+      <p>Wenn du dich über das Formular „Jetzt mitmachen“ für das Agenten-Netzwerk bewirbst, verarbeite ich die Angaben, die du dort machst: Name, E-Mail-Adresse und – freiwillig – deine Grafikkarte und eine Nachricht. Gespeichert werden sie in meiner „Agenten-Zentrale“, einem Dienst bei Cloudflare (agenten-zentrale.kopfwetterroman.workers.dev; Anbieter: Cloudflare, Inc., siehe Punkt 6). Zum Schutz vor Missbrauch wird außerdem ein nicht umkehrbarer Hashwert deiner IP-Adresse gespeichert, um zu viele Bewerbungen vom selben Anschluss zu begrenzen. Über neue Bewerbungen werde ich per Telegram benachrichtigt (Name, E-Mail-Adresse und deine Angaben werden dafür an Telegram übermittelt; Anbieter: Telegram Messenger Inc.).</p>
+      <p>Zweck ist die Prüfung deiner Bewerbung und – wenn ich sie annehme – das Einrichten deines Zugangs und der Versand einer E-Mail mit der Installationsanleitung über mein E-Mail-Postfach (Google Gmail). Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO) bzw. die Durchführung vorvertraglicher Maßnahmen auf deine Anfrage (Art. 6 Abs. 1 lit. b DSGVO). Du kannst die Einwilligung jederzeit per E-Mail an mich widerrufen. Bewerbungsdaten werden spätestens nach 180 Tagen automatisch gelöscht. Im Netzwerk selbst erscheinst du nur mit einem Decknamen. Deinen Bewerbungsstand merkt sich dein Browser im lokalen Speicher (Local Storage), damit du ihn wieder aufrufen kannst.</p>
       <h4>7. Links zu anderen Websites</h4>
       <p>Auf dieser Seite gibt es Links zu anderen Anbietern, etwa zu LinkedIn. Es handelt sich um einfache Links. Es werden keine Inhalte dieser Anbieter eingebunden und beim Aufruf dieser Seite keine Daten an sie übertragen. Erst wenn du einen Link anklickst, gelten die Datenschutzbestimmungen des jeweiligen Anbieters.</p>
 
