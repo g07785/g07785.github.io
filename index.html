@@ -603,15 +603,18 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
       <div class="hl-task" id="agAufgabe">Verbinde mit meinem PC …</div>
       <div class="hl-office" id="agOffice"><iframe src="https://agenten-live.kopfwetterroman.workers.dev/" title="Pixel-Büro mit meinen KI-Agenten (Live-Ansicht)" loading="lazy" tabindex="-1" scrolling="no"></iframe><div class="hl-off">💤 Mein PC schläft gerade – die Agenten machen Pause.</div></div>
       <div class="hl-note">Ein <b>Netzwerk aus PCs</b>, auf denen KI-Agenten-Teams arbeiten. Freunde und Bekannte können beitreten: Wer seine Rechenleistung für andere bereitstellt, sammelt <b>Punkte</b> und setzt sie für eigene Projekte ein – <b>anonym und verschlüsselt</b>.</div>
-      <details class="hl-mehr"><summary>So funktioniert das Netzwerk</summary>
-        <ul>
-          <li><b>Eigenes Team auf jedem PC:</b> Recherche, Programmieren, Texte, Bilder, Videos – die KI-Modelle laufen direkt auf der Grafikkarte, ohne Cloud-KI.</li>
-          <li><b>Gemeinsam schneller:</b> Ist ein PC ausgelastet, übernimmt ein freier PC im Netz einen Teil der Arbeit.</li>
-          <li><b>Punkte statt Geld:</b> 1 Punkt = 1 Minute Grafikkarten-Rechenzeit. Wer für andere rechnet, bekommt Punkte; wer Hilfe nutzt, gibt sie aus. Eigene PCs kosten nichts.</li>
-          <li><b>Anonym &amp; gesichert:</b> Aufträge werden Ende-zu-Ende-verschlüsselt übertragen, im Netz erscheinen nur Decknamen. Inhalte, Dateien und Ergebnisse bleiben auf den beteiligten PCs – die Zentrale kennt nur Zahlen. Beitritt nur mit Einladung.</li>
+      <button type="button" class="hl-mehr" id="netzInfoAuf" aria-haspopup="dialog">So funktioniert das Netzwerk</button>
+      <dialog class="netz-dialog" id="netzInfo" aria-labelledby="netzInfoTitel">
+        <div class="nd-kopf"><h3 id="netzInfoTitel">So funktioniert das Netzwerk</h3><button type="button" class="nd-zu" id="netzInfoZu" aria-label="Schließen">✕</button></div>
+        <p class="nd-lead">Ein Netzwerk aus PCs, auf denen KI-Agenten-Teams arbeiten – und das mit jedem PC stärker wird, der dazukommt.</p>
+        <ul class="nd-liste">
+          <li><b>Eigenes Team auf jedem PC</b>Recherche, Programmieren, Texte, Bilder, Videos – die KI-Modelle laufen direkt auf der Grafikkarte, ohne Cloud-KI.</li>
+          <li><b>Gemeinsam schneller</b>Ist ein PC ausgelastet, übernimmt ein freier PC im Netz einen Teil der Arbeit.</li>
+          <li><b>Punkte statt Geld</b>1 Punkt = 1 Minute Grafikkarten-Rechenzeit. Wer für andere rechnet, bekommt Punkte; wer Hilfe nutzt, gibt sie aus. Eigene PCs kosten nichts.</li>
+          <li><b>Anonym &amp; gesichert</b>Aufträge werden Ende-zu-Ende-verschlüsselt übertragen, im Netz erscheinen nur Decknamen. Inhalte, Dateien und Ergebnisse bleiben auf den beteiligten PCs – die Zentrale kennt nur Zahlen. Beitritt nur mit Einladung.</li>
         </ul>
-        <div class="hl-klein">Hier oben siehst du live mein eigenes Team. Übertragen werden nur Status und Überschrift.</div>
-      </details>
+        <p class="nd-fuss">Oben auf der Seite siehst du live mein eigenes Team. Übertragen werden dafür nur Status und Überschrift.</p>
+      </dialog>
     </div>
   </div>
   </div>
@@ -631,15 +634,26 @@ body.bigshake{animation:bigshake .9s cubic-bezier(.36,.07,.19,.97)}
 .hero-live .hl-off{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:16px;color:#e5e7eb;background:rgba(10,12,18,.72);font-family:var(--mono);font-size:13px}
 .hero-live .hl-office.offline .hl-off{display:grid}
 .hero-live .hl-note{color:var(--muted);font-size:12.5px;margin:8px 4px 2px;line-height:1.45}
-.hero-live .hl-mehr{margin:6px 4px 2px;font-size:12.5px;color:var(--muted);line-height:1.5}
-.hero-live .hl-mehr summary{cursor:pointer;color:var(--p);font-family:var(--mono);font-size:12px;letter-spacing:.03em;list-style:none;display:inline-flex;align-items:center;gap:6px}
-.hero-live .hl-mehr summary::-webkit-details-marker{display:none}
-.hero-live .hl-mehr summary:before{content:"+";display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid var(--line);border-radius:50%;font-size:12px;line-height:1}
-.hero-live .hl-mehr[open] summary:before{content:"–"}
-.hero-live .hl-mehr ul{margin:8px 0 6px;padding-left:18px}.hero-live .hl-mehr li{margin:4px 0}.hero-live .hl-mehr b{color:var(--text,inherit)}
-.hero-live .hl-klein{font-size:11.5px;opacity:.85}
+.hero-live .hl-mehr{display:inline-flex;align-items:center;gap:7px;margin:6px 4px 2px;padding:0;border:0;background:none;cursor:pointer;color:var(--p);font-family:var(--mono);font-size:12px;letter-spacing:.03em}
+.hero-live .hl-mehr:before{content:"i";display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid currentColor;border-radius:50%;font-size:10.5px;font-weight:700;line-height:1}
+.hero-live .hl-mehr:hover{text-decoration:underline;text-underline-offset:3px}
+.netz-dialog{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;border:1px solid var(--line);border-radius:18px;padding:22px 24px 18px;background:var(--card);color:var(--text);box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.netz-dialog::backdrop{background:rgba(10,12,20,.55);backdrop-filter:blur(4px)}
+.netz-dialog[open]{animation:ndAuf .22s ease-out}@keyframes ndAuf{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+.netz-dialog .nd-kopf{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.netz-dialog h3{margin:0;flex:1;font-family:var(--disp);font-size:20px;line-height:1.25}
+.netz-dialog .nd-zu{border:1px solid var(--line);background:none;color:var(--muted);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px}
+.netz-dialog .nd-zu:hover{color:var(--text);border-color:var(--p)}
+.netz-dialog .nd-lead{margin:0 0 12px;color:var(--muted);font-size:14.5px;line-height:1.5}
+.netz-dialog .nd-liste{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.netz-dialog .nd-liste li{border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px;line-height:1.5;color:var(--muted);background:var(--bg2)}
+.netz-dialog .nd-liste b{display:block;color:var(--text);font-size:14.5px;margin-bottom:2px}
+.netz-dialog .nd-fuss{margin:12px 2px 0;font-size:12.5px;color:var(--muted)}
 @media(max-width:900px){.hero{padding-bottom:96px}.hero-right{margin-top:4px}}
 </style>
+<script>(function(){var d=document.getElementById("netzInfo"),a=document.getElementById("netzInfoAuf"),z=document.getElementById("netzInfoZu");if(!d||!a)return;
+a.onclick=function(){if(d.showModal)d.showModal();else d.setAttribute("open","")};z.onclick=function(){d.close?d.close():d.removeAttribute("open")};
+d.addEventListener("click",function(e){var r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()})})();</script>
 <script>
 (function(){
   var API="https://agenten-live.kopfwetterroman.workers.dev", el=function(i){return document.getElementById(i)};
