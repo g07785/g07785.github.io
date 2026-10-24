@@ -1420,7 +1420,8 @@ function updateBreeding(dt){
 
 /* ================= player update ================= */
 function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.form;
-  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.netT>0||state.captured||(TAG&&TAG.phase==='count'&&TAG.chaser==='m')){fwd=str=0;input.up=input.down=false}
+  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.stunT>0){state.stunT-=dt;if(Math.random()<dt*6)floatIcon('💫',P.clone().add(new V3(rnd(-0.5,0.5),2.4,rnd(-0.5,0.5))),1,0.2,0.8)}
+  if(state.netT>0||state.captured||state.stunT>0||(TAG&&TAG.phase==='count'&&TAG.chaser==='m')){fwd=str=0;input.up=input.down=false}
   const K=input.keys;if(K.KeyW||K.ArrowUp)fwd+=1;if(K.KeyS||K.ArrowDown)fwd-=1;if(K.KeyA||K.ArrowLeft)str-=1;if(K.KeyD||K.ArrowRight)str+=1;
   const il=Math.hypot(fwd,str);if(il>1){fwd/=il;str/=il}
   const sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);const mx=-sy*fwd+cy*str,mz=-cy*fwd-sy*str;const mag=Math.hypot(mx,mz);
@@ -1429,7 +1430,7 @@ function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.fo
   let spd;switch(mode){case'human':spd=lake&&P.y<=WATER_Y?4.5:8.5;break;case'unicorn':spd=P.y>gnd+0.6?24:15;break;case'ride':spd=(P.y>gnd+0.6?18:12)*(player.riding?powSpeed(player.riding):1);break;case'fairy':spd=9.5;break;default:spd=swimming?14:4.5}if(VR.on)spd*=VR.speedK;
   if(player.boostT>0){player.boostT-=dt;spd*=1.5;if(Math.random()<dt*25)emit(P.x+rnd(-0.5,0.5),P.y+rnd(0.3,1.5),P.z+rnd(-0.5,0.5),0,0.5,0,pick(SPARK),0.5,0.7,0)}
   player.vel.x=lerp(player.vel.x,mx*spd,damp(7,dt));player.vel.z=lerp(player.vel.z,mz*spd,damp(7,dt));
-  const flyer=mode==='unicorn'||mode==='fairy'||mode==='ride';player.leap-=dt;
+  if(state.fallT>0)state.fallT-=dt;const flyer=(mode==='unicorn'||mode==='fairy'||mode==='ride')&&!(state.fallT>0);player.leap-=dt;
   if(flyer){const vs=mode==='fairy'?8:12;const tv=input.up?vs:input.down?-vs:0;player.vel.y=lerp(player.vel.y,tv,damp(6,dt))}
   else if(swimming){if(input.up&&P.y>WATER_Y-0.6){player.vel.y=11;player.leap=0.4;SFX.splash();burst(P.clone(),30,4,0.5,0.8,[0xffffff,0x9fd8ff,0x7ec8ff])}
     else player.vel.y=lerp(player.vel.y,input.up?6:input.down?-6:0,damp(5,dt))}
@@ -1442,7 +1443,7 @@ function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.fo
   if(lake2&&mode!=='mermaid'&&!(mode==='ride'&&hasP(player.riding,'water')))fl=Math.max(fl,mode==='human'?WATER_Y-0.95:WATER_Y);
   if(mode==='mermaid'&&lake2)fl=fl+0.2;
   if(P.y<fl){P.y=fl;if(player.vel.y<0)player.vel.y=0}
-  player.grounded=P.y<=fl+0.06;
+  player.grounded=P.y<=fl+0.06;if(player.grounded&&state.fallT>0){state.fallT=0;burst(P.clone(),30,4,0.6,0.8,[0xffffff,0xd8f0ff])}
   if(swimming&&P.y>WATER_Y-0.35&&player.leap<=0&&player.vel.y<=0.5){P.y=Math.min(P.y,WATER_Y-0.35)}
   const ceil=player.riding&&hasP(player.riding,'star')?170:78;if(P.y>ceil){P.y=ceil;player.vel.y=Math.min(0,player.vel.y)}
   if(mode!=='fairy'){const dx=P.x-DOME.x,dz=P.z-DOME.z,d=Math.hypot(dx,dz);if(d<4.4&&P.y<DOME_TOP){const k=4.4/(d||1);P.x=DOME.x+dx*k;P.z=DOME.z+dz*k}}
@@ -1645,7 +1646,7 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
     let tg=chase?P.clone().add(new V3(0,0.8,0)):b.target,sp=chase?5.2:3;if(b.flee>0){tg=b.pos.clone().add(b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10));sp=7}
     const dx=tg.x-b.pos.x,dz=tg.z-b.pos.z;b.yaw=angLerp(b.yaw,Math.atan2(dx,dz),damp(chase?3:1.2,dt));b.pos.x+=Math.sin(b.yaw)*sp*dt;b.pos.z+=Math.cos(b.yaw)*sp*dt;
     b.pos.y=clamp(lerp(b.pos.y,tg.y,damp(1.2,dt)),terrainH(b.pos.x,b.pos.z)+1.3,WATER_Y-0.8);
-    if(chase&&d<2.8&&bumpCD<=0){bumpCD=3.5;b.flee=3;const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(14);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y+=3;
+    if(chase&&d<2.8&&bumpCD<=0){bumpCD=3.5;b.flee=3;state.stunT=1.6;const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(14);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y+=3;
       floatIcon('💫',P.clone().add(new V3(0,2,0)),3,0.6,1);SFX.splash();say('sharkBump',{prio:2});if(VR.on){buzz(0,1,200);buzz(1,1,200)}}
     u.ph+=dt*(3+sp*1.2);u.tail.rotation.y=Math.sin(u.ph)*0.4;u.inner.rotation.z=b.flash>0?Math.sin(NOW*40)*0.3:0;u.inner.scale.setScalar(b.flash>0?1.15:1);
     b.mesh.position.copy(b.pos);b.mesh.rotation.y=b.yaw;b.mesh.visible=b.pos.distanceTo(CAMW)<(CAMW.y<WATER_Y?75:50)}
@@ -1732,7 +1733,7 @@ function updateVillains(dt){const P=player.pos,rpow=player.riding&&player.riding
     if(b.flee>0){const aw=b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(b,b.pos.clone().add(aw),6,dt)}
     else if(chase){if(b.roarT<=0){b.roarT=rnd(9,13);floatIcon('💢',b.pos.clone().add(new V3(0,5,0)),2,0.6,1.3);Voice.say(pickNew('rex',REX_LINES),{prio:0,who:'rex'})}sp=villainStep(b,P,Math.min(6,playerRun()*0.72),dt)}
     else{if(b.wanderT<=0){const q=landSpot(b.pos.x,b.pos.z,8,30);if(q)b.target.copy(q);b.wanderT=rnd(6,12)}sp=villainStep(b,b.target,1.8,dt)}
-    if(chase&&d<3&&bumpCD<=0){bumpCD=3;b.flee=3;const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(13);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y+=5;
+    if(chase&&d<3&&bumpCD<=0){bumpCD=3;b.flee=3;state.stunT=1.8;const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(13);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y+=5;
       floatIcon('💫',P.clone().add(new V3(0,2,0)),3,0.6,1);SFX.splash();say('rexBump',{prio:2});if(VR.on){buzz(0,1,200);buzz(1,1,200)}}
     b.pos.y=terrainH(b.pos.x,b.pos.z);b.mesh.position.copy(b.pos);b.mesh.rotation.y=b.yaw;animSimple(b,dt,sp);b.mesh.userData.inner.scale.setScalar(b.flash>0?1.12:1);
     b.mesh.visible=b.pos.distanceTo(CAMW)<130;placeShadow(b.shadow,b.pos.x,b.pos.y,b.pos.z,4)}
@@ -1822,7 +1823,7 @@ function updatePteros(dt){const P=player.pos,gP=groundAt(P.x,P.z,P.y),air=P.y>gP
     const can=air&&!inSafe(P.x,P.z)&&!hasP(player.riding,'ghost')&&d<60;
     if(b.flee>0){flap=true;const aw=b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(20);flyTo(b,b.pos.clone().add(aw).setY(Math.max(b.pos.y,P.y+12)),16,dt)}
     else if(b.swoop>0){b.swoop-=dt;flap=true;flyTo(b,P.clone().add(new V3(0,0.8,0)),Math.min(22,airSp*0.95),dt);
-      if(d<2.8&&bumpCD<=0){bumpCD=3;b.flee=4;b.swoop=0;b.swoopCD=rnd(7,10);const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(14);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y-=7;
+      if(d<2.8&&bumpCD<=0){bumpCD=3;b.flee=4;b.swoop=0;state.stunT=1.2;state.fallT=6;b.swoopCD=rnd(7,10);const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(14);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y-=7;
         floatIcon('💫',P.clone().add(new V3(0,2,0)),3,0.6,1);SFX.splash();say('pteroBump',{prio:2});if(VR.on){buzz(0,1,200);buzz(1,1,200)}}
       if(!can)b.swoop=0}
     else if(can&&b.swoopCD<=0){b.swoop=6;if(b.screamT<=0){b.screamT=rnd(8,12);Voice.say(pickNew('ptero',PTERO_LINES),{prio:0,who:'ptero'})}floatIcon('💢',b.pos.clone().add(new V3(0,2,0)),2,0.5,1.2)}
