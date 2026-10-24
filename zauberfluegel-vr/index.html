@@ -1166,7 +1166,7 @@ function updatePegs(dt){
       const g=groundAt(a.pos.x,a.pos.z,a.pos.y+0.5);a.pos.y=dP>PAD.r+1?Math.max(g,lerp(a.pos.y,g,damp(3,dt))):g;flying=a.pos.y>g+0.6;
       if(!a.adult&&NOW-(a.passive||0)>60){a.passive=NOW;if(a.passive>60){a.growth++;if(a.growth>=GROW_N)growUp(a)}}}
     else if(a.state==='ridden'){spd=Math.hypot(player.vel.x,player.vel.z);flying=player.pos.y>groundAt(player.pos.x,player.pos.z,player.pos.y)+0.5;a.pos.copy(player.pos);a.yaw=player.yaw;a.grazing=false}
-    a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(camera.position)<150;animPeg(a,dt,spd,flying);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
+    a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(CAMW)<150;animPeg(a,dt,spd,flying);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
   if(followers.length&&hd(player.pos,PAD)<PAD.r+14&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
 }
 // breeding: two grown-up horses become parents
@@ -1260,7 +1260,7 @@ function updateCreatures(dt){
     else{n.yaw=angLerp(n.yaw,dn<15?Math.atan2(player.pos.x-n.pos.x,player.pos.z-n.pos.z):(n.rest||0),damp(3,dt));
       if(n.hover){n.pos.y=n.home.y+0.6+Math.sin(NOW*2)*0.25;u.wings.forEach((w,i)=>{w.rotation.y=(i?1:-1)*(0.35+Math.sin(NOW*20)*0.4)})}
       u.arms[1].rotation.x=n.wave>0||(dn<9&&dn>4.8)?-2.6+Math.sin(NOW*8)*0.3:0;u.arms[1].rotation.z=0.25+(n.wave>0?0.3:0)}
-    n.mesh.position.copy(n.pos);n.mesh.rotation.y=n.yaw;n.mesh.visible=n.pos.distanceTo(camera.position)<140;
+    n.mesh.position.copy(n.pos);n.mesh.rotation.y=n.yaw;n.mesh.visible=n.pos.distanceTo(CAMW)<140;
     if(n===ng&&dn<60&&Math.random()<dt*1.4)floatIcon('❕',n.pos.clone().add(new V3(0,3.2*n.scale,0)),1,0.1,0.9);
     placeShadow(n.shadow,n.pos.x,n.pos.y,n.pos.z,1.6*n.scale)}
   // bunnies (sit still and look at Marie when she comes close)
@@ -1268,7 +1268,7 @@ function updateCreatures(dt){
     if(!near&&b.wait<=0&&b.hop<=0){b.tgt.set(b.home.x+rnd(-6,6),0,b.home.z+rnd(-6,6));b.wait=rnd(1.5,4);b.hop=1}
     if(b.hop>0&&!near){const dx=b.tgt.x-b.pos.x,dz=b.tgt.z-b.pos.z,d=Math.hypot(dx,dz);if(d<0.3){b.hop=0}else{b.pos.x+=dx/d*2.5*dt;b.pos.z+=dz/d*2.5*dt;b.yaw=Math.atan2(dx,dz)}}
     if(near)b.yaw=angLerp(b.yaw,Math.atan2(player.pos.x-b.pos.x,player.pos.z-b.pos.z),damp(4,dt));
-    b.m.visible=b.pos.distanceTo(camera.position)<110;const g=terrainH(b.pos.x,b.pos.z);b.pos.y=g;b.m.position.set(b.pos.x,g+(b.hop>0&&!near?Math.abs(Math.sin(NOW*9))*0.45:0)+(b.happy>0?Math.abs(Math.sin(NOW*10))*0.35:0),b.pos.z);b.m.rotation.y=b.yaw}
+    b.m.visible=b.pos.distanceTo(CAMW)<110;const g=terrainH(b.pos.x,b.pos.z);b.pos.y=g;b.m.position.set(b.pos.x,g+(b.hop>0&&!near?Math.abs(Math.sin(NOW*9))*0.45:0)+(b.happy>0?Math.abs(Math.sin(NOW*10))*0.35:0),b.pos.z);b.m.rotation.y=b.yaw}
   // sharks: cruise around the lake; when the mermaid comes close they swim over and look at her
   for(const s of sharks){s.happy-=dt;s.munch-=dt;s.wanderT-=dt;const u=s.mesh.userData;const mer=player.form==='mermaid'&&inLake(player.pos.x,player.pos.z)&&player.pos.y<WATER_Y+0.5;
     const dP=s.pos.distanceTo(player.pos),near=mer&&dP<12;
@@ -1280,7 +1280,7 @@ function updateCreatures(dt){
     s.pos.y=clamp(s.pos.y,terrainH(s.pos.x,s.pos.z)+1.3,WATER_Y-1.6);
     u.ph+=dt*(3+go*1.2);u.tail.rotation.y=Math.sin(u.ph)*0.35;u.head.rotation.y=-Math.sin(u.ph)*0.08;u.fins.forEach((f,i)=>f.rotation.z=(i?1:-1)*Math.sin(NOW*2+i)*0.15);
     u.inner.rotation.z=s.happy>0?Math.sin(NOW*12)*0.35:Math.sin(u.ph*0.5)*0.04;u.inner.position.y=s.happy>0?Math.abs(Math.sin(NOW*8))*0.3:0;
-    s.mesh.position.copy(s.pos);s.mesh.rotation.y=s.yaw;s.mesh.visible=s.pos.distanceTo(camera.position)<(camera.position.y<WATER_Y?75:45);if(s.happy>0&&Math.random()<dt*8)emit(s.pos.x,s.pos.y+1,s.pos.z,rnd(-0.3,0.3),1.2,rnd(-0.3,0.3),0xffffff,0.4,1.2,-1)}
+    s.mesh.position.copy(s.pos);s.mesh.rotation.y=s.yaw;s.mesh.visible=s.pos.distanceTo(CAMW)<(CAMW.y<WATER_Y?75:45);if(s.happy>0&&Math.random()<dt*8)emit(s.pos.x,s.pos.y+1,s.pos.z,rnd(-0.3,0.3),1.2,rnd(-0.3,0.3),0xffffff,0.4,1.2,-1)}
   for(const f of fish){f.a+=f.s*dt*0.6;const x=f.cx+Math.cos(f.a)*f.r,z=f.cz+Math.sin(f.a)*f.r;const g=terrainH(x,z);f.m.position.set(x,Math.max(g+0.8,f.y+Math.sin(NOW+f.r)*0.3),z);f.m.rotation.y=Math.atan2(-Math.sin(f.a)*Math.sign(f.s),Math.cos(f.a)*Math.sign(f.s))}
   // treasure chest glitter + bubbles from the wreck
   if(Math.random()<dt*6)emit(CHEST.x+rnd(-0.6,0.6),CHEST.y+1,CHEST.z+rnd(-0.6,0.6),0,0.8,0,pick([0xffd54a,0xffe9a0,0xffffff]),0.5,1.1,0);
@@ -1368,7 +1368,7 @@ VR.arrow=new THREE.Group();(()=>{const m=new THREE.MeshBasicMaterial({color:0xff
 function headLocal(){return camera.position}  // pose inside the rig (metres)
 function startVR(){if(!navigator.xr)return;navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']}).then(async s=>{
     renderer.xr.setReferenceSpaceType('local-floor');await renderer.xr.setSession(s);try{s.renderState.baseLayer&&(s.renderState.baseLayer.fixedFoveation=1)}catch(e){}
-    VR.on=true;VR.rig.add(camera);camera.position.set(0,1.2,0);camera.rotation.set(0,0,0);VR.rig.rotation.y=player.yaw+Math.PI;camera.far=420;camera.updateProjectionMatrix();
+    VR.on=true;VR.rig.add(camera);camera.position.set(0,1.2,0);camera.rotation.set(0,0,0);VR.rig.rotation.y=player.yaw+Math.PI;camera.far=1200;camera.updateProjectionMatrix();
     dust.visible=false;startGame();s.addEventListener('end',()=>{VR.on=false;scene.add(camera);VR.rig.remove(camera);camera.far=900;dust.visible=true;VR.vign.visible=false;VR.sub.visible=false;VR.arrow.visible=false;VR.ctxGroup.clear();player.root.visible=true;resize()})})
   .catch(e=>console.warn('VR start failed',e))}
 function vrInput(dt){const s=renderer.xr.getSession();VR.mx=VR.my=0;input.up=input.down=false;if(!s)return;
@@ -1420,7 +1420,8 @@ let drawStarPanelT=0;
 
 /* ================= main loop ================= */
 let last=performance.now(),uiT=0,saveT=0;
-function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;NOW+=dt;
+const CAMW=new V3();  // camera position in world space (in VR the camera sits inside the rig)
+function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else CAMW.copy(camera.position);const dt=Math.min(0.05,(now-last)/1000);last=now;NOW+=dt;
   if(VR.on)vrInput(dt);
   if(state.started){updatePlayer(dt);recordTrail();updateGuide(dt);updateItem(dt);if(VR.on)updateVR(dt);
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
