@@ -1573,7 +1573,7 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
     else if(state.captured&&state.captured.ship===s){const q=seaPt(150,0);const dx=q.x-s.pos.x,dz=q.z-s.pos.z;s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.4,dt));if(Math.hypot(dx,dz)>10){s.pos.x+=Math.sin(s.yaw)*3*dt;s.pos.z+=Math.cos(s.yaw)*3*dt}
       s.shoutT-=dt;if(s.shoutT<=0){s.shoutT=rnd(10,15);Voice.say(pickNew('piratCap',PIRATE_CAP_LINES),{prio:0,who:'pirat'})}u.pirates.forEach((p,i)=>{p.userData.arms[1].rotation.x=-1.5+Math.sin(NOW*3+i)*0.3})}
     else{const rpw=player.riding&&player.riding.power,sleepy=rpw==='moon'&&d<55;if(sleepy){s.netT=Math.max(s.netT,2);if(Math.random()<dt*0.8)floatIcon('💤',s.pos.clone().add(new V3(rnd(-2,2),5,rnd(-2,2))),1,0.5,1.2)}
-      const hunt=inW&&d<75&&rpw!=='ghost'&&!sleepy;if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
+      const hunt=inW&&d<75&&rpw!=='ghost'&&!sleepy&&!(s.scared>NOW);if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
       let tg=s.target;if(hunt){const side=new V3(Math.cos(NOW*0.2),0,Math.sin(NOW*0.2)).multiplyScalar(20);tg=P.clone().add(side)}
       const dx=tg.x-s.pos.x,dz=tg.z-s.pos.z,dd=Math.hypot(dx,dz);if(dd>3){s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.7,dt));s.pos.x+=Math.sin(s.yaw)*(hunt?7:4)*dt;s.pos.z+=Math.cos(s.yaw)*(hunt?7:4)*dt}
       if(terrainH(s.pos.x,s.pos.z)>-4){s.pos.x-=Math.sin(s.yaw)*8*dt;s.pos.z-=Math.cos(s.yaw)*8*dt;s.wanderT=0}
@@ -1602,7 +1602,7 @@ const cmdAll=()=>[...NPCS,...pegs,trex,bra,...bunnies,...sharks];
 function cmdHome(x){if(x.kind==='trex'||x.kind==='brachio')return new V3(x.area.x,2,x.area.z);if(x.kind==='bunny')return x.home;if(!x.kind&&!x.swim)return x.home;return null}
 function kiAction(x,act){if(!x||!act)return;if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
   switch(act){case 'jump':x.jumpT=1.8;break;case 'dance':x.danceT=4;break;
-    case 'follow':x.cmd={t:'follow',until:NOW+300};break;case 'protect':x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
+    case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
     case 'fly':if(!cmdCanFly(x)){x.jumpT=1.8;break}x.cmd={t:'fly',t0:NOW,base:x.pos.clone(),ang:0,after:prev&&(prev.t==='follow'||prev.t==='protect')?prev:null};break;
     case 'hide':{const sp=hideSpot(x);if(!sp){x.jumpT=1.5;break}x.cmd={t:'hide',phase:'wait',t0:NOW,spot:sp,call:0};break}}}
 // Versteck: 16–40 m weg, möglichst hinter Marie (wo sie gerade nicht hinschaut), im richtigen Element (Land/Wasser)
@@ -1613,7 +1613,9 @@ function hideSpot(x){const P=player.pos,look=camera.getWorldDirection(new V3());
   return best}
 function cmdMove(x,dt){const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),max=CMD_SPEED[x.kind||(sw?'swim':'npc')]||7;let tgt=null,sp=0,face=null;
   if(c.until&&NOW>c.until){x.cmd={t:'return'};return cmdMove(x,dt)}
-  if(c.t==='follow'||c.t==='protect'){const L=cmdAll().filter(q=>q.cmd&&(q.cmd.t==='follow'||q.cmd.t==='protect')),i=Math.max(0,L.indexOf(x));
+  if(c.t==='protect'&&c.foe&&(c.foe.alive||c.foe.active)&&(sw||fl)){const f=c.foe,fp=f.kind==='ship'?f.pos.clone():f.pos,away=x.pos.clone().sub(fp).setY(0);if(away.lengthSq()<0.01)away.set(1,0,0);away.normalize().multiplyScalar(f.kind==='ship'?9:5);
+    tgt=fp.clone().add(away);tgt.y=sw?(f.kind==='ship'?-0.6:fp.y):fp.y+(f.kind==='ship'?9:3);sp=max*1.5}
+  else if(c.t==='follow'||c.t==='protect'){const L=cmdAll().filter(q=>q.cmd&&(q.cmd.t==='follow'||q.cmd.t==='protect')),i=Math.max(0,L.indexOf(x));
     tgt=trail.length>3?trailAt(3.2+i*2.6+(x.kind==='brachio'?4:0)+followers.length*3):P.clone();const d=hd(x.pos,tgt);
     if(hd(x.pos,P)>70&&!(sw&&!inLake(P.x,P.z))){x.pos.copy(tgt);if(!fl)x.pos.y=sw?Math.min(tgt.y,-0.6):groundAt(tgt.x,tgt.z)}
     sp=Math.min(max,d*1.6);if(d<1.2){sp=0;face=P}}
@@ -1644,14 +1646,22 @@ function cmdMove(x,dt){const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x)
 const GUARD_L={shark:['Lass Marie in Ruhe, du böser Hai!','Weg da, böser Hai!'],ship:['Weg da, ihr Piraten!','Lasst Marie in Ruhe, ihr Piraten!'],net:['Das Netz kriegt dich nicht, Marie!'],cage:['Halt durch, Marie, ich hol dich da raus!']};
 function guardSay(x,k){if(NOW<(x.guardSay||0))return;x.guardSay=NOW+18;kiSay(x,pick(GUARD_L[k]))}
 function guardShoot(from,t){const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xff9fe0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
-  spr.scale.setScalar(1.6);spr.position.copy(from);scene.add(spr);const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;SHOTS.push({spr,pos:from.clone(),vel:c.clone().sub(from).normalize().multiplyScalar(40),life:2.6,tgt:t});SFX.zap()}
-function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd||x.cmd.t!=='protect')continue;x.guardCD-=dt;
+  spr.scale.setScalar(2.4);spr.position.copy(from);scene.add(spr);const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;SHOTS.push({spr,pos:from.clone(),vel:c.clone().sub(from).normalize().multiplyScalar(40),life:2.6,tgt:t});SFX.zap()}
+function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd||x.cmd.t!=='protect')continue;x.guardCD-=dt;const c=x.cmd;
     const from=x.pos.clone().add(new V3(0,(x.h||2.2)*0.8+(x.kind==='shark'?0:0.6),0));
+    // sichtbar: rosa Schutzglitzer und ab und zu ein Schild
+    if(Math.random()<dt*10)emit(x.pos.x+rnd(-1.2,1.2),x.pos.y+rnd(0.3,(x.h||2)*1.1),x.pos.z+rnd(-1.2,1.2),0,0.7,0,pick([0xff9fe0,0xffffff,0xffd6f0]),0.5,0.9,0);
+    x.shieldT=(x.shieldT||0)-dt;if(x.shieldT<=0){x.shieldT=3.5;floatIcon('🛡️',x.pos.clone().add(new V3(0,(x.h||2)+1,0)),1,0.2,0.9)}
+    // nächster Feind in Maries Nähe – Wasserwesen und Flieger jagen ihn
+    let foe=null,fd=1e9;for(const t of zapTargets()){const d=t.pos.distanceTo(P);if(d<60&&d<fd){fd=d;foe=t}}c.foe=foe;
+    if(foe){const df=foe.pos.distanceTo(x.pos);if(df<28){if(foe.kind==='badShark')foe.flee=Math.max(foe.flee,2.5);else{foe.scared=NOW+6;foe.netT=Math.max(foe.netT,3);
+        const aw=foe.pos.clone().sub(P).setY(0).normalize().multiplyScalar(60);foe.target.set(foe.pos.x+aw.x,0,foe.pos.z+aw.z);foe.wanderT=6}}}
+    if(x.zapA>0){x.zapA-=dt;const u=(x.mesh||{}).userData;if(u&&u.arms)u.arms[1].rotation.x=-2.8}
     for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];if(n.pos.distanceTo(from)<16||n.pos.distanceTo(P)<9){burst(n.pos.clone(),30,5,0.8,1,[0xff9fe0,0xffffff]);scene.remove(n.m);NETS.splice(i,1);SFX.sparkle();guardSay(x,'net')}}
     if(x.guardCD>0)continue;
-    if(state.captured){x.guardCD=2.4;burst(from,20,3,0.6,0.8,[0xff9fe0,0xffffff]);SFX.zap();cageZap();guardSay(x,'cage');continue}
-    let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<48&&d<bd){bd=d;best=t}}
-    if(best){x.guardCD=1.6;x.jumpT=Math.max(x.jumpT||0,0.6);guardShoot(from,best);guardSay(x,best.kind==='ship'?'ship':'shark')}}}
+    if(state.captured){x.guardCD=2.4;x.zapA=0.5;burst(from,20,3,0.6,0.8,[0xff9fe0,0xffffff]);SFX.zap();cageZap();guardSay(x,'cage');continue}
+    let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<60&&d<bd){bd=d;best=t}}
+    if(best&&best.pos.distanceTo(x.pos)<75){x.guardCD=1.2;x.zapA=0.5;if(x.kind)x.happy=0.6;burst(from.clone(),18,4,0.6,0.8,[0xff9fe0,0xffffff]);guardShoot(from,best);guardSay(x,best.kind==='ship'?'ship':'shark')}}}
 // Springen / Tanzen als kleine Einlage über der normalen Bewegung
 function updateCmdFx(dt){updateGuards(dt);for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
     if(x.jumpT>0){x.jumpT-=dt;m.position.y+=Math.abs(Math.sin((1.8-x.jumpT)*Math.PI*1.7))*hh}
