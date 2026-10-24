@@ -73,6 +73,8 @@ body{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-c
 #kiMic,#kiGo{font:800 20px 'Baloo 2',system-ui,sans-serif;color:#5b2a86;background:#fff6fb;border:3px solid var(--gold);border-radius:30px;padding:10px 22px;cursor:pointer}
 #kiGo{background:#ffd75e;font-size:22px}
 #kiMic[disabled]{opacity:.75;cursor:default}
+#tagBig{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font:800 120px/1 'Baloo 2',system-ui,sans-serif;color:#ff4f93;-webkit-text-stroke:5px #fff;text-shadow:0 6px 18px rgba(91,42,134,.4);pointer-events:none;z-index:25}
+@keyframes tagpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
 #tagBoard{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(104px + env(safe-area-inset-top,0px));width:min(290px,38vw);height:auto;z-index:19;pointer-events:none}
 #kiBox{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:rgba(255,250,243,.95);color:#5b2a86;border:3px solid #ff7eb6;border-radius:22px;padding:10px 16px;font:700 17px/1.35 'Baloo 2',system-ui,sans-serif;white-space:pre-line;text-align:center;pointer-events:none;z-index:20}
 #start .play-row{display:flex;gap:28px;align-items:center}
@@ -711,6 +713,8 @@ const LINES={
   autoFree:'Hihi, die Bösewichte sind eingeschlafen! Der Käfig geht auf! Schnell, lauf weg!',
   freedLand:'Puff! Der Käfig ist weg! Schnell, lauf davon!',
   starStolen:'Oh nein, der Kobold hat dir einen Stern geklaut! Verzaubere ihn, dann bekommst du ihn zurück!',
+  tagIntroRun:'Lauf schnell weg, wenn gezählt wird!',tagIntroCatch:'Jetzt fängst du! Bei Los rennst du hinterher!',
+  tag3:'Drei!',tag2:'Zwei!',tag1:'Eins!',tagGoRun:'Los, lauf weg!',tagGoCatch:'Los, fang!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -1908,11 +1912,14 @@ function playerTop(){const P=player.pos,mode=player.riding?'ride':player.form,gn
 const TAG_L={xCatch:['Hab dich! Jetzt bist du dran!','Gefangen! Hihi, jetzt musst du mich fangen!'],mCatch:['Oh nein, du hast mich erwischt!','Erwischt! Du bist aber schnell!'],
   xMiss:['Puh, du bist zu schnell für mich!','Oh, ich hab dich nicht gekriegt!'],mMiss:['Hihi, du hast mich nicht gekriegt!','Ätsch, ich war schneller!'],
   winM:'Du hast gewonnen! Du bist die Fang-Königin!',winX:'Ich habe gewonnen! Das war lustig! Spielen wir nochmal?',tie:'Unentschieden! Das war ein tolles Spiel!'};
+const tagBigEl=document.createElement('div');tagBigEl.id='tagBig';tagBigEl.hidden=true;document.body.appendChild(tagBigEl);
+function tagBig(t){tagBigEl.textContent=t;tagBigEl.hidden=false;tagBigEl.style.animation='none';void tagBigEl.offsetWidth;tagBigEl.style.animation='tagpop .9s ease-out forwards'}
 const tagCv=document.createElement('canvas');tagCv.width=560;tagCv.height=330;tagCv.id='tagBoard';tagCv.hidden=true;document.body.appendChild(tagCv);
 const tagTex=new THREE.CanvasTexture(tagCv);const tagMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.365),new THREE.MeshBasicMaterial({map:tagTex,transparent:true,depthTest:false,depthWrite:false,fog:false}));
 tagMesh.renderOrder=997;tagMesh.visible=false;
-function tagStart(x){if(TAG||state.captured)return;if(!tagMesh.parent)VR.rig.add(tagMesh);TAG={x,round:1,chaser:'x',phase:'count',t:3,score:{m:0,x:0},log:[],beep:4};x.cmd={t:'tag'};tagCv.hidden=false;drawTag()}
-function tagEnd(){if(!TAG)return;const x=TAG.x;if(x.cmd&&x.cmd.t==='tag')x.cmd=null;TAG=null;tagCv.hidden=true;tagMesh.visible=false}
+const tagMark=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🏃'),transparent:true,depthTest:false,depthWrite:false,fog:false}));tagMark.renderOrder=996;tagMark.visible=false;scene.add(tagMark);
+function tagStart(x){if(TAG||state.captured)return;if(!tagMesh.parent)VR.rig.add(tagMesh);TAG={x,round:1,chaser:'x',phase:'count',t:6,score:{m:0,x:0},log:[],beep:4};x.cmd={t:'tag'};tagCv.hidden=false;drawTag()}
+function tagEnd(){if(!TAG)return;tagMark.visible=false;const x=TAG.x;if(x.cmd&&x.cmd.t==='tag')x.cmd=null;TAG=null;tagCv.hidden=true;tagMesh.visible=false}
 function tagBeep(hi){if(!AC)return;tone(hi?1568:880,AC.currentTime,hi?0.5:0.25,'triangle',0.12)}
 function drawTag(){const T=TAG;if(!T)return;const c=tagCv.getContext('2d'),W=560,H=330,nm=T.x.name;c.clearRect(0,0,W,H);
   c.fillStyle='rgba(255,250,243,0.95)';c.beginPath();c.roundRect?c.roundRect(6,6,W-12,H-12,34):c.rect(6,6,W-12,H-12);c.fill();c.lineWidth=7;c.strokeStyle='#ff7eb6';c.stroke();
@@ -1924,19 +1931,22 @@ function drawTag(){const T=TAG;if(!T)return;const c=tagCv.getContext('2d'),W=560
   else if(T.phase==='run')info=(T.chaser==='x'?`${nm} fängt dich!`:`Fang ${nm}!`)+`  ⏱ ${Math.ceil(T.t)} s`;else if(T.phase==='caught')info=T.msg||'';else if(T.phase==='end')info=T.msg||'';
   c.fillStyle=T.phase==='count'?'#ff4f93':'#5b2a86';c.fillText(info,W/2,146);
   c.font='600 23px "Baloo 2",system-ui,sans-serif';c.fillStyle='#5b2a86';T.log.slice(-5).forEach((l,i)=>c.fillText(l,W/2,192+i*27));tagTex.needsUpdate=true}
-function tagFlee(x,dt){const P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x);x.stumble=(x.stumble||0)-dt;if(x.stumble>0)return 0;if(x.stumble<-rnd(6,10)){x.stumble=0.8;floatIcon('💫',x.pos.clone().add(new V3(0,(x.h||2)+0.8,0)),1,0.2,0.9);return 0}const sp=playerTop();
+function tagFlee(x,dt,k=1){const P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x);x.stumble=(x.stumble||0)-dt;if(x.stumble>0)return 0;if(x.stumble<-rnd(6,10)){x.stumble=0.8;floatIcon('💫',x.pos.clone().add(new V3(0,(x.h||2)+0.8,0)),1,0.2,0.9);return 0}const sp=playerTop()*k;
   const away=Math.atan2(x.pos.x-P.x,x.pos.z-P.z)+Math.sin(NOW*0.9+(x.ud?x.ud.seed:0))*0.5;
   for(const off of [0,0.8,-0.8,1.6,-1.6,2.4,-2.4]){const a=away+off,nx=x.pos.x+Math.sin(a)*sp*dt,nz=x.pos.z+Math.cos(a)*sp*dt,wet=inLake(nx,nz);
     if(Math.hypot(nx,nz)>WORLD_R-12&&Math.hypot(nx-LAKE.x,nz-LAKE.z)>LAKE.r-8)continue;x.pos.x=nx;x.pos.z=nz;x.yaw=angLerp(x.yaw,a,damp(8,dt));return sp}
   return 0}
 function updateTag(dt){const T=TAG;if(!T)return;const x=T.x,P=player.pos;
+  if(T.cover){const u=x.mesh&&x.mesh.userData;if(u&&u.arms&&u.arms.length>1){u.arms.forEach((a,i)=>{a.rotation.x=-2.5;a.rotation.z=(i?1:-1)*0.55})}}
   if(!x.cmd||x.cmd.t!=='tag'||state.captured||hd(x.pos,P)>140){tagEnd();return}
   T.t-=dt;const nm=x.name;
-  if(T.phase==='count'){const n=Math.ceil(T.t);if(n<T.beep&&n>0){T.beep=n;tagBeep(false);onSay(String(n))}
-    if(T.t<=0){T.phase='run';T.t=30;T.t0=NOW;tagBeep(true);onSay('LOS!');floatIcon('🏁',x.pos.clone().add(new V3(0,(x.h||2)+1,0)),1,0.2,1.2)}}
-  else if(T.phase==='run'){const r=(x.kind==='brachio'?4.5:x.kind==='pegasus'?2.8:2.2)*(x.scale||1);
+  T.cover=false;tagMark.visible=true;const mh=(x.h||2)*(x.scale||1)+1.8;tagMark.position.set(x.pos.x,x.pos.y+mh+Math.sin(NOW*4)*0.2,x.pos.z);const ms=1.4+Math.min(4,hd(x.pos,P)/12);tagMark.scale.setScalar(ms);
+  tagMark.material.map=emojiTexture(T.chaser==='x'?'🏃':'🎯');
+  if(T.phase==='count'){const n=Math.ceil(T.t);if(n<T.beep&&n>0&&n<=3){T.beep=n;tagBeep(false);onSay(String(n));tagBig(String(n));say('tag'+n,{prio:3})}
+    if(T.t<=0){T.phase='run';T.t=30;T.t0=NOW;T.grace=1.2;tagBeep(true);onSay('LOS!');tagBig('LOS!');say(T.chaser==='x'?'tagGoRun':'tagGoCatch',{prio:3});floatIcon('🏁',x.pos.clone().add(new V3(0,(x.h||2)+1,0)),1,0.2,1.2)}}
+  else if(T.phase==='run'){T.grace-=dt;const r=1.3+(x.kind==='brachio'?2.8:x.kind==='pegasus'?1.1*(x.scale||1):x.kind==='trex'?1.2:x.kind==='shark'||x.kind==='ptero'?1:x.kind==='bunny'?0.3:0.5*(x.scale||1));
     if(Math.random()<dt*1.2)floatIcon(T.chaser==='x'?'🏃':'🎯',x.pos.clone().add(new V3(0,(x.h||2)+1.2,0)),1,0.2,1);
-    const caught=hd(x.pos,P)<r&&Math.abs(P.y-x.pos.y)<3.5,tm=(NOW-T.t0).toFixed(1).replace('.',',');
+    const caught=T.grace<=0&&hd(x.pos,P)<r&&Math.abs(P.y-x.pos.y)<3.5,tm=(NOW-T.t0).toFixed(1).replace('.',',');
     if(caught||T.t<=0){const xr=T.chaser==='x';T.phase='caught';T.t=3.2;
       if(caught){T.score[xr?'x':'m']++;T.log.push(`R${T.round}: ${xr?nm+' fängt Marie':'Marie fängt '+nm} ✓ ${tm} s`);T.msg=xr?'Gefangen! 🙈':'Erwischt! 🎉';
         x.jumpT=2.2;burst(P.clone().add(new V3(0,1.2,0)),70,7,0.9,1.4);floatIcon(xr?'✋':'🎉',P.clone().add(new V3(0,2.5,0)),5,1,1.3);SFX.found();kiSay(x,pick(xr?TAG_L.xCatch:TAG_L.mCatch));
@@ -1945,14 +1955,18 @@ function updateTag(dt){const T=TAG;if(!T)return;const x=T.x,P=player.pos;
   else if(T.phase==='caught'){if(T.t<=0){if(T.chaser==='x'){T.chaser='m'}else{T.chaser='x';T.round++}
       if(T.round>3){T.phase='end';T.t=8;const m=T.score.m,xs=T.score.x;T.msg=m>xs?'🏆 Marie gewinnt!':xs>m?`🏆 ${nm} gewinnt!`:'🤝 Unentschieden!';
         kiSay(x,m>xs?TAG_L.winM:xs>m?TAG_L.winX:TAG_L.tie);for(let i=0;i<4;i++)setTimeout(()=>{burst(P.clone().add(new V3(rnd(-3,3),rnd(3,6),rnd(-3,3))),80,8,1,1.6);SFX.star()},i*500);x.danceT=4}
-      else{T.phase='count';T.t=3;T.beep=4}}}
+      else{T.phase='count';T.t=4.5;T.beep=4;T.spot=null;T.settled=false;say(T.chaser==='m'?'tagIntroCatch':'tagIntroRun',{prio:3})}}}
   else if(T.phase==='end'&&T.t<=0){tagEnd();return}
   T.drawT=(T.drawT||0)-dt;if(T.drawT<=0){T.drawT=0.2;drawTag()}
   if(VR.on){tagMesh.visible=true;const hl=camera.position,a=VR.ctxYaw||0;tagMesh.position.set(hl.x+Math.sin(a)*1.25,hl.y+0.5,hl.z-Math.cos(a)*1.25);tagMesh.rotation.set(0.15,-a,0,'YXZ')}else tagMesh.visible=false}
 // Bewegung der Figur beim Fangen (aus cmdMove aufgerufen)
 function tagMove(x,dt){const T=TAG,P=player.pos;if(!T||T.x!==x)return null;let sp=0;
-  if(T.phase==='count'&&T.chaser==='x'){x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(4,dt));if(hd(x.pos,P)<8){const aw=Math.atan2(x.pos.x-P.x,x.pos.z-P.z),nx=x.pos.x+Math.sin(aw)*6*dt,nz=x.pos.z+Math.cos(aw)*6*dt,wet=inLake(nx,nz);if(cmdSwims(x)===wet||cmdCanFly(x)){x.pos.x=nx;x.pos.z=nz;sp=6}}const n=Math.ceil(T.t);if(n!==x.tagN){x.tagN=n;x.jumpT=0.6}}
-  else if((T.phase==='count'||T.phase==='run')&&T.chaser==='m')sp=tagFlee(x,dt);
+  if(T.phase==='count'&&T.chaser==='x'){// erst sichtbar auf 10 m Abstand gehen, dann Augen zuhalten und zählen
+    const dd=hd(x.pos,P);if(!T.spot){const aw=dd>0.5?Math.atan2(x.pos.x-P.x,x.pos.z-P.z):Math.random()*TAU,rr=clamp(dd,7,10);T.spot=new V3(P.x+Math.sin(aw)*rr,0,P.z+Math.cos(aw)*rr)}
+    const dx=T.spot.x-x.pos.x,dz=T.spot.z-x.pos.z,d=Math.hypot(dx,dz);
+    if(d>0.4&&!T.settled){const v=Math.min(12,d*4+2);x.pos.x+=dx/d*Math.min(d,v*dt);x.pos.z+=dz/d*Math.min(d,v*dt);x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(8,dt));sp=v}
+    else{T.settled=true;x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(6,dt));T.cover=true}}
+  else if((T.phase==='count'||T.phase==='run')&&T.chaser==='m')sp=tagFlee(x,dt,T.phase==='count'?0.6:1);
   else if(T.phase==='run'&&T.chaser==='x'){const sw=cmdSwims(x),fl=cmdCanFly(x);x.stumble=(x.stumble||0)-dt;if(x.stumble<-rnd(7,11)){x.stumble=0.7;floatIcon('💫',x.pos.clone().add(new V3(0,(x.h||2)+0.8,0)),1,0.2,0.9)}const v=x.stumble>0?0:playerTop();
     const dx=P.x-x.pos.x,dz=P.z-x.pos.z,d=Math.hypot(dx,dz);if(d>0.3){const nx=x.pos.x+dx/d*v*dt,nz=x.pos.z+dz/d*v*dt,wet=inLake(nx,nz);
       x.pos.x=nx;x.pos.z=nz;sp=v;x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(8,dt))}}
