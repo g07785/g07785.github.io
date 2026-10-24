@@ -1274,13 +1274,14 @@ function animPeg(a,dt,spd,flying){const u=a.ud;u.fly=lerp(u.fly,flying?1:0,damp(
   u.inner.position.y=flying?Math.sin(NOW*3+u.seed)*0.12:Math.abs(Math.sin(u.ph))*amp*0.15+(a.happy>0?Math.abs(Math.sin(NOW*9))*0.3:0);
   u.inner.rotation.x=flying&&spd>3?-0.12:0;updateReins(u)}
 function updatePegs(dt){
-  followers.forEach((a,i)=>{const tgt=trailAt((i+1)*(2.4+a.scale*1.6));if(a.pos.distanceTo(player.pos)>45){a.pos.copy(tgt);a.vel.set(0,0,0)}
+  followers.forEach((a,i)=>{if(a.cmd)return;const tgt=trailAt((i+1)*(2.4+a.scale*1.6));if(a.pos.distanceTo(player.pos)>45){a.pos.copy(tgt);a.vel.set(0,0,0)}
     const want=tgt.sub(a.pos).multiplyScalar(3.2);a.vel.lerp(want,damp(5,dt));a.pos.addScaledVector(a.vel,dt)});
   for(const a of pegs){a.munch=(a.munch||0)-dt;a.happy=(a.happy||0)-dt;a.shine=(a.shine||0)-dt;
     if(a.shine>0&&Math.random()<dt*20)emit(a.pos.x+rnd(-1,1)*a.scale,a.pos.y+rnd(0.8,2.6)*a.scale,a.pos.z+rnd(-1,1)*a.scale,0,0.6,0,pick(SPARK),0.5,0.8,0);
     if(a.growAnim>=0){a.growAnim+=dt/2;a.grow=Math.min(1,a.growAnim);applyScale(a);if(Math.random()<dt*30)emit(a.pos.x+rnd(-1.5,1.5),a.pos.y+rnd(0,3.5),a.pos.z+rnd(-1.5,1.5),0,1,0,pick(SPARK),0.6,1,0);if(a.growAnim>=1)a.growAnim=-1}
     let spd=0,flying=false;
-    if(a.state==='hidden'){a.grazing=true;a.yaw+=dt*0.15;a.pos.y=a.home.y+Math.sin(NOW*1.5)*0.05;
+    if(a.cmd&&(a.state==='home'||a.state==='follow')){const r=cmdMove(a,dt);spd=r.spd;flying=r.fly;a.grazing=false}
+    else if(a.state==='hidden'){a.grazing=true;a.yaw+=dt*0.15;a.pos.y=a.home.y+Math.sin(NOW*1.5)*0.05;
       if(a.glow){a.glow.position.set(a.pos.x,a.pos.y+1,a.pos.z);a.glow.material.opacity=0.45+Math.sin(NOW*3)*0.25}
       if(Math.random()<dt*3)emit(a.pos.x+rnd(-1,1),a.pos.y+rnd(0.5,2),a.pos.z+rnd(-1,1),0,0.8,0,pick(SPARK),0.5,1.2,0);
       const d=a.pos.distanceTo(player.pos);if(d<22&&Math.random()<dt*0.5)SFX.chime(1-d/22);
@@ -1406,13 +1407,15 @@ function updateCreatures(dt){
     const near=hd(c.pos,player.pos)<c.reach+1&&player.form==='human';
     if(c.wanderT<=0){const a=Math.random()*TAU,r=Math.random()*c.r;c.target.set(c.area.x+Math.cos(a)*r,2,c.area.z+Math.sin(a)*r);c.wanderT=rnd(3,8)}
     const dx=c.target.x-c.pos.x,dz=c.target.z-c.pos.z,d=Math.hypot(dx,dz);let spd=0;
-    if(!near&&d>0.4&&c.munch<=0){spd=c.speed;c.pos.x+=dx/d*spd*dt;c.pos.z+=dz/d*spd*dt;c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),damp(3,dt))}
+    if(c.cmd)spd=cmdMove(c,dt).spd;
+    else if(!near&&d>0.4&&c.munch<=0){spd=c.speed;c.pos.x+=dx/d*spd*dt;c.pos.z+=dz/d*spd*dt;c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),damp(3,dt))}
     else if(near)c.yaw=angLerp(c.yaw,Math.atan2(player.pos.x-c.pos.x,player.pos.z-c.pos.z),damp(3,dt));
-    c.pos.y=2;c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
+    c.pos.y=hd(c.pos,c.area)<c.r+3?2:terrainH(c.pos.x,c.pos.z);c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
   // people
   const noTask=!state.task;const ng=noTask?nextGiver():null;
   for(const n of NPCS){n.wave-=dt;const u=n.mesh.userData,dn=hd(n.pos,player.pos);
-    if(n.id==='ben'){const near=dn<5;if(!near){n.ang=(n.ang||0)+dt*0.85;const tx=PLAY.x+Math.cos(n.ang)*4.5,tz=PLAY.z-7+Math.sin(n.ang)*4.5;
+    if(n.cmd){const r=cmdMove(n,dt);if(n.id==='mia')u.pivot.rotation.x=0;animGirl(n.mesh,dt,r.spd,n.swim?'mermaid':(n.hover?'fairy':'human'),r.fly&&!n.hover,!!n.swim);if(n.swim)n.shadow.visible=false}
+    else if(n.id==='ben'){const near=dn<5;if(!near){n.ang=(n.ang||0)+dt*0.85;const tx=PLAY.x+Math.cos(n.ang)*4.5,tz=PLAY.z-7+Math.sin(n.ang)*4.5;
         n.yaw=Math.atan2(-Math.sin(n.ang),Math.cos(n.ang));n.pos.set(tx,groundAt(tx,tz),tz);animGirl(n.mesh,dt,3.8,'human',false,false)}
       else{n.yaw=angLerp(n.yaw,Math.atan2(player.pos.x-n.pos.x,player.pos.z-n.pos.z),damp(4,dt));animGirl(n.mesh,dt,0,'human',false,false)}}
     else if(n.swim){const dP=n.pos.distanceTo(player.pos),inW=inLake(player.pos.x,player.pos.z)&&player.pos.y<WATER_Y+0.5,near=inW&&dP<14;if(inW&&dP>60&&(n.wt||0)>2)n.wt=0;n.wt=(n.wt||0)-dt;
@@ -1434,6 +1437,7 @@ function updateCreatures(dt){
     if(!n.swim)placeShadow(n.shadow,n.pos.x,n.pos.y,n.pos.z,1.6*n.scale)}
   // bunnies (sit still and look at Marie when she comes close)
   for(const b of bunnies){b.happy-=dt;b.munch-=dt;b.wait-=dt;const near=hd(b.pos,player.pos)<4&&player.form==='human';
+    if(b.cmd){const r=cmdMove(b,dt);b.wait=1;const g=terrainH(b.pos.x,b.pos.z);b.m.visible=b.pos.distanceTo(CAMW)<110;b.m.position.set(b.pos.x,g+(r.spd>0.2?Math.abs(Math.sin(NOW*9))*0.45:0),b.pos.z);b.m.rotation.y=b.yaw;continue}
     if(!near&&b.wait<=0&&b.hop<=0){b.tgt.set(b.home.x+rnd(-6,6),0,b.home.z+rnd(-6,6));b.wait=rnd(1.5,4);b.hop=1}
     if(b.hop>0&&!near){const dx=b.tgt.x-b.pos.x,dz=b.tgt.z-b.pos.z,d=Math.hypot(dx,dz);if(d<0.3){b.hop=0}else{b.pos.x+=dx/d*2.5*dt;b.pos.z+=dz/d*2.5*dt;b.yaw=Math.atan2(dx,dz)}}
     if(near)b.yaw=angLerp(b.yaw,Math.atan2(player.pos.x-b.pos.x,player.pos.z-b.pos.z),damp(4,dt));
@@ -1441,12 +1445,13 @@ function updateCreatures(dt){
   // sharks: cruise around the lake; when the mermaid comes close they swim over and look at her
   for(const s of sharks){s.happy-=dt;s.munch-=dt;s.wanderT-=dt;const u=s.mesh.userData;const mer=player.form==='mermaid'&&inLake(player.pos.x,player.pos.z)&&player.pos.y<WATER_Y+0.5;
     const dP=s.pos.distanceTo(player.pos),near=mer&&dP<12;
+    let go=0;if(s.cmd)go=cmdMove(s,dt).spd;else{
     if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-10){const q=seaZone(),x=q.x,z=q.z;s.target.set(x,rnd(terrainH(x,z)+2.5,-2.5),z);s.wanderT=rnd(6,12)}
     let tgt=s.target,sp=s.speed;if(near){const off=new V3(s.pos.x-player.pos.x,0,s.pos.z-player.pos.z).normalize().multiplyScalar(3.6);tgt=player.pos.clone().add(off);tgt.y=player.pos.y+0.4;sp=dP>5?3:0.4}
     const dx=tgt.x-s.pos.x,dz=tgt.z-s.pos.z,dH=Math.hypot(dx,dz);let want=Math.atan2(dx,dz);if(near&&dH<1.5)want=Math.atan2(player.pos.x-s.pos.x,player.pos.z-s.pos.z);
     s.yaw=angLerp(s.yaw,near&&dP<6?Math.atan2(player.pos.x-s.pos.x,player.pos.z-s.pos.z):want,damp(near?3:1.2,dt));
-    const go=dH>0.8?sp:0;s.pos.x+=Math.sin(s.yaw)*go*dt;s.pos.z+=Math.cos(s.yaw)*go*dt;s.pos.y=lerp(s.pos.y,tgt.y,damp(0.8,dt));
-    s.pos.y=clamp(s.pos.y,terrainH(s.pos.x,s.pos.z)+1.3,WATER_Y-1.6);
+    go=dH>0.8?sp:0;s.pos.x+=Math.sin(s.yaw)*go*dt;s.pos.z+=Math.cos(s.yaw)*go*dt;s.pos.y=lerp(s.pos.y,tgt.y,damp(0.8,dt));
+    s.pos.y=clamp(s.pos.y,terrainH(s.pos.x,s.pos.z)+1.3,WATER_Y-1.6)}
     u.ph+=dt*(3+go*1.2);u.tail.rotation.y=Math.sin(u.ph)*0.35;u.head.rotation.y=-Math.sin(u.ph)*0.08;u.fins.forEach((f,i)=>f.rotation.z=(i?1:-1)*Math.sin(NOW*2+i)*0.15);
     u.inner.rotation.z=s.happy>0?Math.sin(NOW*12)*0.35:Math.sin(u.ph*0.5)*0.04;u.inner.position.y=s.happy>0?Math.abs(Math.sin(NOW*8))*0.3:0;
     s.mesh.position.copy(s.pos);s.mesh.rotation.y=s.yaw;s.mesh.visible=s.pos.distanceTo(CAMW)<(CAMW.y<WATER_Y?75:45);if(s.happy>0&&Math.random()<dt*8)emit(s.pos.x,s.pos.y+1,s.pos.z,rnd(-0.3,0.3),1.2,rnd(-0.3,0.3),0xffffff,0.4,1.2,-1)}
@@ -1588,6 +1593,74 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
     if(state.netT<=0){netMesh.visible=false;burst(netMesh.position.clone(),40,5);say('netFree',{prio:1})}}
   $('#btnZap').classList.toggle('pulse',!!state.captured||zapTargets().some(t=>t.pos.distanceTo(P)<40))}
 
+/* ================= Befehle an Figuren und Tiere ("Folg mir!", "Flieg hoch!", "Versteck dich!") =================
+   Der KI-Server erkennt den Befehl im Gesagten und schickt ihn mit der Antwort. Hier wird er ausgeführt. */
+const CMD_SPEED={npc:7.5,swim:7,pegasus:13,trex:7,brachio:5,bunny:7,shark:8};
+const FOUND_L=['Oh nein, du hast mich gefunden!','Gefunden! Du bist richtig gut im Suchen!','Hihi, da bin ich! Du hast mich gefunden!'];
+const cmdSwims=x=>x.kind==='shark'||!!x.swim, cmdCanFly=x=>x.kind==='pegasus'||!!x.hover;
+const cmdAll=()=>[...NPCS,...pegs,trex,bra,...bunnies,...sharks];
+function cmdHome(x){if(x.kind==='trex'||x.kind==='brachio')return new V3(x.area.x,2,x.area.z);if(x.kind==='bunny')return x.home;if(!x.kind&&!x.swim)return x.home;return null}
+function kiAction(x,act){if(!x||!act)return;if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
+  switch(act){case 'jump':x.jumpT=1.8;break;case 'dance':x.danceT=4;break;
+    case 'follow':x.cmd={t:'follow',until:NOW+300};break;case 'protect':x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
+    case 'fly':if(!cmdCanFly(x)){x.jumpT=1.8;break}x.cmd={t:'fly',t0:NOW,base:x.pos.clone(),ang:0,after:prev&&(prev.t==='follow'||prev.t==='protect')?prev:null};break;
+    case 'hide':{const sp=hideSpot(x);if(!sp){x.jumpT=1.5;break}x.cmd={t:'hide',phase:'wait',t0:NOW,spot:sp,call:0};break}}}
+// Versteck: 16–40 m weg, möglichst hinter Marie (wo sie gerade nicht hinschaut), im richtigen Element (Land/Wasser)
+function hideSpot(x){const P=player.pos,look=camera.getWorldDirection(new V3());look.y=0;look.normalize();const sw=cmdSwims(x),h0=terrainH(x.pos.x,x.pos.z);let best=null,bs=1e9;
+  for(let i=0;i<60;i++){const a=Math.random()*TAU,r=rnd(16,40),cx=x.pos.x+Math.cos(a)*r,cz=x.pos.z+Math.sin(a)*r,t=terrainH(cx,cz);
+    if(sw){if(!inLake(cx,cz)||t>-3||hd({x:cx,z:cz},LAKE)>LAKE.r-12)continue}else if(inLake(cx,cz)||Math.hypot(cx,cz)>WORLD_R-15||Math.abs(t-h0)>6)continue;
+    const dx=cx-P.x,dz=cz-P.z,dl=Math.hypot(dx,dz)||1,sc=(dx*look.x+dz*look.z)/dl+Math.abs(dl-26)/30;if(sc<bs){bs=sc;best=new V3(cx,sw?rnd(t+1.5,x.kind==='shark'?-2:-0.6):t,cz)}}
+  return best}
+function cmdMove(x,dt){const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),max=CMD_SPEED[x.kind||(sw?'swim':'npc')]||7;let tgt=null,sp=0,face=null;
+  if(c.until&&NOW>c.until){x.cmd={t:'return'};return cmdMove(x,dt)}
+  if(c.t==='follow'||c.t==='protect'){const L=cmdAll().filter(q=>q.cmd&&(q.cmd.t==='follow'||q.cmd.t==='protect')),i=Math.max(0,L.indexOf(x));
+    tgt=trail.length>3?trailAt(3.2+i*2.6+(x.kind==='brachio'?4:0)+followers.length*3):P.clone();const d=hd(x.pos,tgt);
+    if(hd(x.pos,P)>70&&!(sw&&!inLake(P.x,P.z))){x.pos.copy(tgt);if(!fl)x.pos.y=sw?Math.min(tgt.y,-0.6):groundAt(tgt.x,tgt.z)}
+    sp=Math.min(max,d*1.6);if(d<1.2){sp=0;face=P}}
+  else if(c.t==='stay')face=P;
+  else if(c.t==='return'){const h=cmdHome(x);if(!h){x.cmd=null;return {spd:0,fly:false}}tgt=h;const d=hd(x.pos,h);if(d>120)x.pos.set(h.x,groundAt(h.x,h.z),h.z);sp=Math.min(max,d*1.5+1);
+    if(d<0.7){x.cmd=null;return {spd:0,fly:false}}}
+  else if(c.t==='fly'){const t=NOW-c.t0;c.ang+=dt*0.9;const k=Math.min(1,t/2),up=k*(t>8?Math.max(0,1-(t-8)/2.5):1);
+    const nx=c.base.x+Math.sin(c.ang)*7*k,nz=c.base.z+Math.cos(c.ang)*7*k,ny=Math.max(groundAt(nx,nz,c.base.y+0.5),c.base.y)+up*18;
+    x.yaw=angLerp(x.yaw,Math.atan2(nx-x.pos.x,nz-x.pos.z),damp(6,dt));x.pos.set(nx,ny,nz);
+    if(Math.random()<dt*20)emit(nx+rnd(-1,1),ny+rnd(0.5,2),nz+rnd(-1,1),0,0.5,0,pick(SPARK),0.5,0.8,0);
+    if(t>10.5)x.cmd=c.after?{t:c.after.t,until:c.after.until}:(x.kind==='pegasus'?null:{t:'return'});return {spd:6,fly:up>0.05}}
+  else if(c.t==='hide'){if(c.phase==='wait'){face=P;if(NOW-c.t0>2.4)c.phase='run'}
+    else if(c.phase==='run'){tgt=c.spot;sp=max*1.3;if(hd(x.pos,c.spot)<0.9||NOW-c.t0>18){x.pos.x=c.spot.x;x.pos.z=c.spot.z;c.phase='hidden';c.t1=NOW}}
+    else{face=P;const ht=NOW-c.t1;
+      if(hd(x.pos,P)<5&&Math.abs(P.y-x.pos.y)<5){x.jumpT=2;burst(x.pos.clone().add(new V3(0,1.5,0)),40,5,0.8,1.1);SFX.found();kiSay(x,pick(FOUND_L));x.cmd={t:'stay',until:NOW+8}}
+      else{if(ht>45&&c.call<1){c.call=1;kiSay(x,'Hier bin ich! Such mich doch!')}if(ht>95&&c.call<2){c.call=2;kiSay(x,'Huhu! Ich bin hier drüben!')}
+        if(ht>45&&Math.random()<dt*6)emit(x.pos.x+rnd(-1,1),x.pos.y+rnd(1,3),x.pos.z+rnd(-1,1),0,1.2,0,pick(SPARK),0.6,1.2,0);
+        if(ht>160){kiSay(x,'Ich komme raus! Du hast mich nicht gefunden, hihi!');x.cmd={t:'return'}}}}}
+  let spd=0;if(tgt&&sp>0){const dx=tgt.x-x.pos.x,dz=tgt.z-x.pos.z,d=Math.hypot(dx,dz);if(d>0.05){const st=Math.min(d,sp*dt),nx=x.pos.x+dx/d*st,nz=x.pos.z+dz/d*st,wet=inLake(nx,nz);
+      if((sw&&!wet)||(!sw&&!fl&&wet&&terrainH(nx,nz)<WATER_Y-0.6))face=P;else{x.pos.x=nx;x.pos.z=nz;spd=sp;x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(7,dt))}}}
+  if(face&&!spd)x.yaw=angLerp(x.yaw,Math.atan2(face.x-x.pos.x,face.z-x.pos.z),damp(4,dt));
+  const g=groundAt(x.pos.x,x.pos.z,x.pos.y+0.5);let fly=false;
+  if(sw){const ty=tgt&&c.t!=='return'?tgt.y:x.pos.y;x.pos.y=clamp(lerp(x.pos.y,ty,damp(1.5,dt)),terrainH(x.pos.x,x.pos.z)+1.2,x.kind==='shark'?WATER_Y-1.6:-0.35)}
+  else if(fl){const ty=(c.t==='follow'||c.t==='protect'||c.t==='hide')&&tgt?Math.max(tgt.y,g):g;x.pos.y=Math.max(g+(x.hover?0.6:0),lerp(x.pos.y,ty+(x.hover?0.6:0),damp(3,dt)));fly=x.pos.y>g+(x.hover?1.2:0.6)}
+  else x.pos.y=g;
+  return {spd,fly}}
+// Beschützer: begleiten Marie, verzaubern böse Haie und Piratenschiffe, fangen Netze ab und helfen aus dem Käfig
+const GUARD_L={shark:['Lass Marie in Ruhe, du böser Hai!','Weg da, böser Hai!'],ship:['Weg da, ihr Piraten!','Lasst Marie in Ruhe, ihr Piraten!'],net:['Das Netz kriegt dich nicht, Marie!'],cage:['Halt durch, Marie, ich hol dich da raus!']};
+function guardSay(x,k){if(NOW<(x.guardSay||0))return;x.guardSay=NOW+18;kiSay(x,pick(GUARD_L[k]))}
+function guardShoot(from,t){const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xff9fe0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
+  spr.scale.setScalar(1.6);spr.position.copy(from);scene.add(spr);const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;SHOTS.push({spr,pos:from.clone(),vel:c.clone().sub(from).normalize().multiplyScalar(40),life:2.6,tgt:t});SFX.zap()}
+function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd||x.cmd.t!=='protect')continue;x.guardCD-=dt;
+    const from=x.pos.clone().add(new V3(0,(x.h||2.2)*0.8+(x.kind==='shark'?0:0.6),0));
+    for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];if(n.pos.distanceTo(from)<16||n.pos.distanceTo(P)<9){burst(n.pos.clone(),30,5,0.8,1,[0xff9fe0,0xffffff]);scene.remove(n.m);NETS.splice(i,1);SFX.sparkle();guardSay(x,'net')}}
+    if(x.guardCD>0)continue;
+    if(state.captured){x.guardCD=2.4;burst(from,20,3,0.6,0.8,[0xff9fe0,0xffffff]);SFX.zap();cageZap();guardSay(x,'cage');continue}
+    let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<48&&d<bd){bd=d;best=t}}
+    if(best){x.guardCD=1.6;x.jumpT=Math.max(x.jumpT||0,0.6);guardShoot(from,best);guardSay(x,best.kind==='ship'?'ship':'shark')}}}
+// Springen / Tanzen als kleine Einlage über der normalen Bewegung
+function updateCmdFx(dt){updateGuards(dt);for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
+    if(x.jumpT>0){x.jumpT-=dt;m.position.y+=Math.abs(Math.sin((1.8-x.jumpT)*Math.PI*1.7))*hh}
+    if(x.danceT>0){x.danceT-=dt;const t=4-x.danceT;m.rotation.y=x.yaw+t*7;m.position.y+=Math.abs(Math.sin(t*6))*hh*0.35;if(Math.random()<dt*10)floatIcon('🎵',x.pos.clone().add(new V3(0,(x.h||2)+0.5,0)),1,0.6,0.7)}}}
+function kiSay(x,text){kiShow(x.name+': '+text);if(!KI.ok){Voice.say(text,{prio:2,who:x.kind?'erz':x.id});return}
+  let q=KI.base+'/api/say?inline='+(KI_APP?1:0)+'&npc='+(x.kind?'tier':x.id)+'&text='+encodeURIComponent(text);if(x.kind){const d=kiAnimalInfo(x);q+='&art='+d.art+'&name='+encodeURIComponent(x.name)}
+  const r=new XMLHttpRequest();r.open('GET',q);r.onload=()=>{try{const au=(JSON.parse(r.responseText).audios||[]).map(u=>u[0]==='/'?KI.base+u:u);
+    if(au.length&&KI.state==='idle'){Voice.stop();Voice.prio=2;Voice.queue=au;Voice.playing=true;Voice.next()}}catch(e){}};r.send()}
+
 /* ================= KI-Figuren: frei sprechen (lokaler KI-Server auf dem PC) =================
    Nur aktiv, wenn das Spiel vom PC-Server geladen wurde (https://<PC>:8443/). Dort laufen Whisper,
    ein kleines Sprachmodell und die Stimmen. Sonst bleibt alles wie bisher (feste Sätze). */
@@ -1631,12 +1704,12 @@ function kiStop(cancel){if(KI.state!=='rec')return;KI.cancel=!!cancel;KI.state='
 function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;KI.state='idle';kiShow(KI.speech?'':'Ich habe nichts gehört. Tippe nochmal auf 🎤 und sprich!');return}
   KI.state='send';kiShow('💭 '+n.name+' überlegt …',true);const cur=curTask();
   const ctx=[player.riding?'Marie reitet gerade auf einem Flügelpferd':'Marie ist gerade '+({human:'ein Mädchen',unicorn:'ein Einhorn',fairy:'eine kleine Fee',mermaid:'eine Meerjungfrau'}[player.form]||'ein Mädchen'),
-    cur?'Ihre Aufgabe: '+cur.line:'',state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
+    cur?'Ihre Aufgabe: '+cur.line:'',(()=>{const c=(n.a||n).cmd;return !c?'':c.t==='follow'?'Du läufst Marie gerade hinterher':c.t==='protect'?'Du beschützt Marie gerade vor bösen Haien und Piraten':c.t==='hide'?'Du spielst gerade Verstecken mit Marie':c.t==='stay'?'Du wartest gerade hier auf Marie':''})(),state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
   let q=KI.base+'/api/talk?inline='+(KI_APP?1:0)+'&npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
   const x=new XMLHttpRequest();x.open('POST',q);x.timeout=40000;
   x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
   x.onerror=x.ontimeout=()=>{KI.state='idle';kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
-function kiAnswer(n,j){n.wave=2.5;if(n.a){n.a.happy=2;floatIcon('💬',headPos(n.a),3,0.8,1)}Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
+function kiAnswer(n,j){if(j.aktion)setTimeout(()=>kiAction(n.a||n,j.aktion),250);n.wave=2.5;if(n.a){n.a.happy=2;floatIcon('💬',headPos(n.a),3,0.8,1)}Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
   let au=j.audios&&j.audios.length?j.audios:j.audio?[j.audio]:null;if(au)au=au.map(u=>u[0]==='/'?KI.base+u:u);if(au){Voice.prio=3;Voice.queue=au.slice();Voice.playing=true;Voice.next()}else Voice.say(j.text,{prio:3,who:n.id})}
 function updateKI(dt){if(KI.hideT&&NOW>KI.hideT){KI.hideT=0;$('#kiBox').hidden=true}if(KI.state!=='rec')return;
   let lv=0;if(KI.an){KI.an.getFloatTimeDomainData(KI.buf);let q=0;for(let i=0;i<KI.buf.length;i++)q+=KI.buf[i]*KI.buf[i];lv=Math.sqrt(q/KI.buf.length)}
@@ -1758,7 +1831,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
     updateBreeding(dt);updateWild(dt);updatePowers(dt);updateKI(dt)}
-  updatePegs(dt);updateCreatures(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
+  updatePegs(dt);updateCreatures(dt);updateCmdFx(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
   water.material.emissiveIntensity=0.15+Math.sin(NOW*1.5)*0.05;swayU.value=NOW;
   if(VR.on)updateEnv(dt);else updateCamera(dt);renderer.render(scene,camera)}
@@ -1792,7 +1865,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
     if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
   return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);updateCombat(0.05);updateCreatures(0.05);updatePegs(0.05);updatePowers(0.05)}},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
