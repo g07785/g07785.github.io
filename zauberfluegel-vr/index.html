@@ -1743,14 +1743,14 @@ function updateVillains(dt){const P=player.pos,rpow=player.riding&&player.riding
       if(k.shoutT<=0){k.shoutT=rnd(10,15);Voice.say(pickNew('kobCap',KOBOLD_CAP_LINES),{prio:0,who:'kobold'})}}
     else if(state.captured&&hd(k.pos,KCAMP)<40){const a=NOW*0.6+kobolds.indexOf(k)*1.7;sp=villainStep(k,new V3(KCAMP.x+Math.cos(a)*6,0,KCAMP.z+Math.sin(a)*6),2.5,dt)}
     else if(k.flee>0){const aw=k.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(k,k.pos.clone().add(aw),7,dt)}
-    else if(free&&d<34){sp=d>1.2?villainStep(k,P,Math.min(9.5,playerRun()*1.08),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(5,dt));
+    else if(free&&d<48){sp=d>1.2?villainStep(k,P,Math.min(9.5,playerRun()*1.08),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(5,dt));
       if(k.shoutT<=0){k.shoutT=rnd(5,8);Voice.say(pickNew('kob',KOBOLD_LINES),{prio:0,who:'kobold'});floatIcon(pick(['😜','😝','😛']),k.pos.clone().add(new V3(0,2.4,0)),1,0.2,1.1)}
       // frech: klaut einen Stern, wenn er Marie erwischt
       k.stealCD=(k.stealCD||0)-dt;if(d<1.9&&k.stealCD<=0&&state.stars>0&&state.netT<=0){k.stealCD=12;state.stars--;k.stolen=(k.stolen||0)+1;updateStars();save();floatIcon('⭐',P.clone().add(new V3(0,2,0)),3,0.5,1.1);
         Voice.say(KOBOLD_STEAL,{prio:2,who:'kobold'});setTimeout(()=>say('starStolen',{prio:2}),2600);k.flee=6}
       // zielt dorthin, wo Marie gleich sein wird, und wirft schnell
-      if(d<18&&k.netT<=0&&state.netT<=0){k.netT=rnd(2.8,4.2);u.net.rotation.x=-1.2;const from=k.pos.clone().add(new V3(0,2,0)),T=Math.max(0.45,from.distanceTo(P)/24),to=P.clone().add(new V3(player.vel.x*T+rnd(-0.9,0.9),1,player.vel.z*T+rnd(-0.9,0.9)));
-        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.7);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:k,r:3.3});SFX.jump()}}
+      if(d<32&&k.netT<=0&&state.netT<=0){k.netT=rnd(2.8,4.2);u.net.rotation.x=-1.2;const from=k.pos.clone().add(new V3(0,2,0)),T=Math.max(0.45,from.distanceTo(P)/28),to=P.clone().add(new V3(player.vel.x*T+rnd(-0.9,0.9),1,player.vel.z*T+rnd(-0.9,0.9)));
+        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.85);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:k,r:3.5});SFX.jump()}}
     // Marie ist im sicheren Hof: Kobolde tanzen frech am Zaun und rufen
     else if(!state.captured&&onLand&&safe&&d<45&&k.flee<=0){const dx=P.x-k.pos.x,dz=P.z-k.pos.z,dd=Math.hypot(dx,dz)||1,nx=k.pos.x+dx/dd*4*dt,nz=k.pos.z+dz/dd*4*dt;k.yaw=angLerp(k.yaw,Math.atan2(dx,dz),damp(5,dt));
       if(!inSafe(nx,nz,3)&&!inLake(nx,nz)){k.pos.x=nx;k.pos.z=nz;sp=4}else{k.taunt=0.2;if(k.shoutT<=0){k.shoutT=rnd(6,9);Voice.say(KOBOLD_TAUNT,{prio:0,who:'kobold'});floatIcon(pick(['😜','😝']),k.pos.clone().add(new V3(0,2.4,0)),2,0.3,1.2)}}}
