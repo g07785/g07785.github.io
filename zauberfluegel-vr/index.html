@@ -778,7 +778,7 @@ const clam=new THREE.Group();clam.position.set(PEARL.x-1.5,terrainH(PEARL.x-1.5,
   clam.add(M(SPHG,mat(0xffffff,{metalness:0.3,roughness:0.1,emissive:0xfff0ff,emissiveIntensity:0.5}),0.3,0.3,0.3,0,0.65,0))})();
 // sharks + a few small reef fish
 const sharks=[];[[0x8fb3d9,'Finn'],[0xb7a4e0,'Flossi'],[0xff9fc6,'Rosi'],[0x7fd0c8,'Blubb'],[0xffc98a,'Sunny'],[0xa8c8ff,'Wellchen'],[0xd0a8ff,'Lila']].forEach(([c,name],i)=>{const m=makeShark(c);scene.add(m);const {x,z}=seaZone();
-  sharks.push({kind:'shark',name,mesh:m,pos:new V3(x,-6,z),yaw:sr(0,TAU),target:new V3(x,-6,z),wanderT:0,cd:{},reach:4.2,h:1.2,speed:3.2,happy:0,munch:0,shine:0})});
+  sharks.push({kind:'shark',name,col:c,mesh:m,pos:new V3(x,-6,z),yaw:sr(0,TAU),target:new V3(x,-6,z),wanderT:0,cd:{},reach:4.2,h:1.2,speed:3.2,happy:0,munch:0,shine:0})});
 const fish=[];for(let i=0;i<22;i++){const f=makeFish(pick([0xff9b5a,0xff7eb6,0xffe14d,0xb48cff,0x6fe0ff]));f.scale.setScalar(0.8);scene.add(f);fish.push({m:f,cx:REEF.x+sr(-6,6),cz:REEF.z+sr(-6,6),a:sr(0,TAU),r:sr(2,7),y:sr(-11,-5),s:sr(0.5,0.9)*(i%2?1:-1)})}
 // pier + little boat for Captain Kira
 const BOAT=new V3();
@@ -1057,7 +1057,7 @@ $('#btnHome').addEventListener('pointerdown',e=>{e.preventDefault();teleportHome
 addEventListener('keydown',e=>{input.keys[e.code]=true;if(!state.started)return;
   if(e.code==='Space')input.up=true;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=true;
   const fm={Digit1:'human',Digit2:'unicorn',Digit3:'fairy',Digit4:'mermaid'}[e.code];if(fm)setForm(fm);
-  if((e.code==='KeyE'||e.code==='Enter')&&ctxActs[0])doAction(ctxActs[0]);if(e.code==='KeyH')help(true);if(e.code==='KeyF')playerZap();if(e.code==='KeyT'&&!e.repeat){const n=nearNPC();if(n)kiListen(n)}});
+  if((e.code==='KeyE'||e.code==='Enter')&&ctxActs[0])doAction(ctxActs[0]);if(e.code==='KeyH')help(true);if(e.code==='KeyF')playerZap();if(e.code==='KeyT'&&!e.repeat){const n=kiNear();if(n)kiListen(n)}});
 addEventListener('keyup',e=>{input.keys[e.code]=false;if(e.code==='Space')input.up=false;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=false});
 
 /* ================= transformation ================= */
@@ -1073,18 +1073,20 @@ function computeActions(){const P=player.pos,acts=[];
     if(KI.ok)acts.push({id:'ask',icon:KI.state==='rec'?'⏹️':KI.state==='send'?'💭':'🎤',n,pulse:KI.state==='rec'})}
   if(!player.carry&&hd(P,BUSHV)<3.9&&Math.abs(P.y-2)<3)acts.push({id:'pick',icon:'🫐'});
   let best=null,bd=1e9;for(const a of [...pegs,trex,bra,...bunnies,...sharks]){if(a.kind==='pegasus'&&a.state!=='home'&&a.state!=='follow')continue;const d=hd(P,a.pos);if(d<a.reach&&Math.abs(P.y-a.pos.y)<3.5&&d<bd){bd=d;best=a}}
-  if(best){const food=player.carry==='berries'?'🫐':'🥕';
+  const a0=acts.length;if(best){const food=player.carry==='berries'?'🫐':'🥕';
     if(best.kind==='shark'){if(player.form==='mermaid')acts.push({id:'pet',icon:'❤️',t:best})}
     else if(player.form!=='human')acts.push({id:'human',icon:'👧',pulse:true});
     else{acts.push({id:'feed',icon:food,t:best});acts.push({id:'pet',icon:'❤️',t:best});if(best.kind!=='bunny')acts.push({id:'brush',icon:'✨',t:best});if(best.kind==='pegasus')acts.push({id:'ride',icon:'🏇',t:best});
       if(best.kind==='pegasus'&&best.state==='home'&&best.adult&&!merge){const sel=state.mergeSel&&pegs.includes(state.mergeSel)?state.mergeSel:null;
         if(sel&&sel!==best)acts.push({id:'merge',icon:'✨',t:best,pulse:true});else acts.push({id:'mergeSel',icon:sel===best?'💔':'💞',t:best})}}}
-  return acts.slice(0,5)}
+  if(best&&KI.ok)acts.splice(Math.min(acts.length,a0+2),0,{id:'askA',icon:KI.state==='rec'?'⏹️':KI.state==='send'?'💭':'🎤',t:best,pulse:KI.state==='rec'});
+  return acts.slice(0,6)}
 function headPos(a){const f=new V3(Math.sin(a.yaw),0,Math.cos(a.yaw));return a.pos.clone().addScaledVector(f,a.kind==='brachio'?3:a.kind==='shark'?2:a.kind==='bunny'?0.3:1.1*(a.scale||1)).add(new V3(0,a.kind==='shark'?0.8:a.h*0.85,0))}
 function doAction(act){if(!act)return;const a=act.t;
   switch(act.id){
     case 'talk':talkNPC(act.n);break;
     case 'ask':kiListen(act.n);break;
+    case 'askA':kiListen(kiAnimal(act.t));break;
     case 'give':completeFetch();break;
     case 'pick':player.carry='berries';SFX.pop();burst(BUSHV.clone().add(new V3(0,1.5,0)),20,3,0.5,0.8,[0x8a6bff,0xc8a2ff]);say('pick',{prio:1});break;
     case 'feed':{const berries=player.carry==='berries';if(berries)player.carry=null;floatIcon(berries?'🫐':'🥕',headPos(a),3,0.6,1.1);SFX.munch();a.munch=1.6;care(a,'feed',berries);break}
@@ -1602,6 +1604,16 @@ function kiMic(){if(KI.stream)return Promise.resolve(KI.stream);if(!navigator.me
 function kiAnalyser(){if(KI.an||!KI.stream)return;try{if(!AC)audioInit();if(!AC)return;const src=AC.createMediaStreamSource(KI.stream);KI.an=AC.createAnalyser();KI.an.fftSize=1024;KI.buf=new Float32Array(KI.an.fftSize);src.connect(KI.an)}catch(e){}}
 $('#kiMic').addEventListener('click',()=>{const b=$('#kiMic');b.disabled=true;b.textContent='🎤 …';
   kiMic().then(()=>{b.textContent='🎤 Mikrofon ist an ✓'}).catch(()=>{b.disabled=false;b.textContent='🎤 Mikrofon erlauben'})});
+// Tiere: wer bin ich? (geht als Beschreibung an den KI-Server)
+function colorName(hex){const c=new THREE.Color(hex),h={};c.getHSL(h);if(h.l>0.86)return 'weiß';if(h.l<0.16)return 'schwarz';if(h.s<0.18)return 'grau';
+  const d=h.h*360;if(d<15||d>=345)return h.l>0.7?'rosa':'rot';if(d<40)return h.l<0.45?'braun':'orange';if(d<65)return 'gelb';if(d<160)return 'grün';if(d<200)return 'türkis';if(d<255)return 'blau';if(d<290)return 'lila';return 'rosa'}
+function kiAnimal(a){return a._ki||(a._ki={id:'tier',a,get name(){return a.name},pos:a.pos})}
+function kiNear(){const n=nearNPC();if(n)return n;const q=computeActions().find(x=>x.id==='askA');return q?kiAnimal(q.t):null}
+function kiAnimalInfo(a){if(a.kind==='pegasus'){const art=a.power?'super':a.adult?'pferd':'baby';
+    let i='Dein Fell ist '+colorName(a.body)+' und deine Mähne ist '+colorName(a.mane)+'.';if(a.power&&POWERS[a.power])i+=' Deine Zauberkraft heißt '+POWERS[a.power].name+'.';
+    if(player.riding===a)i+=' Marie reitet gerade auf dir.';else if(a.state==='follow')i+=' Marie hat dich gerade gefunden und du fliegst hinter ihr her nach Hause.';return {art,info:i}}
+  if(a.kind==='trex')return {art:'trex',info:''};if(a.kind==='brachio')return {art:'brachio',info:''};if(a.kind==='bunny')return {art:'hase',info:''};
+  return {art:'hai',info:'Deine Farbe ist '+colorName(a.col||0x8fb3d9)+'.'}}
 function kiShow(text,sticky){const el=$('#kiBox');if(!text){el.hidden=true;return}el.textContent=text;el.hidden=false;KI.hideT=sticky?1e9:NOW+Math.max(5,text.length*0.08);onSay(text.replace(/\n/g,' '))}
 function kiListen(n){if(!KI.ok||!n)return;if(KI.state==='rec'){kiStop();return}if(KI.state!=='idle')return;
   Voice.stop();KI.n=n;KI.state='wait';kiShow('🎤 …',true);
@@ -1616,11 +1628,12 @@ function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;
   KI.state='send';kiShow('💭 '+n.name+' überlegt …',true);const cur=curTask();
   const ctx=[player.riding?'Marie reitet gerade auf einem Flügelpferd':'Marie ist gerade '+({human:'ein Mädchen',unicorn:'ein Einhorn',fairy:'eine kleine Fee',mermaid:'eine Meerjungfrau'}[player.form]||'ein Mädchen'),
     cur?'Ihre Aufgabe: '+cur.line:'',state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
-  const x=new XMLHttpRequest();x.open('POST','/api/talk?npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx));x.timeout=40000;
+  let q='/api/talk?npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
+  const x=new XMLHttpRequest();x.open('POST',q);x.timeout=40000;
   x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
   x.onerror=x.ontimeout=()=>{KI.state='idle';kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
-function kiAnswer(n,j){n.wave=2.5;Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
-  if(j.audio){Voice.prio=3;Voice.queue=[j.audio];Voice.playing=true;Voice.next()}else Voice.say(j.text,{prio:3,who:n.id})}
+function kiAnswer(n,j){n.wave=2.5;if(n.a){n.a.happy=2;floatIcon('💬',headPos(n.a),3,0.8,1)}Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
+  const au=j.audios&&j.audios.length?j.audios:j.audio?[j.audio]:null;if(au){Voice.prio=3;Voice.queue=au.slice();Voice.playing=true;Voice.next()}else Voice.say(j.text,{prio:3,who:n.id})}
 function updateKI(dt){if(KI.hideT&&NOW>KI.hideT){KI.hideT=0;$('#kiBox').hidden=true}if(KI.state!=='rec')return;
   let lv=0;if(KI.an){KI.an.getFloatTimeDomainData(KI.buf);let q=0;for(let i=0;i<KI.buf.length;i++)q+=KI.buf[i]*KI.buf[i];lv=Math.sqrt(q/KI.buf.length)}
   const thr=Math.max(0.02,KI.floor*3);if(lv>thr){KI.speech=true;KI.quietT=0}else{if(!KI.speech)KI.floor=lerp(KI.floor,lv,0.05);else KI.quietT+=dt}
@@ -1688,7 +1701,7 @@ function vrInput(dt){const s=renderer.xr.getSession();VR.mx=VR.my=0;input.up=inp
   for(const src of s.inputSources){const gp=src.gamepad;if(!gp)continue;const ax=gp.axes,b=gp.buttons;const sx=ax.length>=4?ax[2]:ax[0]||0,sy=ax.length>=4?ax[3]:ax[1]||0;
     if(src.handedness==='left'){if(Math.hypot(sx,sy)>0.15){VR.mx=sx;VR.my=-sy}
       if(b[4]&&b[4].pressed&&!VR.xWas)help(true);VR.xWas=!!(b[4]&&b[4].pressed);
-      const yb=!!(b[5]&&b[5].pressed);if(yb&&!VR.yWas){VR.yT=NOW;const n=nearNPC();if(n&&KI.ok)kiListen(n)}if(!yb&&VR.yWas&&NOW-(VR.yT||0)>0.7&&KI.state==='rec')kiStop();VR.yWas=yb}
+      const yb=!!(b[5]&&b[5].pressed);if(yb&&!VR.yWas){VR.yT=NOW;const n=kiNear();if(n&&KI.ok)kiListen(n)}if(!yb&&VR.yWas&&NOW-(VR.yT||0)>0.7&&KI.state==='rec')kiStop();VR.yWas=yb}
     else{if(Math.abs(sx)>0.65&&VR.snapReady){VR.rig.rotation.y-=Math.sign(sx)*Math.PI/6;VR.snapReady=false;VR.turnFx=0.35}if(Math.abs(sx)<0.3)VR.snapReady=true;
       if(sy<-0.5)input.up=true;if(sy>0.5)input.down=true;if(b[4]&&b[4].pressed)input.up=true;if(b[5]&&b[5].pressed)input.down=true}}}
 function updateVR(dt){
