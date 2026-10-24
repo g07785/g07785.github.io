@@ -132,8 +132,10 @@ const SEA_DIR=(()=>{const l=Math.hypot(LAKE.x,LAKE.z);return{x:-LAKE.x/l,z:-LAKE
 const seaPt=(fromShore,side=0)=>({x:LAKE.x+SEA_DIR.x*(LAKE.r-fromShore)+SEA_DIR.px*side,z:LAKE.z+SEA_DIR.z*(LAKE.r-fromShore)+SEA_DIR.pz*side});
 const PAD={x:12,z:-4,r:9}, DINO={x:-13,z:13,r:6}, BUSH={x:7,z:17}, DOME={x:-118,z:-14}, NPC_P={x:-6,z:-22};
 // the horse farm: two stable wings with 12 boxes each around a courtyard
-const STABLE={x:-36,z:-28,n:12,bw:4.6,bd:5.5,yard:18}, HOME={x:-36,z:-28};
-const BOXES=[];for(let w=0;w<2;w++)for(let k=0;k<STABLE.n;k++){const x=STABLE.x+(k-(STABLE.n-1)/2)*STABLE.bw,z=STABLE.z+(w?1:-1)*(STABLE.yard/2+STABLE.bd/2);BOXES.push({x,z,w,face:w?Math.PI:0})}
+// three courtyards one behind the other, each with two wings of 12 boxes = 72 boxes
+const STABLE={x:-36,z:-28,n:12,bw:4.6,bd:5.5,yard:18,yards:3,pitch:33}, HOME={x:-36,z:-28};
+const YARDS=[...Array(STABLE.yards)].map((_,i)=>({x:STABLE.x,z:STABLE.z-i*STABLE.pitch}));
+const BOXES=[];YARDS.forEach((Y,yi)=>{for(let w=0;w<2;w++)for(let k=0;k<STABLE.n;k++){const x=Y.x+(k-(STABLE.n-1)/2)*STABLE.bw,z=Y.z+(w?1:-1)*(STABLE.yard/2+STABLE.bd/2);BOXES.push({x,z,w,yi,face:w?Math.PI:0})}});
 const GARDEN={x:38,z:44}, PLAY={x:-38,z:34}, MEADOW={x:-100,z:62}, GROVE={x:78,z:118};
 const ISLANDS=[{x:-70,y:28,z:-96,r:9},{x:22,y:40,z:-158,r:8},{x:-150,y:24,z:76,r:7},{x:150,y:32,z:70,r:7.5},{x:-30,y:50,z:135,r:6},{x:-175,y:36,z:-90,r:7}];
 // pier: from the shore towards the lake centre
@@ -147,7 +149,7 @@ function terrainH(x,z){
   const d=Math.hypot(x,z);
   let h=2+hill(x,z)*0.75*smooth(20,38,d);
   h+=(Math.sin(x*0.021+0.7)*Math.cos(z*0.019)*4.5+Math.sin(z*0.033+x*0.011)*2)*smooth(55,110,d);  // rolling hills further out
-  const fx=Math.max(Math.abs(x-STABLE.x)-31,0),fz=Math.max(Math.abs(z-STABLE.z)-18,0);h=lerp(2,h,smooth(0,14,Math.hypot(fx,fz)));  // flat ground for the horse farm
+  const fx=Math.max(Math.abs(x-STABLE.x)-31,0),fz=Math.max(Math.abs(z-(STABLE.z-STABLE.pitch))-18-STABLE.pitch,0);h=lerp(2,h,smooth(0,14,Math.hypot(fx,fz)));  // flat ground for the horse farm
   h+=smooth(WORLD_R-25,WORLD_R+25,d)*20;
   const dl=Math.hypot(x-LAKE.x,z-LAKE.z);
   const floor=LAKE_FLOOR+Math.sin(x*0.09)*1.1+Math.cos(z*0.08)*1.1+smooth(LAKE.r-40,LAKE.r-6,dl)*9;  // shallow shelf near the shore
@@ -303,8 +305,34 @@ function eyePair(parent,r,yy,ang,sz,iris=0x8a5cff,{lashes=true,brows=null,lid=0x
     parent.add(g)}
 }
 
+/* super powers for merged horses: look + what they can do while you ride them */
+const POWERS={
+  fire:{name:'Feuer',icon:'🔥',body:0xffb347,mane:0xff3b1f,pattern:'plain',accent:0xffd75e,glow:0xff5a1f,fx:[0xff5a1f,0xffb347,0xffe14d],speed:1.45},
+  ice:{name:'Eis',icon:'❄️',body:0xdff4ff,mane:0x7fd8ff,pattern:'stars',accent:0xffffff,glow:0x9fe8ff,fx:[0xffffff,0xbfefff,0x7fd8ff],speed:1.15},
+  lightning:{name:'Blitz',icon:'⚡',body:0xfff3a0,mane:0x3a3aa0,pattern:'pinto',accent:0xffd000,glow:0xffe14d,fx:[0xffe14d,0xffffff,0x9fd8ff],speed:2},
+  rainbow:{name:'Regenbogen',icon:'🌈',body:0xffffff,mane:0xff7eb6,pattern:'rainbow',accent:0xffffff,glow:0xff9fd6,fx:[0xff5a6e,0xffa04d,0xffe14d,0x7fe07a,0x6fc0ff,0xb48cff],speed:1.25},
+  star:{name:'Sternen',icon:'🌟',body:0x2b2a7a,mane:0xffe27a,pattern:'galaxy',accent:0xffffff,glow:0xc8a2ff,fx:[0xffe27a,0xffffff,0xc8a2ff],speed:1.3,sky:true},
+  ghost:{name:'Unsichtbar',icon:'👻',body:0xeef2ff,mane:0xc8d8ff,pattern:'plain',accent:0xffffff,glow:0xdfe8ff,fx:[0xffffff,0xdfe8ff],speed:1.1,ghost:true},
+  giant:{name:'Riesen',icon:'🏔️',body:0xc9a27a,mane:0x6a3a1e,pattern:'dapple',accent:0x8a5a3c,glow:0xffd9a0,fx:[0xffd9a0,0xffffff],speed:1.2,size:1.55},
+  flower:{name:'Blumen',icon:'🌸',body:0xfff0f6,mane:0x7fd67a,pattern:'hearts',accent:0xff9fbf,glow:0xff9fd6,fx:[0xff9fd6,0xffe14d,0xffffff,0x7fd67a],speed:1.15},
+  water:{name:'Wasser',icon:'🌊',body:0x7fd8e8,mane:0x1f6fd8,pattern:'spots',accent:0x2fb8a6,glow:0x4fc8ff,fx:[0x9fe8ff,0xffffff,0x4fc8ff],speed:1.2,dive:true},
+  diamond:{name:'Diamant',icon:'💎',body:0xe8f6ff,mane:0xa8c8ff,pattern:'stars',accent:0xc8e8ff,glow:0xffffff,fx:[0xffffff,0xc8e8ff,0xffd0f0],speed:1.15},
+  heart:{name:'Herz',icon:'💖',body:0xffd6ea,mane:0xff4fa3,pattern:'hearts',accent:0xff4fa3,glow:0xff7eb6,fx:[0xff7eb6,0xff4fa3,0xffffff],speed:1.15},
+  music:{name:'Musik',icon:'🎵',body:0xd9c8ff,mane:0x7a4cff,pattern:'dapple',accent:0xffffff,glow:0xb48cff,fx:[0xb48cff,0xffffff,0xffe14d],speed:1.15},
+  moon:{name:'Mond',icon:'🌙',body:0x3b4a7a,mane:0xdfe8ff,pattern:'galaxy',accent:0xffffff,glow:0xdfe8ff,fx:[0xdfe8ff,0xffffff,0x9fb3ff],speed:1.2},
+};
+const POWER_IDS=Object.keys(POWERS);
+/* merge the plain (non-animated) meshes inside each group into one mesh per material */
+function mergeStatic(root,skip){const walk=g=>{const buckets=new Map(),kids=[...g.children];
+    for(const c of kids){if(c.isMesh&&!c.isSprite&&!(skip&&skip.has(c))&&!Array.isArray(c.material)&&c.children.length===0){const k=c.material.uuid;if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(c)}else if(c.isGroup||c.type==='Object3D')walk(c)}
+    for(const [,list] of buckets){if(list.length<2)continue;const parts=[];let ok=true;
+      for(const c of list){c.updateMatrix();let geo=c.geometry.index?c.geometry.toNonIndexed():c.geometry.clone();geo.applyMatrix4(c.matrix);if(!geo.attributes.uv||!geo.attributes.normal){ok=false;break}parts.push(geo)}
+      if(!ok)continue;let L=0;parts.forEach(q=>L+=q.attributes.position.count);const pos=new Float32Array(L*3),nor=new Float32Array(L*3),uv=new Float32Array(L*2);let o=0;
+      for(const q of parts){pos.set(q.attributes.position.array,o*3);nor.set(q.attributes.normal.array,o*3);uv.set(q.attributes.uv.array,o*2);o+=q.attributes.position.count}
+      const mg=new THREE.BufferGeometry();mg.setAttribute('position',new THREE.BufferAttribute(pos,3));mg.setAttribute('normal',new THREE.BufferAttribute(nor,3));mg.setAttribute('uv',new THREE.BufferAttribute(uv,2));mg.computeBoundingSphere();
+      list.forEach(c=>g.remove(c));g.add(new THREE.Mesh(mg,list[0].material))}};walk(root);return root}
 /* ================= character builders ================= */
-function makePegasus({body,mane,wing=0xffffff,gold=false,pattern='plain',accent=0xffffff,tack=false,saddle=0x8a4f2c}){
+function makePegasus({body,mane,wing=0xffffff,gold=false,pattern='plain',accent=0xffffff,tack=false,saddle=0x8a4f2c,power=null}){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
   const mB=TEX.coat(body,gold,pattern,accent);
   const maneCols=gold?[0xff8ccf,0xc59bff,0x7ec8ff]:[mane,new THREE.Color(mane).lerp(new THREE.Color(0xffffff),0.45).getHex()];
@@ -364,7 +392,19 @@ function makePegasus({body,mane,wing=0xffffff,gold=false,pattern='plain',accent=
     // reins: two segments per side, re-aimed every frame between the bit and the pommel
     for(let i=0;i<4;i++){const r=new THREE.Mesh(CYLG,mL);inner.add(r);reins.push(r)}
   }
+  if(power){const P=POWERS[power],gm=mat(P.glow,{emissive:P.glow,emissiveIntensity:0.7,roughness:0.2,metalness:0.3});
+    // a glowing crown of the power colour on every super horse
+    for(let i=0;i<5;i++){const a=(i-2)*0.32;const c=M(CONEG,gm,0.05,0.22-Math.abs(i-2)*0.03,0.05,Math.sin(a)*0.3,0.42,0.05+Math.cos(a)*0.08);head.add(c)}
+    if(power==='fire'||power==='lightning'||power==='ice'||power==='diamond'){const fm=mat(P.fx[0],{emissive:P.fx[0],emissiveIntensity:power==='ice'||power==='diamond'?0.5:0.9,transparent:power==='ice'||power==='diamond',opacity:0.85,roughness:0.15,metalness:power==='diamond'?0.6:0});
+      for(let i=0;i<9;i++){const t=i/8;const sp=M(CONEG,fm,0.09,0.45+Math.sin(i*1.7)*0.12,0.09,0,2.35+t*0.9,0.55+t*0.75);sp.rotation.x=-0.5;inner.add(sp)}
+      for(let i=0;i<4;i++){const sp=M(CONEG,fm,0.08,0.35,0.08,0,1.75-i*0.2,-1.05-i*0.15);sp.rotation.x=-1.2;inner.add(sp)}}
+    if(power==='flower'){const fc=[0xff7eb6,0xffe14d,0xffffff,0xb48cff];for(let i=0;i<12;i++){const t=i/11;inner.add(M(SPHLO,mat(fc[i%4],{emissive:fc[i%4],emissiveIntensity:0.2}),0.11,0.08,0.11,(i%2?0.18:-0.18),2.4+t*0.8,0.6+t*0.7))}}
+    if(power==='water'){const wm=mat(0x4fc8ff,{transparent:true,opacity:0.8,emissive:0x2a8fc0,emissiveIntensity:0.3});legs.forEach(l=>{const f=M(SPHG,wm,0.05,0.28,0.2,0,-0.75,-0.1);l.add(f)})}
+    if(power==='music'){for(let i=0;i<3;i++){const n=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(i%2?'🎶':'🎵'),transparent:true}));n.scale.setScalar(0.45);n.position.set(Math.sin(i*2.1)*0.9,3.1+i*0.25,Math.cos(i*2.1)*0.6);inner.add(n)}}
+    if(power==='moon'||power==='heart'||power==='star'){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(power==='moon'?'🌙':power==='heart'?'💖':'⭐'),transparent:true}));sp.scale.setScalar(0.5);sp.position.set(0,0.95,0.1);head.add(sp)}}
   g.userData={inner,head,tail,legs,wings,reins,fly:0,ph:Math.random()*6,seed:Math.random()*6,graze:0};
+  mergeStatic(g,new Set(reins));
+  if(power==='ghost')g.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.transparent=true;o.material.opacity=0.45;o.material.depthWrite=false}});
   return g;
 }
 const _ra=new V3(),_rb=new V3(),_rm=new V3(),_up=new V3(0,1,0);
@@ -445,7 +485,7 @@ function makeGirl(o={}){
     const br=M(CYLG,mg,0.012,0.08,0.012,0,0.05,0.345);br.rotation.z=Math.PI/2;head.add(br)}
   if(captain){const mw=mat(0xffffff,{roughness:0.5}),mn=mat(0x24305e,{roughness:0.5});head.add(M(CYLG,mw,0.33,0.16,0.33,0,0.32,0));head.add(M(CYLG,mn,0.335,0.06,0.335,0,0.25,0));
     const vis=M(SPHG,mn,0.24,0.03,0.18,0,0.24,0.26);head.add(vis);head.add(M(SPHLO,mat(0xffd75e,{metalness:0.6,emissive:0x6a4a00,emissiveIntensity:0.3}),0.06,0.06,0.03,0,0.3,0.33))}
-  root.userData=ud;return root;
+  root.userData=ud;mergeStatic(root);return root;
 }
 function makeTrex(){
   const g=new THREE.Group(),inner=new THREE.Group();g.add(inner);
@@ -636,7 +676,8 @@ const LINES={
   needFly:'Da kommst du nur fliegend hin! Werde zum Einhorn!',needSwim:'Dafür musst du tauchen! Werde zur Meerjungfrau!',needFairy:'Dafür musst du ganz klein sein! Werde zur Fee!',
   shark:['Der Hai freut sich!','Hihi, das kitzelt den Hai!','Der Hai ist ganz lieb!'],
   goHome:'Bring die Baby-Pferde nach Hause zum Stall! Folge den goldenen Pfeilen.',
-  careHint:'Kümmere dich um deine Tiere! Du kannst sie füttern, streicheln und putzen.',
+  careHint:['Kümmere dich um deine Tiere! Du kannst sie füttern, streicheln und putzen.','Tipp: Tippe bei einem großen Pferd auf die Herzen und bei einem zweiten auf die Sterne. Dann entsteht ein Superpferd!'],
+  mergeSelect:'Super! Jetzt geh zu einem zweiten großen Pferd und tippe auf die Sterne zum Verschmelzen!',mergeCancel:'Okay, doch kein Verschmelzen.',mergeStart:'Achtung, Zauberei! Die Pferde verschmelzen!',
   toNpc:'Geh zu Lotte! Sie hat eine Aufgabe für dich.',
   beHuman:'Werde wieder Marie, dann kannst du die Tiere pflegen!',
   feed:['Mmmh, lecker!','Knusper, knusper! Danke!','Das schmeckt!','Hmm, noch eins bitte!','Lecker, lecker!','Danke schön, Marie!'],pet:['Das hat es gern!','Kuschelig!','Oh, wie schön!','Da freut es sich!','So weich!','Es schmust mit dir!'],brush:['Jetzt glitzert es!','Schön sauber!','Wie das funkelt!','Blitzeblank!','Alles schön gekämmt!','Jetzt glänzt es wie ein Stern!'],
@@ -645,7 +686,7 @@ const LINES={
   teleport:'Schwupps! Zurück nach Hause!',wildFoal:'Schau mal! Irgendwo ist ein wildes Fohlen aufgetaucht! Folge dem Schmetterling und bring es nach Hause!',
   zapHit:['Treffer!','Zack! Getroffen!','Gut gezielt!'],sharkFixed:['Puff! Der böse Hai ist jetzt ein lieber Hai!','Verzaubert! Jetzt ist er ganz lieb!'],
   sharkBump:['Aua! Ein böser Hai! Verzaubere ihn mit deinem Zauberstab!','Vorsicht, ein böser Hai! Schieß mit deinem Zauberstab!'],
-  netCaught:'Oh nein, ein Netz! Zappel dich schnell frei!',netFree:'Geschafft, du bist frei!',shipBeaten:'Die Piraten geben auf! Sie segeln ganz weit weg!',
+  netCaught:'Oh nein, ein Netz! Zappel dich schnell frei!',netFree:'Geschafft, du bist frei!',captured:'Oh nein! Die Piraten haben dich auf ihr Schiff geholt! Befreie dich mit deinem Zauberstab!',cageHit1:'Weiter zaubern! Das Schloss wackelt schon!',cageHit2:'Noch einmal zaubern!',freed:'Puff! Der Käfig ist weg! Schnell, schwimm davon!',onlyWand:'Nur dein Zauberstab kann dich befreien! Zaubere auf das Schloss!',netBounce:'Ha! Das Netz prallt einfach ab!',shipBeaten:'Die Piraten geben auf! Sie segeln ganz weit weg!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -750,7 +791,7 @@ function addTree(x,z,s=1,blossom=false){const h=terrainH(x,z);const t=new THREE.
   t.add(M(SPHMID,mat(cs[0],{roughness:0.7}),1.8,1.6,1.8,0,3.8,0));t.add(M(SPHMID,mat(cs[1],{roughness:0.7}),1.3,1.2,1.3,0.9,4.6,0.3));t.add(M(SPHMID,mat(cs[2],{roughness:0.7}),1.2,1.1,1.2,-0.8,4.4,-0.5));bake(t)}
 function addPine(x,z,s=1){const h=terrainH(x,z);const t=new THREE.Group();t.position.set(x,h,z);t.scale.setScalar(s);t.add(M(TAPG,trunkM,0.3,2,0.3,0,1,0));
   for(let k=0;k<3;k++)t.add(M(new THREE.ConeGeometry(1,1,9),mat(k%2?0x4fb879:0x5fc98a,{roughness:0.8}),1.9-k*0.45,2.2,1.9-k*0.45,0,2.4+k*1.3,0));bake(t)}
-const AVOID=[[0,0,32],[STABLE.x,STABLE.z,42],[LAKE.x,LAKE.z,LAKE.r+14],[DOME.x,DOME.z,12],[MEADOW.x,MEADOW.z,7],[GROVE.x,GROVE.z,5],[GARDEN.x,GARDEN.z,13],[PLAY.x,PLAY.z,12],[PIER.x,PIER.z,8]];
+const AVOID=[[0,0,32],[STABLE.x,STABLE.z,42],[STABLE.x,STABLE.z-33,42],[STABLE.x,STABLE.z-66,42],[LAKE.x,LAKE.z,LAKE.r+14],[DOME.x,DOME.z,12],[MEADOW.x,MEADOW.z,7],[GROVE.x,GROVE.z,5],[GARDEN.x,GARDEN.z,13],[PLAY.x,PLAY.z,12],[PIER.x,PIER.z,8]];
 const okSpot=(x,z,extra=0)=>AVOID.every(([ax,az,r])=>Math.hypot(x-ax,z-az)>r+extra)&&pathD(x,z)>4+extra;
 for(let i=0;i<1400;i++){const x=sr(-280,280),z=sr(-280,280);if(Math.hypot(x,z)>276||!okSpot(x,z))continue;if(SR()<0.33){if(Math.hypot(x,z)>140&&SR()<0.5)addPine(x,z,sr(0.9,1.5));else addTree(x,z,sr(0.8,1.3),SR()<0.3)}}
 for(let i=0;i<150;i++){const a=i/150*TAU+sr(-0.02,0.02),r=sr(282,305);if(SR()<0.5)addPine(Math.cos(a)*r,Math.sin(a)*r,sr(1.4,2.2));else addTree(Math.cos(a)*r,Math.sin(a)*r,sr(1.2,1.8),SR()<0.25)}
@@ -816,7 +857,7 @@ rainbow(0,2,-40,30);rainbow(-70,29,-96,14,0.9);rainbow(150,32,70,10,-0.6);rainbo
 const BOX_SIGNS=[];
 (()=>{const box=new THREE.BoxGeometry(1,1,1),{bw,bd,n}=STABLE,pal=[0xffc6dc,0xc9e4ff,0xd9f5c9,0xfff0b3,0xe3d1ff,0xffd9c2];
   const wood=mat(0xffffff,{roughness:0.6}),straw=mat(0xf3d36b,{roughness:1}),hay=mat(0xe9c46a,{roughness:1}),roofM=mat(0x9b6bd6,{roughness:0.5}),rail=mat(0xff9fc4,{roughness:0.5});
-  for(let w=0;w<2;w++){const g=new THREE.Group();g.position.set(STABLE.x,2,STABLE.z+(w?1:-1)*(STABLE.yard/2+bd/2));g.rotation.y=w?Math.PI:0;const L=n*bw;
+  for(const Y of YARDS)for(let w=0;w<2;w++){const g=new THREE.Group();g.position.set(Y.x,2,Y.z+(w?1:-1)*(STABLE.yard/2+bd/2));g.rotation.y=w?Math.PI:0;const L=n*bw;
     g.add(M(box,straw,L,0.08,bd,0,0.04,0));
     for(let k=0;k<n;k++){const x=(k-(n-1)/2)*bw*(w?-1:1),c=pal[(k+w*3)%pal.length];
       g.add(M(box,mat(c,{roughness:0.6}),bw,3.6,0.3,x,1.8,-bd/2));
@@ -831,17 +872,17 @@ const BOX_SIGNS=[];
   BOXES.forEach((B,i)=>{const c=document.createElement('canvas');c.width=256;c.height=72;const t=new THREE.CanvasTexture(c);t.cv=c;
     const sp=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.73),new THREE.MeshBasicMaterial({map:t,transparent:true}));sp.position.set(B.x,2+4.2,B.z+(B.w?-1:1)*(bd/2+0.25));sp.rotation.y=B.w?Math.PI:0;scene.add(sp);BOX_SIGNS.push({mesh:sp,tex:t,name:null})});
   // entrance arch "Maries Pferdehof"
-  const ag=new THREE.Group();ag.position.set(STABLE.x+n*bw/2+3,2,STABLE.z);ag.rotation.y=Math.PI/2;
-  for(const s2 of [-1,1])ag.add(M(box,wood,0.5,6,0.5,s2*5,3,0));ag.add(M(box,mat(0xff9fc4),11,0.5,0.6,0,6,0));bake(ag);
+  for(const Y of YARDS){const ag=new THREE.Group();ag.position.set(Y.x+n*bw/2+3,2,Y.z);ag.rotation.y=Math.PI/2;
+  for(const s2 of [-1,1])ag.add(M(box,wood,0.5,6,0.5,s2*5,3,0));ag.add(M(box,mat(0xff9fc4),11,0.5,0.6,0,6,0));bake(ag)}
   const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.fillStyle='#fffaf3';x.beginPath();x.roundRect?x.roundRect(4,4,504,88,40):x.rect(4,4,504,88);x.fill();x.lineWidth=6;x.strokeStyle='#ff7eb6';x.stroke();
   x.fillStyle='#5b2a86';x.font='800 50px "Baloo 2","Trebuchet MS",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🦄 Maries Pferdehof 🦄',256,50);
-  for(const s2 of [1,-1]){const sg=new THREE.Mesh(new THREE.PlaneGeometry(8,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true}));sg.position.set(STABLE.x+n*bw/2+3+s2*0.35,2+6.9,STABLE.z);sg.rotation.y=s2>0?Math.PI/2:-Math.PI/2;scene.add(sg)}
+  const signTex=new THREE.CanvasTexture(c);for(const Y of YARDS)for(const s2 of [1,-1]){const sg=new THREE.Mesh(new THREE.PlaneGeometry(8,1.5),new THREE.MeshBasicMaterial({map:signTex,transparent:true}));sg.position.set(Y.x+n*bw/2+3+s2*0.35,2+6.9,Y.z);sg.rotation.y=s2>0?Math.PI/2:-Math.PI/2;scene.add(sg)}
   // courtyard: big water trough and flower tubs
-  bake(M(box,mat(0x8fd0ff,{emissive:0x2a7fb0,emissiveIntensity:0.2}),5,0.6,1.4,STABLE.x,2.3,STABLE.z));
-  for(let k=0;k<6;k++){const fx=STABLE.x-24+k*9.6;for(const s2 of [-1,1]){bake(M(CYLG,mat(0xc49a6c),0.6,0.6,0.6,fx,2.3,STABLE.z+s2*6));bake(M(SPHLO,mat(pick([0xff7eb6,0xffe14d,0xb48cff,0xffffff])),0.7,0.45,0.7,fx,2.85,STABLE.z+s2*6))}}})();
+  for(const Y of YARDS){bake(M(box,mat(0x8fd0ff,{emissive:0x2a7fb0,emissiveIntensity:0.2}),5,0.6,1.4,Y.x,2.3,Y.z));
+  for(let k=0;k<6;k++){const fx=Y.x-24+k*9.6;for(const s2 of [-1,1]){bake(M(CYLG,mat(0xc49a6c),0.6,0.6,0.6,fx,2.3,Y.z+s2*6));bake(M(SPHLO,mat(pick([0xff7eb6,0xffe14d,0xb48cff,0xffffff])),0.7,0.45,0.7,fx,2.85,Y.z+s2*6))}}}})();
 function drawSign(i){const S=BOX_SIGNS[i];if(!S)return;const a=pegs.find(p=>p.box===i&&p.state!=='hidden');const nm=a?a.name:'';if(S.name===nm)return;S.name=nm;
   const x=S.tex.cv.getContext('2d');x.clearRect(0,0,256,72);x.fillStyle=nm?'#fff6e0':'rgba(255,246,224,0.55)';x.beginPath();x.roundRect?x.roundRect(4,4,248,64,18):x.rect(4,4,248,64);x.fill();
-  x.lineWidth=5;x.strokeStyle='#c4895a';x.stroke();x.fillStyle='#5b2a86';x.font='800 38px "Baloo 2","Trebuchet MS",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(nm||'frei',128,40);S.tex.needsUpdate=true}
+  x.lineWidth=5;x.strokeStyle='#c4895a';x.stroke();x.fillStyle='#5b2a86';let fs=38;do{x.font='800 '+fs+'px "Baloo 2","Trebuchet MS",sans-serif';fs-=2}while(x.measureText(nm||'frei').width>228&&fs>16);x.textAlign='center';x.textBaseline='middle';x.fillText(nm||'frei',128,40);S.tex.needsUpdate=true}
 // paddock fence (gate faces centre)
 (()=>{const postM=mat(0xffffff,{roughness:0.5}),railM=mat(0xffd6ea,{roughness:0.5});const n=24;const gateA=Math.atan2(-PAD.z,-PAD.x);
   const pts=[];for(let i=0;i<n;i++){const a=i/n*TAU;pts.push([PAD.x+Math.cos(a)*PAD.r,PAD.z+Math.sin(a)*PAD.r,a])}
@@ -943,13 +984,14 @@ const pegs=[],followers=[];
 const GROW_N=4;
 function hiddenPos(d){if(d.island!=null){const I=ISLANDS[d.island];return new V3(I.x-1,I.y+1,I.z+1)}if(d.lake)return new V3(PEARL.x+1,terrainH(PEARL.x+1,PEARL.z),PEARL.z);
   if(d.dome)return new V3(DOME.x,DOME_Y,DOME.z);return new V3(d.at[0],terrainH(d.at[0],d.at[1]),d.at[1])}
-function createPeg(d,st){const pattern=d.pattern||'plain',accent=d.accent??0xffffff,saddle=d.saddle??0x8a4f2c;
-  const mesh=makePegasus({body:d.body,mane:d.mane,pattern,accent,saddle,tack:true});scene.add(mesh);
+function createPeg(d,st){const pattern=d.pattern||'plain',accent=d.accent??0xffffff,saddle=d.saddle??0x8a4f2c,power=POWERS[d.power]?d.power:null;
+  const mesh=makePegasus({body:d.body,mane:d.mane,pattern,accent,saddle,tack:true,power});scene.add(mesh);
   const a={kind:'pegasus',id:d.id,name:d.name,body:d.body,mane:d.mane,pattern,accent,saddle,need:d.need||null,mesh,ud:mesh.userData,pos:new V3(),vel:new V3(),yaw:Math.random()*TAU,
-    growth:d.growth||0,adult:!!d.adult,box:d.box??null,grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
+    growth:d.growth||0,adult:!!d.adult,box:d.box??null,power,grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
   if(st==='hidden'){a.glow=new THREE.Sprite(new THREE.SpriteMaterial({map:shadowTex,color:0xffc0e8,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));a.glow.scale.setScalar(5);scene.add(a.glow)}
+  if(power){a.icon=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(POWERS[power].icon),transparent:true,depthWrite:false}));a.icon.scale.setScalar(1.1);scene.add(a.icon)}
   pegs.push(a);applyScale(a);return a}
-function applyScale(a){const e=1-Math.pow(1-a.grow,3);a.scale=lerp(0.55,1,e);a.mesh.scale.setScalar(a.scale);a.ud.head.scale.setScalar(lerp(1.35,1,e));a.reach=3.2+a.scale*1.4;a.h=3.4*a.scale}
+function applyScale(a){const e=1-Math.pow(1-a.grow,3);a.scale=lerp(0.55,1,e)*(a.power&&POWERS[a.power].size||1);a.mesh.scale.setScalar(a.scale);a.ud.head.scale.setScalar(lerp(1.35,1,e));a.reach=3.2+a.scale*1.4;a.h=3.4*a.scale}
 
 
 /* ================= player ================= */
@@ -964,15 +1006,15 @@ berryCarry.visible=false;scene.add(berryCarry);
 const FORM_SCALE={human:1,unicorn:1.12,fairy:0.55,mermaid:1};
 
 /* ================= state & save ================= */
-const state={started:false,stars:0,task:null,met:{},tIdx:{},itemPos:null,itemHeld:false,allDone:false,found:new Set(),nameIdx:0,lastBirth:-999,lastProgress:0,lastAutoHint:0,needHintT:0,wrongT:0,wrongHintT:0,netT:0,taskCount:0};
+const state={started:false,stars:0,task:null,met:{},tIdx:{},itemPos:null,itemHeld:false,allDone:false,found:new Set(),nameIdx:0,lastBirth:-999,lastProgress:0,lastAutoHint:0,needHintT:0,wrongT:0,wrongHintT:0,netT:0,taskCount:0,gone:[],mergeSel:null};
 const SAVE_KEY='maries-zauberfluegel-v1';
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({stars:state.stars,task:state.task,taskCount:state.taskCount,met:state.met,tIdx:state.tIdx,itemPos:state.itemPos,itemHeld:state.itemHeld,allDone:state.allDone,nameIdx:state.nameIdx,
-  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult,box:a.box}))}))}catch(e){}}
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({stars:state.stars,task:state.task,taskCount:state.taskCount,gone:state.gone,met:state.met,tIdx:state.tIdx,itemPos:state.itemPos,itemHeld:state.itemHeld,allDone:state.allDone,nameIdx:state.nameIdx,
+  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult,box:a.box,power:a.power}))}))}catch(e){}}
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
   if(d){state.stars=d.stars|0;state.task=TASK_MAP[d.task]?d.task:null;state.met=d.met||{};if(d.talked)state.met.lotte=true;state.tIdx=d.tIdx||{lotte:d.taskIdx|0};
-    state.itemPos=d.itemPos||null;state.taskCount=d.taskCount|0;state.itemHeld=!!d.itemHeld;if(state.task&&TASK_MAP[state.task].fetch&&!state.itemPos&&!state.itemHeld)state.task=null;state.allDone=!!d.allDone;state.nameIdx=d.nameIdx|0;(d.found||[]).forEach(id=>state.found.add(id))}
+    state.itemPos=d.itemPos||null;state.taskCount=d.taskCount|0;state.gone=d.gone||[];state.itemHeld=!!d.itemHeld;if(state.task&&TASK_MAP[state.task].fetch&&!state.itemPos&&!state.itemHeld)state.task=null;state.allDone=!!d.allDone;state.nameIdx=d.nameIdx|0;(d.found||[]).forEach(id=>state.found.add(id))}
   const saved=(d&&d.pegs)||[];
-  for(const def of BABY_DEFS){const s=saved.find(p=>p.id===def.id);if(state.found.has(def.id)){const a=createPeg(Object.assign({},def,s?{growth:s.growth,adult:s.adult,box:s.box}:{}),'home');assignBox(a);a.pos.copy(boxSpot(a))}else{const a=createPeg(def,'hidden');a.pos.copy(hiddenPos(def));a.home=a.pos.clone()}}
+  for(const def of BABY_DEFS){const s=saved.find(p=>p.id===def.id);if(state.gone.includes(def.id))continue;if(state.found.has(def.id)){const a=createPeg(Object.assign({},def,s?{growth:s.growth,adult:s.adult,box:s.box}:{}),'home');assignBox(a);a.pos.copy(boxSpot(a))}else{const a=createPeg(def,'hidden');a.pos.copy(hiddenPos(def));a.home=a.pos.clone()}}
   for(const s of saved){if(BABY_DEFS.some(b=>b.id===s.id))continue;const a=createPeg(s,'home');assignBox(a);a.pos.copy(boxSpot(a))}}
 
 /* ================= HUD ================= */
@@ -1012,7 +1054,7 @@ addEventListener('keydown',e=>{input.keys[e.code]=true;if(!state.started)return;
 addEventListener('keyup',e=>{input.keys[e.code]=false;if(e.code==='Space')input.up=false;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=false});
 
 /* ================= transformation ================= */
-function setForm(f){if(player.riding)dismount(true);if(f===player.form)return;player.form=f;player.trans=0.5;player.transTo=f;
+function setForm(f){if(state.captured){say('onlyWand',{prio:2});return}if(player.riding)dismount(true);if(f===player.form)return;player.form=f;player.trans=0.5;player.transTo=f;
   burst(player.pos.clone().add(new V3(0,1.2,0)),50,6,0.8,1.2);SFX.transform();say(f,{prio:1});updateFormBtns(null)}
 
 /* ================= actions ================= */
@@ -1026,8 +1068,10 @@ function computeActions(){const P=player.pos,acts=[];
   if(best){const food=player.carry==='berries'?'🫐':'🥕';
     if(best.kind==='shark'){if(player.form==='mermaid')acts.push({id:'pet',icon:'❤️',t:best})}
     else if(player.form!=='human')acts.push({id:'human',icon:'👧',pulse:true});
-    else{acts.push({id:'feed',icon:food,t:best});acts.push({id:'pet',icon:'❤️',t:best});if(best.kind!=='bunny')acts.push({id:'brush',icon:'✨',t:best});if(best.kind==='pegasus')acts.push({id:'ride',icon:'🏇',t:best})}}
-  return acts.slice(0,4)}
+    else{acts.push({id:'feed',icon:food,t:best});acts.push({id:'pet',icon:'❤️',t:best});if(best.kind!=='bunny')acts.push({id:'brush',icon:'✨',t:best});if(best.kind==='pegasus')acts.push({id:'ride',icon:'🏇',t:best});
+      if(best.kind==='pegasus'&&best.state==='home'&&best.adult&&!merge){const sel=state.mergeSel&&pegs.includes(state.mergeSel)?state.mergeSel:null;
+        if(sel&&sel!==best)acts.push({id:'merge',icon:'✨',t:best,pulse:true});else acts.push({id:'mergeSel',icon:sel===best?'💔':'💞',t:best})}}}
+  return acts.slice(0,5)}
 function headPos(a){const f=new V3(Math.sin(a.yaw),0,Math.cos(a.yaw));return a.pos.clone().addScaledVector(f,a.kind==='brachio'?3:a.kind==='shark'?2:a.kind==='bunny'?0.3:1.1*(a.scale||1)).add(new V3(0,a.kind==='shark'?0.8:a.h*0.85,0))}
 function doAction(act){if(!act)return;const a=act.t;
   switch(act.id){
@@ -1038,6 +1082,8 @@ function doAction(act){if(!act)return;const a=act.t;
     case 'pet':floatIcon('💖',headPos(a),4,0.8,1);SFX.heart();a.happy=1.5;care(a,'pet');break;
     case 'brush':burst(a.pos.clone().add(new V3(0,a.h*0.55,0)),60,3.5,0.7,1.4);SFX.sparkle();a.shine=2;care(a,'brush');break;
     case 'ride':mount(a);break;
+    case 'mergeSel':if(state.mergeSel===a){state.mergeSel=null;say('mergeCancel',{prio:1})}else{state.mergeSel=a;floatIcon('💞',headPos(a),4,0.8,1);SFX.heart();say('mergeSelect',{prio:2})}break;
+    case 'merge':startMerge(state.mergeSel,a);break;
     case 'dismount':dismount();break;
     case 'human':setForm('human');break;
   }
@@ -1049,7 +1095,7 @@ function care(a,act,berries){a.wanderT=Math.max(a.wanderT||0,3);
   if(a.kind==='pegasus'&&!a.adult){a.growth++;if(a.growth>=GROW_N)growUp(a)}
   state.lastProgress=NOW;save()}
 function growUp(a){a.adult=true;a.growAnim=0;setTimeout(()=>{Voice.say(`Schau mal! ${a.name} ist groß geworden!`,{prio:2});SFX.found()},900)}
-function mount(a){const i=followers.indexOf(a);if(i>=0)followers.splice(i,1);a.prev=a.state;a.state='ridden';player.riding=a;player.pos.copy(a.pos);player.yaw=a.yaw;player.vel.set(0,0,0);
+function mount(a){if(a.power){setTimeout(()=>Voice.say(MOUNT_LINES[a.power],{prio:2}),700)}const i=followers.indexOf(a);if(i>=0)followers.splice(i,1);a.prev=a.state;a.state='ridden';player.riding=a;player.pos.copy(a.pos);player.yaw=a.yaw;player.vel.set(0,0,0);
   SFX.jump();say('ride',{prio:1});updateFormBtns(null);taskEvent('ride',a.pos)}
 function dismount(silent){const a=player.riding;if(!a)return;player.riding=null;const nearHome=hd(player.pos,HOME)<34&&player.pos.y<groundAt(player.pos.x,player.pos.z)+6;
   a.state=nearHome?'home':'follow';a.wanderT=0;if(nearHome)assignBox(a);if(!nearHome)followers.unshift(a);a.vel.set(0,0,0);
@@ -1144,7 +1190,7 @@ function arriveHome(){followers.forEach(a=>{a.state='home';a.wanderT=0;assignBox
   const all=BABY_DEFS.every(d=>state.found.has(d.id))&&!pegs.some(a=>a.state==='follow'||a.state==='hidden'||a.state==='celebrate');
   if(all&&!state.allDone){state.allDone=true;Voice.say(LINES.allFound,{prio:3});fireworks=6}else say('home',{prio:2});save()}
 let fireworks=0,fwT=0;
-function teleportHome(){if(player.riding)dismount(true);burst(player.pos.clone().add(new V3(0,1,0)),50,5);player.pos.set(HOME.x+STABLE.n*STABLE.bw/2+8,2,HOME.z);player.yaw=-Math.PI/2;player.vel.set(0,0,0);trail.length=0;
+function teleportHome(){if(state.captured){say('onlyWand',{prio:2});return}if(player.riding)dismount(true);burst(player.pos.clone().add(new V3(0,1,0)),50,5);player.pos.set(HOME.x+STABLE.n*STABLE.bw/2+8,2,HOME.z);player.yaw=-Math.PI/2;player.vel.set(0,0,0);trail.length=0;
   followers.forEach((a,i)=>{a.pos.set(HOME.x+STABLE.n*STABLE.bw/2+11+i*1.5,2,HOME.z+Math.sin(i)*2);a.vel.set(0,0,0)});burst(player.pos.clone().add(new V3(0,1,0)),60,5);SFX.transform();say('teleport',{prio:1});cam.yaw=player.yaw+Math.PI}
 
 /* ================= guide: butterfly + light beam + golden arrows + screen-edge pointer ================= */
@@ -1242,12 +1288,33 @@ function updatePegs(dt){
       else{a.grazing=!near&&!a.date&&Math.sin(NOW*0.3+a.ud.seed)>0.2;if(near)a.yaw=angLerp(a.yaw,Math.atan2(player.pos.x-a.pos.x,player.pos.z-a.pos.z),damp(4,dt));else if(B)a.yaw=angLerp(a.yaw,B.face,damp(1.5,dt))}
       const g=groundAt(a.pos.x,a.pos.z,a.pos.y+0.5);a.pos.y=d>6&&!a.date?lerp(a.pos.y,g+6,damp(2,dt)):Math.max(g,lerp(a.pos.y,g,damp(4,dt)));flying=a.pos.y>g+0.6;
       if(!a.adult&&NOW-(a.passive||0)>60){a.passive=NOW;if(a.passive>60){a.growth++;if(a.growth>=GROW_N)growUp(a)}}}
+    else if(a.state==='merging'&&merge){const t=merge.t,ang=t*3+(a===merge.a?0:Math.PI),r=Math.max(0.3,4.5*(1-t/3.2));a.pos.set(merge.spot.x+Math.cos(ang)*r,2+t*1.6,merge.spot.z+Math.sin(ang)*r);
+      a.yaw=ang+Math.PI/2;flying=true;spd=6;if(Math.random()<dt*50)emit(a.pos.x,a.pos.y+1.5,a.pos.z,rnd(-1,1),rnd(0,2),rnd(-1,1),pick(SPARK),0.7,1,0)}
     else if(a.state==='ridden'){spd=Math.hypot(player.vel.x,player.vel.z);flying=player.pos.y>groundAt(player.pos.x,player.pos.z,player.pos.y)+0.5;a.pos.copy(player.pos);a.yaw=player.yaw;a.grazing=false}
-    a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(CAMW)<150;animPeg(a,dt,spd,flying);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
-  if(followers.length&&hd(player.pos,HOME)<34&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
+    a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(CAMW)<(a.state==='home'?80:150);animPeg(a,dt,spd,flying);
+    if(a.power&&a.mesh.visible){const P=POWERS[a.power];if(a.icon){a.icon.visible=a.state!=='ridden'&&a.state!=='hidden';a.icon.position.set(a.pos.x,a.pos.y+a.h+1.1+Math.sin(NOW*2+a.ud.seed)*0.15,a.pos.z)}
+      if(Math.random()<dt*(a.state==='ridden'?45:6))emit(a.pos.x+rnd(-1,1)*a.scale,a.pos.y+rnd(0.5,2.5)*a.scale,a.pos.z+rnd(-1,1)*a.scale,rnd(-0.3,0.3),a.state==='ridden'?0.2:0.8,rnd(-0.3,0.3),pick(P.fx),a.state==='ridden'?0.8:0.5,a.state==='ridden'?1.6:1,0)}
+    else if(a.icon)a.icon.visible=false;
+    if(a===state.mergeSel&&Math.random()<dt*2)floatIcon('💞',a.pos.clone().add(new V3(0,a.h+0.8,0)),1,0.3,0.9);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
+  if(followers.length&&Math.abs(player.pos.x-HOME.x)<36&&player.pos.z<HOME.z+22&&player.pos.z>HOME.z-STABLE.pitch*2-22&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
 }
 // breeding: two grown-up horses become parents
-let breedT=0,date=null,wildT=40;
+let breedT=0,date=null,wildT=40,merge=null,powMusicT=0;
+const MOUNT_LINES={fire:'Feuerkraft! Jetzt seid ihr superschnell!',ice:'Eiskraft! Unter euch glitzert alles wie Schnee!',lightning:'Blitzkraft! Ihr seid schnell wie der Blitz!',
+  rainbow:'Regenbogenkraft! Ihr malt einen Regenbogen in den Himmel!',star:'Sternenkraft! Ihr könnt bis zu den Sternen fliegen!',ghost:'Unsichtbar-Kraft! Böse Haie und Piraten können euch nicht sehen!',
+  giant:'Riesenkraft! Ihr seid riesengroß!',flower:'Blumenkraft! Überall, wo ihr seid, blühen Blumen!',water:'Wasserkraft! Ihr könnt zusammen tauchen!',diamond:'Diamantkraft! Kein Netz kann euch fangen!',
+  heart:'Herzkraft! Böse Haie werden ganz lieb, wenn ihr kommt!',music:'Musikkraft! Hört mal, wie schön das klingt!',moon:'Mondkraft! Die Piraten werden ganz müde!'};
+function startMerge(a,b){if(!a||!b||a===b||merge)return;state.mergeSel=null;[a,b].forEach(h=>{h.state='merging';h.date=false});merge={a,b,spot:new V3(HOME.x,2,HOME.z),t:0};SFX.transform();say('mergeStart',{prio:2})}
+function removePeg(h){scene.remove(h.mesh);scene.remove(h.shadow);if(h.icon)scene.remove(h.icon);const i=pegs.indexOf(h);if(i>=0)pegs.splice(i,1);const f=followers.indexOf(h);if(f>=0)followers.splice(f,1);
+  if(BABY_DEFS.some(d=>d.id===h.id)&&!state.gone.includes(h.id))state.gone.push(h.id);if(h.box!=null)drawSign(h.box)}
+function finishMerge(){const {a,b,spot}=merge;merge=null;const parent=pick([a,b]);removePeg(a);removePeg(b);
+  const pw=pick(POWER_IDS),P=POWERS[pw],base=parent.name.replace(/^[^-]+-/,'');
+  const n=createPeg({id:'s'+Date.now(),name:P.name+'-'+base,power:pw,body:P.body,mane:P.mane,pattern:P.pattern,accent:P.accent,saddle:P.glow,adult:true,growth:GROW_N},'home');
+  n.pos.copy(spot);assignBox(n);burst(spot.clone().add(new V3(0,3,0)),160,10,1.2,2,P.fx);SFX.found();fireworks=2;
+  Voice.say(`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${P.name}!`,{prio:3});state.lastProgress=NOW;save()}
+function updatePowers(dt){if(merge){merge.t+=dt;if(merge.t>3.4){finishMerge()}}
+  const rp=player.riding&&player.riding.power;
+  if(rp==='music'){powMusicT-=dt;if(powMusicT<=0){powMusicT=0.42;tone(pick(PENTA)*(Math.random()<0.4?2:1),AC?AC.currentTime:0,0.6,'triangle',0.06);floatIcon(pick(['🎵','🎶']),player.pos.clone().add(new V3(rnd(-1,1),3,rnd(-1,1))),1,0.3,0.8)}}}
 const COAT_COLORS=[0xffc9e3,0xd9e6f5,0x3b3a99,0xd98a45,0x9eeedd,0xfff6ee,0xffe08a,0xc9b3ff,0x8a5a3c,0xf2f2f2,0x2e2e3a,0xffb38a];
 function spawnWild(){let x=0,z=0,ok=false;for(let i=0;i<40&&!ok;i++){const ang=rnd(0,TAU),r=rnd(60,250);x=Math.cos(ang)*r;z=Math.sin(ang)*r;ok=okSpot(x,z,3)&&!inLake(x,z)}if(!ok)return;
   const pattern=pick(PATTERNS),d={id:'w'+Date.now(),name:nextName(),body:pick(COAT_COLORS),mane:pick([0xff4fa3,0x3f9bff,0xd59bff,0xfff0c8,0x1fa898,0xff5f78,0xffd75e,0x7a4cff]),pattern,accent:pick([0xffffff,0xff9fbf,0xffe27a,0x8ea3c2,0x2a8f86]),saddle:pick([0xffffff,0x2f5fb0,0x9b6bd6,0xff7eb6,0xffd75e,0x6a3a1e])};
@@ -1263,20 +1330,20 @@ function updateBreeding(dt){
         n.pos.copy(date.mid);n.yaw=Math.random()*TAU;assignBox(n);burst(date.mid.clone().add(new V3(0,1.5,0)),90,6,0.9,1.6);SFX.found();
         Voice.say(`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${name}!`,{prio:2});state.lastBirth=NOW;a.date=b.date=false;a.wanderT=b.wanderT=0;date=null;save()}}
     return}
-  breedT-=dt;if(breedT>0)return;breedT=3;if(NOW-state.lastBirth<50||pegs.filter(p=>p.state!=='hidden').length>=BOXES.length)return;
+  breedT-=dt;if(breedT>0)return;breedT=3;if(NOW-state.lastBirth<300||pegs.filter(p=>p.state!=='hidden').length>=BOXES.length)return;if(!(Math.abs(player.pos.x-HOME.x)<45&&player.pos.z<HOME.z+30&&player.pos.z>HOME.z-STABLE.pitch*2-30))return;
   const ad=pegs.filter(p=>p.state==='home'&&p.adult);if(ad.length<2)return;const a=ad.splice(Math.floor(Math.random()*ad.length),1)[0],b=pick(ad);
   const mid=new V3(HOME.x+rnd(-12,12),2,HOME.z+rnd(-3,3));
   a.date=b.date=true;a.dateTarget=mid.clone().add(new V3(-1.3,0,0));b.dateTarget=mid.clone().add(new V3(1.3,0,0));date={a,b,mid,t:0}}
 
 /* ================= player update ================= */
 function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.form;
-  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.netT>0){fwd=str=0}
+  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.netT>0||state.captured){fwd=str=0;input.up=input.down=false}
   const K=input.keys;if(K.KeyW||K.ArrowUp)fwd+=1;if(K.KeyS||K.ArrowDown)fwd-=1;if(K.KeyA||K.ArrowLeft)str-=1;if(K.KeyD||K.ArrowRight)str+=1;
   const il=Math.hypot(fwd,str);if(il>1){fwd/=il;str/=il}
   const sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);const mx=-sy*fwd+cy*str,mz=-cy*fwd-sy*str;const mag=Math.hypot(mx,mz);
   const lake=inLake(P.x,P.z),gnd=groundAt(P.x,P.z,P.y);
   const swimming=mode==='mermaid'&&lake&&P.y<=WATER_Y+0.25&&player.leap<=0;
-  let spd;switch(mode){case'human':spd=lake&&P.y<=WATER_Y?4.5:8.5;break;case'unicorn':spd=P.y>gnd+0.6?24:15;break;case'ride':spd=P.y>gnd+0.6?18:12;break;case'fairy':spd=9.5;break;default:spd=swimming?14:4.5}if(VR.on)spd*=VR.speedK;
+  let spd;switch(mode){case'human':spd=lake&&P.y<=WATER_Y?4.5:8.5;break;case'unicorn':spd=P.y>gnd+0.6?24:15;break;case'ride':spd=(P.y>gnd+0.6?18:12)*(player.riding&&player.riding.power?POWERS[player.riding.power].speed:1);break;case'fairy':spd=9.5;break;default:spd=swimming?14:4.5}if(VR.on)spd*=VR.speedK;
   player.vel.x=lerp(player.vel.x,mx*spd,damp(7,dt));player.vel.z=lerp(player.vel.z,mz*spd,damp(7,dt));
   const flyer=mode==='unicorn'||mode==='fairy'||mode==='ride';player.leap-=dt;
   if(flyer){const vs=mode==='fairy'?8:12;const tv=input.up?vs:input.down?-vs:0;player.vel.y=lerp(player.vel.y,tv,damp(6,dt))}
@@ -1288,12 +1355,12 @@ function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.fo
   const lake2=inLake(P.x,P.z);
   if(lake2&&wasAbove&&P.y<=WATER_Y&&player.vel.y<-6){SFX.splash();burst(new V3(P.x,WATER_Y,P.z),25,4,0.5,0.8,[0xffffff,0x9fd8ff])}
   let fl=groundAt(P.x,P.z,P.y);
-  if(lake2&&mode!=='mermaid')fl=Math.max(fl,mode==='human'?WATER_Y-0.95:WATER_Y);
+  if(lake2&&mode!=='mermaid'&&!(mode==='ride'&&player.riding.power==='water'))fl=Math.max(fl,mode==='human'?WATER_Y-0.95:WATER_Y);
   if(mode==='mermaid'&&lake2)fl=fl+0.2;
   if(P.y<fl){P.y=fl;if(player.vel.y<0)player.vel.y=0}
   player.grounded=P.y<=fl+0.06;
   if(swimming&&P.y>WATER_Y-0.35&&player.leap<=0&&player.vel.y<=0.5){P.y=Math.min(P.y,WATER_Y-0.35)}
-  if(P.y>78){P.y=78;player.vel.y=Math.min(0,player.vel.y)}
+  const ceil=player.riding&&player.riding.power==='star'?170:78;if(P.y>ceil){P.y=ceil;player.vel.y=Math.min(0,player.vel.y)}
   if(mode!=='fairy'){const dx=P.x-DOME.x,dz=P.z-DOME.z,d=Math.hypot(dx,dz);if(d<4.4&&P.y<DOME_TOP){const k=4.4/(d||1);P.x=DOME.x+dx*k;P.z=DOME.z+dz*k}}
   const dW=Math.hypot(P.x,P.z),dLk=Math.hypot(P.x-LAKE.x,P.z-LAKE.z);if(dW>WORLD_R&&dLk>LAKE.r-6){if(dLk<LAKE.r+20){const k=(LAKE.r-6)/dLk;P.x=LAKE.x+(P.x-LAKE.x)*k;P.z=LAKE.z+(P.z-LAKE.z)*k}else{P.x*=WORLD_R/dW;P.z*=WORLD_R/dW}}
   if(mag>0.08)player.yaw=angLerp(player.yaw,Math.atan2(mx,mz),damp(9,dt));
@@ -1427,10 +1494,11 @@ function spawnShip(){const m=makeShip();scene.add(m);let q;for(let i=0;i<20;i++)
   const s={kind:'ship',mesh:m,pos:new V3(q.x,0,q.z),yaw:rnd(0,TAU),target:new V3(q.x,0,q.z),wanderT:0,hp:5,active:true,flash:0,netT:3,leaveT:0,shoutT:0};ships.push(s);return s}
 for(let i=0;i<2;i++)spawnShip();
 const PIRATE_LINES=['Arrr! Fangt das Mädchen!','Wirf das Netz, Matrose!','Arrr, die ist ganz schön schnell!','Hoho! Gleich haben wir dich!'];
+const PIRATE_CAP_LINES=['Hoho! Jetzt bist du unsere Gefangene!','Arrr! Aus dem Käfig kommst du nicht raus!','Wir segeln zu unserer Schatzinsel!'];
 const shotTex=shadowTex;
 function zapTargets(){return[...badSharks.filter(b=>b.alive),...ships.filter(s=>s.active)]}
 // fire a magic star from `from` in direction `dir`; it homes in on a bad shark / ship that lies roughly ahead
-function shoot(from,dir,cone=0.35){if(zapCD>0)return;zapCD=0.32;dir=dir.clone().normalize();let best=null,bs=-1;
+function shoot(from,dir,cone=0.35){if(zapCD>0)return;zapCD=0.32;if(state.captured){SFX.zap();cageZap();return}dir=dir.clone().normalize();let best=null,bs=-1;
   for(const t of zapTargets()){const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;const v=c.clone().sub(from);const d=v.length();if(d>90)continue;const dot=v.divideScalar(d).dot(dir);if(dot>Math.cos(cone)&&dot>bs){bs=dot;best=t}}
   const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xffe680,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));spr.scale.setScalar(1.6);spr.position.copy(from);scene.add(spr);
   SHOTS.push({spr,pos:from.clone(),vel:dir.multiplyScalar(48),life:2.2,tgt:best});SFX.zap()}
@@ -1446,9 +1514,22 @@ function zapHit(t,p){t.flash=0.4;t.hp--;burst(p,40,6,0.8,1.1,[0xffe680,0xff8ccf,
 function taskEvent(ev,p){const t=curTask();if(!t||t.ev!==ev)return;state.taskCount=(state.taskCount||0)+1;const left=t.count-state.taskCount;
   if(left<=0){reward((p||player.pos).clone().add(new V3(0,2,0)));Voice.say(pickNew('taskDone',LINES.taskDone)+` Bei ${NPC_MAP[t.giver].name} gibt es noch mehr zu tun!`,{prio:2})}
   else{say(left===1?'progress1':'progress2',{prio:2});save()}}
-function catchInNet(){if(state.netT>0||player.riding)return;state.netT=4;player.vel.set(0,0,0);SFX.splash();say('netCaught',{prio:2});netMesh.visible=true}
+const cage=new THREE.Group();(()=>{const m=mat(0x5e4030,{roughness:0.7}),g=mat(0xffd75e,{metalness:0.5,roughness:0.3});for(let i=0;i<12;i++){const a=i/12*TAU;cage.add(M(CYLG,m,0.06,2.8,0.06,Math.cos(a)*1.3,1.4,Math.sin(a)*1.3))}
+  for(const y of [0.05,2.8]){const r=new THREE.Mesh(RINGG,m);r.scale.set(1.3,1.3,1.5);r.rotation.x=Math.PI/2;r.position.y=y;cage.add(r)}cage.add(M(SPHLO,m,1.35,0.25,1.35,0,2.9,0));
+  const lock=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🔒'),transparent:true}));lock.scale.setScalar(0.7);lock.position.set(0,1.3,1.35);cage.add(lock);cage.userData.lock=lock;cage.visible=false;scene.add(cage)})();
+function catchInNet(ship){if(state.captured||!ship||!ship.active)return;const rp=player.riding&&player.riding.power;
+  if(rp==='diamond'){burst(player.pos.clone().add(new V3(0,2,0)),40,6,0.8,1,[0xe8f6ff,0xffffff]);say('netBounce',{prio:1});return}
+  if(player.riding)dismount(true);state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say('captured',{prio:3});
+  if(VR.on){buzz(0,1,300);buzz(1,1,300)}}
+function cageZap(){const c=state.captured;if(!c)return;c.hits++;burst(cage.position.clone().add(new V3(0,1.5,0)),50,5,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);SFX.sparkle();cage.userData.lock.scale.setScalar(0.9);
+  if(c.hits<3){say(c.hits===1?'cageHit1':'cageHit2',{prio:2});return}
+  const s=c.ship,side=new V3(Math.cos(s.yaw),0,-Math.sin(s.yaw));state.captured=null;cage.visible=false;s.netT=14;
+  player.pos.set(s.pos.x+side.x*8,-0.4,s.pos.z+side.z*8);player.vel.set(0,4,0);burst(player.pos.clone(),60,6);SFX.found();say('freed',{prio:3})}
 const netMesh=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),new THREE.MeshBasicMaterial({color:0x8a6a3a,wireframe:true,transparent:true,opacity:0.9}));netMesh.visible=false;scene.add(netMesh);
-function updateCombat(dt){const P=player.pos,inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.6;zapCD-=dt;bumpCD-=dt;
+function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
+  if(state.captured){const s=state.captured.ship;P.set(s.pos.x,s.pos.y+2.15,s.pos.z);player.vel.set(0,0,0);player.root.position.copy(P);cage.position.copy(P);cage.rotation.y=s.yaw;
+    cage.userData.lock.scale.setScalar(lerp(cage.userData.lock.scale.x,0.7,damp(4,dt)));if(Math.random()<dt*1.5)emit(P.x,P.y+3,P.z,rnd(-0.5,0.5),0.5,rnd(-0.5,0.5),0xffd75e,0.5,1,0)}
+  const inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.6&&!state.captured;
   // shots
   for(let i=SHOTS.length-1;i>=0;i--){const s=SHOTS[i];s.life-=dt;
     if(s.tgt&&(s.tgt.alive||s.tgt.active)){const c=s.tgt.kind==='ship'?s.tgt.pos.clone().add(new V3(0,3,0)):s.tgt.pos;const want=c.clone().sub(s.pos).normalize().multiplyScalar(48);s.vel.lerp(want,damp(6,dt))}
@@ -1457,7 +1538,8 @@ function updateCombat(dt){const P=player.pos,inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.
     if(hit)zapHit(hit,s.pos.clone());if(hit||s.life<=0||s.pos.y<terrainH(s.pos.x,s.pos.z)){scene.remove(s.spr);s.spr.material.dispose();SHOTS.splice(i,1)}}
   // bad sharks: chase Marie when she is in the water, bump her, flee for a moment
   for(const b of badSharks){if(!b.alive)continue;const u=b.mesh.userData,d=b.pos.distanceTo(P);b.flash-=dt;b.flee-=dt;b.wanderT-=dt;
-    const chase=inW&&d<32&&b.flee<=0&&state.netT<=0;
+    const rpow=player.riding&&player.riding.power;if(rpow==='heart'&&d<11){b.hp=1;zapHit(b,b.pos.clone());continue}
+    const chase=inW&&d<32&&b.flee<=0&&state.netT<=0&&rpow!=='ghost';
     if(b.wanderT<=0||hd(b.pos,LAKE)>LAKE.r-10){const q=seaZone();b.target.set(q.x,rnd(terrainH(q.x,q.z)+2.5,-2.5),q.z);b.wanderT=rnd(6,12)}
     let tg=chase?P.clone().add(new V3(0,0.8,0)):b.target,sp=chase?5.2:3;if(b.flee>0){tg=b.pos.clone().add(b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10));sp=7}
     const dx=tg.x-b.pos.x,dz=tg.z-b.pos.z;b.yaw=angLerp(b.yaw,Math.atan2(dx,dz),damp(chase?3:1.2,dt));b.pos.x+=Math.sin(b.yaw)*sp*dt;b.pos.z+=Math.cos(b.yaw)*sp*dt;
@@ -1472,25 +1554,28 @@ function updateCombat(dt){const P=player.pos,inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.
     if(!s.active){s.leaveT+=dt;const away=s.pos.clone().sub(P).setY(0).normalize();s.yaw=angLerp(s.yaw,Math.atan2(away.x,away.z),damp(1,dt));s.pos.x+=Math.sin(s.yaw)*9*dt;s.pos.z+=Math.cos(s.yaw)*9*dt;
       u.pirates.forEach((p,i)=>{p.userData.arms[1].rotation.x=-2.6+Math.sin(NOW*8+i)*0.4});
       if(s.leaveT>60||hd(s.pos,LAKE)>LAKE.r-8){scene.remove(s.mesh);s.gone=true}}
-    else{const hunt=inW&&d<75;if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
+    else if(state.captured&&state.captured.ship===s){const q=seaPt(150,0);const dx=q.x-s.pos.x,dz=q.z-s.pos.z;s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.4,dt));if(Math.hypot(dx,dz)>10){s.pos.x+=Math.sin(s.yaw)*3*dt;s.pos.z+=Math.cos(s.yaw)*3*dt}
+      s.shoutT-=dt;if(s.shoutT<=0){s.shoutT=rnd(10,15);Voice.say(pickNew('piratCap',PIRATE_CAP_LINES),{prio:0,who:'pirat'})}u.pirates.forEach((p,i)=>{p.userData.arms[1].rotation.x=-1.5+Math.sin(NOW*3+i)*0.3})}
+    else{const rpw=player.riding&&player.riding.power,sleepy=rpw==='moon'&&d<55;if(sleepy){s.netT=Math.max(s.netT,2);if(Math.random()<dt*0.8)floatIcon('💤',s.pos.clone().add(new V3(rnd(-2,2),5,rnd(-2,2))),1,0.5,1.2)}
+      const hunt=inW&&d<75&&rpw!=='ghost'&&!sleepy;if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
       let tg=s.target;if(hunt){const side=new V3(Math.cos(NOW*0.2),0,Math.sin(NOW*0.2)).multiplyScalar(20);tg=P.clone().add(side)}
       const dx=tg.x-s.pos.x,dz=tg.z-s.pos.z,dd=Math.hypot(dx,dz);if(dd>3){s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.7,dt));s.pos.x+=Math.sin(s.yaw)*(hunt?7:4)*dt;s.pos.z+=Math.cos(s.yaw)*(hunt?7:4)*dt}
       if(terrainH(s.pos.x,s.pos.z)>-4){s.pos.x-=Math.sin(s.yaw)*8*dt;s.pos.z-=Math.cos(s.yaw)*8*dt;s.wanderT=0}
       s.netT-=dt;s.shoutT-=dt;
       if(hunt&&d<38&&s.netT<=0&&state.netT<=0&&P.y>WATER_Y-4){s.netT=rnd(4,6);const from=s.pos.clone().add(new V3(0,4,0)),to=P.clone().add(new V3(0,1,0)),T=Math.max(0.8,from.distanceTo(to)/20);
-        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.7);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1});SFX.jump()}
+        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.7);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:s});SFX.jump()}
       if(hunt&&d<60&&s.shoutT<=0){s.shoutT=rnd(9,14);Voice.say(pickNew('pirat',PIRATE_LINES),{prio:0,who:'pirat'})}}
     s.pos.y=WATER_Y+Math.sin(NOW*1.2+s.yaw)*0.15;s.mesh.position.copy(s.pos);s.mesh.rotation.set(Math.sin(NOW*0.9)*0.04,s.yaw,Math.sin(NOW*1.1)*0.05+(s.flash>0?Math.sin(NOW*40)*0.05:0));
     u.flag.rotation.z=Math.sin(NOW*6)*0.2;s.mesh.visible=s.pos.distanceTo(CAMW)<260}
   for(let i=ships.length-1;i>=0;i--)if(ships[i].gone){ships.splice(i,1);setTimeout(()=>spawnShip(),45000)}
   // nets in flight
   for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];n.life-=dt;n.vel.y-=14*dt;n.pos.addScaledVector(n.vel,dt);n.m.position.copy(n.pos);n.m.rotation.y+=dt*3;n.m.scale.setScalar(Math.min(1.6,n.m.scale.x+dt*1.2));
-    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<2.6;if(hitP)catchInNet();if(hitP||n.life<=0||n.pos.y<WATER_Y-1){scene.remove(n.m);NETS.splice(i,1)}}
+    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<2.6;if(hitP)catchInNet(n.ship);if(hitP||n.life<=0||n.pos.y<WATER_Y-1){scene.remove(n.m);NETS.splice(i,1)}}
   // caught in a net: wiggle free (moving the stick frees you faster)
   if(state.netT>0){const wig=Math.min(1,Math.hypot(joy.x||0,joy.y||0)+Math.hypot(VR.mx||0,VR.my||0)+(input.up?1:0));state.netT-=dt*(1+wig*1.5);
     netMesh.position.copy(P).add(new V3(0,1*FORM_SCALE[player.form]+(player.form==='unicorn'?1.4:0),0));netMesh.scale.setScalar(1.6*Math.max(FORM_SCALE[player.form],0.7)+Math.sin(NOW*10)*0.05);
     if(state.netT<=0){netMesh.visible=false;burst(netMesh.position.clone(),40,5);say('netFree',{prio:1})}}
-  $('#btnZap').classList.toggle('pulse',zapTargets().some(t=>t.pos.distanceTo(P)<40))}
+  $('#btnZap').classList.toggle('pulse',!!state.captured||zapTargets().some(t=>t.pos.distanceTo(P)<40))}
 
 /* ================= VR (Meta Quest, WebXR) =================
    First person with comfort settings: snap turn, soft vignette while moving, slower speeds,
@@ -1604,7 +1689,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
-    updateBreeding(dt);updateWild(dt)}
+    updateBreeding(dt);updateWild(dt);updatePowers(dt)}
   updatePegs(dt);updateCreatures(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
   water.material.emissiveIntensity=0.15+Math.sin(NOW*1.5)*0.05;swayU.value=NOW;
@@ -1614,7 +1699,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
 load();buildSlots();updateStars();Voice.init();
 player.pos.y=groundAt(player.pos.x,player.pos.z);
 function startGame(){if(state.started)return;audioInit();if(AC&&AC.state==='suspended')AC.resume();
-  state.started=true;state.lastProgress=NOW;state.lastAutoHint=NOW;$('#start').hidden=true;$('#hud').hidden=false;cam.yaw=player.yaw+Math.PI;
+  state.started=true;state.lastProgress=NOW;state.lastBirth=NOW;state.lastAutoHint=NOW;$('#start').hidden=true;$('#hud').hidden=false;cam.yaw=player.yaw+Math.PI;
   try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}
   SFX.found();const first=state.found.size===0;Voice.say(first?LINES.intro:'Hallo Marie! Schön, dass du wieder da bist! Deine Tiere haben auf dich gewartet.',{prio:3});
   burst(player.pos.clone().add(new V3(0,1,0)),60,5)}
@@ -1630,7 +1715,8 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
   const names=[...BABY_DEFS.map(d=>d.name),...NEW_NAMES];
   for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
   for(const nm of names)add('erz',`Juhu! Du hast ${nm} gefunden! ${nm} kommt jetzt mit dir mit.`);
-  PIRATE_LINES.forEach(t=>add('pirat',t));
+  for(const k in POWERS)add('erz',`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${POWERS[k].name}!`);for(const k in MOUNT_LINES)add('erz',MOUNT_LINES[k]);
+  PIRATE_LINES.forEach(t=>add('pirat',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
   for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
     for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
     if(n.tasks.length){add('erz',`Bei ${n.name} gibt es noch mehr zu tun!`);add('erz',`Geh zu ${n.name}! ${n.er} hat eine Aufgabe für dich. Folge dem Lichtstrahl!`)}}
@@ -1638,7 +1724,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
     if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
   return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);updateCombat(0.05);updateCreatures(0.05)}},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);updateCombat(0.05);updateCreatures(0.05);updatePegs(0.05);updatePowers(0.05)}},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
