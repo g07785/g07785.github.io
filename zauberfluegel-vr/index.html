@@ -124,7 +124,7 @@ const hd=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 let NOW=0;
 
 /* ================= world shape ================= */
-const WATER_Y=0, LAKE={x:100,z:-72,r:60}, WORLD_R=235, LAKE_FLOOR=-15;
+const WATER_Y=0, LAKE={x:132,z:-112,r:108}, WORLD_R=300, LAKE_FLOOR=-15;
 const PAD={x:12,z:-4,r:9}, DINO={x:-13,z:13,r:6}, BUSH={x:7,z:17}, DOME={x:-118,z:-14}, NPC_P={x:-3,z:-4};
 const GARDEN={x:38,z:44}, PLAY={x:-38,z:34}, MEADOW={x:-100,z:62}, GROVE={x:78,z:118};
 const ISLANDS=[{x:-70,y:28,z:-96,r:9},{x:22,y:40,z:-158,r:8},{x:-150,y:24,z:76,r:7},{x:150,y:32,z:70,r:7.5},{x:-30,y:50,z:135,r:6},{x:-175,y:36,z:-90,r:7}];
@@ -164,7 +164,7 @@ function resize(){const w=host.clientWidth||innerWidth,h=host.clientHeight||inne
 addEventListener('resize',resize);resize();
 
 const FOG_NORMAL=new THREE.Color(0xffe2f1), FOG_WATER=new THREE.Color(0x2a9fd6);
-scene.fog=new THREE.Fog(FOG_NORMAL.clone(),110,380);
+scene.fog=new THREE.Fog(FOG_NORMAL.clone(),120,440);
 
 const skyMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,
   uniforms:{top:{value:new THREE.Color(0x5fb8ff)},mid:{value:new THREE.Color(0xbfe6ff)},bot:{value:new THREE.Color(0xffd6ec)}},
@@ -234,8 +234,8 @@ const TEX={
     x.strokeStyle='#ff7eb6';x.lineWidth=6;x.setLineDash([10,8]);x.strokeRect(6,6,w-12,h-12);grain(x,w,h)},2,2)})),
   straw:()=>tmat('straw',()=>({roughness:0.8,map:ctex(256,256,(x,w,h)=>{x.fillStyle='#f2d38a';x.fillRect(0,0,w,h);
     for(let i=0;i<32;i++){x.fillStyle=i%2?'rgba(190,140,60,0.35)':'rgba(255,240,200,0.35)';x.fillRect(0,i*8,w,4);x.fillRect(i*8,0,4,h)}grain(x,w,h,2000,0.1)},3,3)})),
-  scales:()=>tmat('scales',()=>({roughness:0.24,metalness:0.4,emissive:0x0a4050,emissiveIntensity:0.25,map:ctex(256,256,(x,w,h)=>{
-    const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#3fe0c8');g.addColorStop(0.5,'#8a8cff');g.addColorStop(1,'#3fe0c8');x.fillStyle=g;x.fillRect(0,0,w,h);
+  scales:(ta=0x3fe0c8,tb=0x8a8cff)=>tmat('scales'+ta+tb,()=>({roughness:0.24,metalness:0.4,emissive:0x0a4050,emissiveIntensity:0.25,map:ctex(256,256,(x,w,h)=>{
+    const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,hex(ta));g.addColorStop(0.5,hex(tb));g.addColorStop(1,hex(ta));x.fillStyle=g;x.fillRect(0,0,w,h);
     for(let r=-1;r<14;r++)for(let k=-1;k<9;k++){const cx=k*32+(r%2?16:0),cy=r*20;const sg=x.createRadialGradient(cx,cy+8,2,cx,cy,18);sg.addColorStop(0,'rgba(255,255,255,0.4)');sg.addColorStop(1,'rgba(255,255,255,0)');
       x.fillStyle=sg;x.beginPath();x.arc(cx,cy,17,0,Math.PI);x.fill();x.strokeStyle='rgba(20,70,110,0.45)';x.lineWidth=2;x.beginPath();x.arc(cx,cy,17,0.15,Math.PI-0.15);x.stroke()}
     for(let i=0;i<80;i++){x.fillStyle='rgba(255,255,255,0.9)';x.beginPath();x.arc(TR()*w,TR()*h,TR()*1.4+0.4,0,Math.PI*2);x.fill()}},4,3)})),
@@ -365,7 +365,7 @@ function updateReins(u){if(!u.reins||!u.reins.length)return;const h=u.head;
     const mid=_ra.clone().lerp(_rb,0.5);mid.y-=0.28;seg(u.reins[s*2],_ra,mid,0.022);seg(u.reins[s*2+1],mid,_rb,0.022)}}
 function bow(parent,col,x,y,z,s=1){const m=mat(col,{roughness:0.35});for(const k of [-1,1]){const c=M(CONEG,m,0.07*s,0.14*s,0.05*s,x+k*0.07*s,y,z);c.rotation.z=k*Math.PI/2;parent.add(c)}parent.add(M(SPHLO,m,0.035*s,0.035*s,0.035*s,x,y,z))}
 function makeGirl(o={}){
-  const {dress=0xff6fae,pattern='dots',hair=0x7a4321,skin=0xffd7bf,shoes=0xff4f93,iris=0x8a5a2b,mermaid=false,fairy=false,hat=false,apron=false,ribbon=0xffe14d,freckles=true,curly=false,boy=false,shorts=0x4a6fc0,beard=false,glasses=false,captain=false,longHair=false}=o;
+  const {dress=0xff6fae,pattern='dots',hair=0x7a4321,skin=0xffd7bf,shoes=0xff4f93,iris=0x8a5a2b,mermaid=false,fairy=false,hat=false,apron=false,ribbon=0xffe14d,freckles=true,curly=false,boy=false,shorts=0x4a6fc0,tailA=0x3fe0c8,tailB=0x8a8cff,beard=false,glasses=false,captain=false,longHair=false}=o;
   const root=new THREE.Group(),pivot=new THREE.Group(),body=new THREE.Group();
   pivot.position.y=0.95;body.position.y=-0.95;root.add(pivot);pivot.add(body);
   const ud={pivot,legs:[],arms:[],tail:[],wings:[],ph:0};
@@ -381,7 +381,7 @@ function makeGirl(o={}){
     body.add(M(SPHG,mD,0.24,0.28,0.2,0,1.42,0));}
     if(apron){body.add(M(SPHG,TEX.apron(),0.33,0.38,0.08,0,1.08,0.33));bow(body,0xff7eb6,0,1.32,-0.2,1.3)}
   }else{
-    const mT=TEX.scales();
+    const mT=TEX.scales(tailA,tailB);
     let pv=new THREE.Group();pv.position.set(0,1.05,0);body.add(pv);
     for(const [sx,sy,sz,len] of [[0.27,0.34,0.22,0.42],[0.21,0.3,0.18,0.36],[0.15,0.24,0.13,0.3]]){
       pv.add(M(SPHG,mT,sx,sy,sz,0,-len*0.5,0));ud.tail.push(pv);const nx=new THREE.Group();nx.position.y=-len;pv.add(nx);pv=nx}
@@ -636,7 +636,7 @@ const say=(k,o)=>Voice.say(Array.isArray(LINES[k])?pick(LINES[k]):LINES[k],o);
 
 /* ================= build world ================= */
 // terrain (vertex coloured: meadow, sandy paths, beach, sea floor, mountains)
-(()=>{const S=560,N=230,g=new THREE.PlaneGeometry(S,S,N,N);g.rotateX(-Math.PI/2);const p=g.attributes.position,cols=new Float32Array(p.count*3);const c=new THREE.Color(),c2=new THREE.Color();
+(()=>{const S=720,N=270,g=new THREE.PlaneGeometry(S,S,N,N);g.rotateX(-Math.PI/2);const p=g.attributes.position,cols=new Float32Array(p.count*3);const c=new THREE.Color(),c2=new THREE.Color();
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),h=terrainH(x,z);p.setY(i,h);const dl=Math.hypot(x-LAKE.x,z-LAKE.z),d=Math.hypot(x,z);
     const n=Math.sin(x*0.3)*Math.cos(z*0.27)*0.5+0.5;c.set(0x86dd7c).lerp(c2.set(0x5fcb72),n*0.6);
     if(d<26)c.lerp(c2.set(0xaeeb92),0.6);
@@ -650,13 +650,13 @@ const say=(k,o)=>Voice.say(Array.isArray(LINES[k])?pick(LINES[k]):LINES[k],o);
 const water=new THREE.Mesh(new THREE.CircleGeometry(LAKE.r+14,72),new THREE.MeshStandardMaterial({color:0x5fd0f0,transparent:true,opacity:0.62,roughness:0.08,metalness:0.2,emissive:0x1b7fb0,emissiveIntensity:0.15,side:THREE.DoubleSide,depthWrite:false}));
 water.rotation.x=-Math.PI/2;water.position.set(LAKE.x,WATER_Y,LAKE.z);water.renderOrder=2;scene.add(water);
 const lakeP=(r0,r1)=>{const a=sr(0,TAU),r=sr(r0,r1);return[LAKE.x+Math.cos(a)*r,LAKE.z+Math.sin(a)*r]};
-const WRECK={x:LAKE.x-14,z:LAKE.z+12}, REEF={x:LAKE.x+20,z:LAKE.z-16};
+const WRECK={x:LAKE.x-30,z:LAKE.z+26}, REEF={x:LAKE.x+34,z:LAKE.z-30}, REEF2={x:LAKE.x-38,z:LAKE.z-42};
 for(let i=0;i<18;i++){const [x,z]=lakeP(LAKE.r-4,LAKE.r+6);if(terrainH(x,z)>-0.3)continue;const lp=M(CYLG,mat(0x5cc85a),sr(0.8,1.3),0.06,sr(0.8,1.3),x,WATER_Y+0.04,z);bake(lp);
   if(i%2===0)bake(M(SPHG,mat(0xff9fd0,{emissive:0xff7eb6,emissiveIntensity:0.2}),0.25,0.18,0.25,x,WATER_Y+0.2,z))}
 // sea grass (sways in the current)
 function addWeed(x,z,n=5){const h0=terrainH(x,z),g=new THREE.Group();g.position.set(x,h0,z);
   for(let k=0;k<n;k++){const ht=sr(1.8,5.5),b=M(CONEG,mat(pick([0x3fbf7f,0x6fdc8a,0x2fae9a]),{emissive:0x0a4a2a,emissiveIntensity:0.25}),sr(0.12,0.22),ht,sr(0.05,0.12),sr(-0.6,0.6),ht/2,sr(-0.6,0.6));b.rotation.y=sr(0,3);g.add(b)}bake(g,'weed',true)}
-for(let i=0;i<90;i++){const [x,z]=lakeP(3,LAKE.r-6);if(terrainH(x,z)>-2.5||Math.hypot(x-WRECK.x,z-WRECK.z)<9)continue;addWeed(x,z,4+Math.floor(sr(0,4)))}
+for(let i=0;i<260;i++){const [x,z]=lakeP(3,LAKE.r-6);if(terrainH(x,z)>-2.5||Math.hypot(x-WRECK.x,z-WRECK.z)<9)continue;addWeed(x,z,4+Math.floor(sr(0,4)))}
 // corals: branching, brain, fan, tube, plus anemones, starfish and shells
 const CORAL=[0xff7eb6,0xff9b5a,0xffd75e,0xb48cff,0x7ef0e0,0xff5a7a,0x8fd0ff];
 function coralBranch(x,z,c,s){const g=new THREE.Group();g.position.set(x,terrainH(x,z),z);g.scale.setScalar(s);const m=mat(c,{emissive:c,emissiveIntensity:0.25});
@@ -674,10 +674,10 @@ function starfish(x,z,c){const g=new THREE.Group();g.position.set(x,terrainH(x,z
   for(let k=0;k<5;k++){const a=k/5*TAU;const arm=M(CONEG,m,0.14,0.55,0.06,Math.cos(a)*0.25,0.04,Math.sin(a)*0.25);arm.rotation.set(Math.PI/2,0,0);arm.rotation.z=0;const p=new THREE.Group();p.rotation.y=-a+Math.PI/2;arm.position.set(0,0.04,0.27);p.add(arm);g.add(p)}
   g.add(M(SPHLO,m,0.16,0.07,0.16,0,0.05,0));bake(g)}
 function shell(x,z,c){const g=M(SPHG,mat(c,{roughness:0.35,metalness:0.15}),0.3,0.12,0.25,x,terrainH(x,z)+0.08,z);g.rotation.y=sr(0,3);bake(g)}
-for(let i=0;i<70;i++){const a=sr(0,TAU),r=Math.sqrt(SR())*14,x=REEF.x+Math.cos(a)*r,z=REEF.z+Math.sin(a)*r,c=pick(CORAL),k=i%6;
+for(let i=0;i<150;i++){const RC=i<80?REEF:REEF2,a=sr(0,TAU),r=Math.sqrt(SR())*15,x=RC.x+Math.cos(a)*r,z=RC.z+Math.sin(a)*r,c=pick(CORAL),k=i%6;
   if(k===0)coralBranch(x,z,c,sr(0.9,1.6));else if(k===1)coralBrain(x,z,c,sr(0.8,1.5));else if(k===2)coralFan(x,z,c,sr(0.9,1.7));else if(k===3)coralTube(x,z,c);else if(k===4)anemone(x,z,c);else starfish(x,z,c)}
-for(let i=0;i<40;i++){const [x,z]=lakeP(4,LAKE.r-10);if(terrainH(x,z)>-3)continue;const k=i%5,c=pick(CORAL);if(k===0)coralBranch(x,z,c,sr(0.7,1.2));else if(k===1)coralBrain(x,z,c,sr(0.6,1.1));else if(k===2)starfish(x,z,c);else if(k===3)coralFan(x,z,c,sr(0.7,1.2));else shell(x,z,pick([0xffc2d9,0xffe0b3,0xe0c8ff,0xffffff]))}
-for(let i=0;i<26;i++){const [x,z]=lakeP(4,LAKE.r-8);bake(M(SPHG,mat(pick([0x9a8fb5,0xa9a2c2,0x8f9fb0]),{roughness:0.9}),sr(0.8,2.4),sr(0.6,1.5),sr(0.8,2.2),x,terrainH(x,z)+0.2,z))}
+for(let i=0;i<110;i++){const [x,z]=lakeP(4,LAKE.r-10);if(terrainH(x,z)>-3)continue;const k=i%5,c=pick(CORAL);if(k===0)coralBranch(x,z,c,sr(0.7,1.2));else if(k===1)coralBrain(x,z,c,sr(0.6,1.1));else if(k===2)starfish(x,z,c);else if(k===3)coralFan(x,z,c,sr(0.7,1.2));else shell(x,z,pick([0xffc2d9,0xffe0b3,0xe0c8ff,0xffffff]))}
+for(let i=0;i<70;i++){const [x,z]=lakeP(4,LAKE.r-8);bake(M(SPHG,mat(pick([0x9a8fb5,0xa9a2c2,0x8f9fb0]),{roughness:0.9}),sr(0.8,2.4),sr(0.6,1.5),sr(0.8,2.2),x,terrainH(x,z)+0.2,z))}
 // shipwreck: tilted hull half sunk in the sand, broken mast with a torn sail, open treasure chest
 const CHEST=new V3();
 (()=>{const g=new THREE.Group();g.position.set(WRECK.x,terrainH(WRECK.x,WRECK.z)-0.6,WRECK.z);g.rotation.set(0.12,0.7,0.22);
@@ -711,9 +711,9 @@ const clam=new THREE.Group();clam.position.set(LAKE.x-1.5,terrainH(LAKE.x-1.5,LA
   const b=new THREE.Mesh(hg,m);b.scale.set(0.9,0.4,0.9);b.rotation.x=Math.PI;b.position.y=0.4;clam.add(b);const t=new THREE.Mesh(hg,m);t.scale.set(0.9,0.4,0.9);t.position.set(0,0.4,-0.7);t.rotation.x=-1.0;clam.add(t);
   clam.add(M(SPHG,mat(0xffffff,{metalness:0.3,roughness:0.1,emissive:0xfff0ff,emissiveIntensity:0.5}),0.3,0.3,0.3,0,0.65,0))})();
 // sharks + a few small reef fish
-const sharks=[];[[0x8fb3d9,'Finn'],[0xb7a4e0,'Flossi'],[0xff9fc6,'Rosi'],[0x7fd0c8,'Blubb']].forEach(([c,name],i)=>{const m=makeShark(c);scene.add(m);const [x,z]=lakeP(10,LAKE.r-14);
+const sharks=[];[[0x8fb3d9,'Finn'],[0xb7a4e0,'Flossi'],[0xff9fc6,'Rosi'],[0x7fd0c8,'Blubb'],[0xffc98a,'Sunny'],[0xa8c8ff,'Wellchen'],[0xd0a8ff,'Lila']].forEach(([c,name],i)=>{const m=makeShark(c);scene.add(m);const [x,z]=lakeP(10,LAKE.r-14);
   sharks.push({kind:'shark',name,mesh:m,pos:new V3(x,-6,z),yaw:sr(0,TAU),target:new V3(x,-6,z),wanderT:0,cd:{},reach:4.2,h:1.2,speed:3.2,happy:0,munch:0,shine:0})});
-const fish=[];for(let i=0;i<14;i++){const f=makeFish(pick([0xff9b5a,0xff7eb6,0xffe14d,0xb48cff,0x6fe0ff]));f.scale.setScalar(0.8);scene.add(f);fish.push({m:f,cx:REEF.x+sr(-6,6),cz:REEF.z+sr(-6,6),a:sr(0,TAU),r:sr(2,7),y:sr(-11,-5),s:sr(0.5,0.9)*(i%2?1:-1)})}
+const fish=[];for(let i=0;i<22;i++){const f=makeFish(pick([0xff9b5a,0xff7eb6,0xffe14d,0xb48cff,0x6fe0ff]));f.scale.setScalar(0.8);scene.add(f);fish.push({m:f,cx:REEF.x+sr(-6,6),cz:REEF.z+sr(-6,6),a:sr(0,TAU),r:sr(2,7),y:sr(-11,-5),s:sr(0.5,0.9)*(i%2?1:-1)})}
 // pier + little boat for Captain Kira
 const BOAT=new V3();
 (()=>{const g=new THREE.Group();const ang=Math.atan2(PIER.dx,PIER.dz);g.position.set(PIER.x,0,PIER.z);g.rotation.y=ang+Math.PI;
@@ -734,15 +734,15 @@ function addPine(x,z,s=1){const h=terrainH(x,z);const t=new THREE.Group();t.posi
   for(let k=0;k<3;k++)t.add(M(new THREE.ConeGeometry(1,1,9),mat(k%2?0x4fb879:0x5fc98a,{roughness:0.8}),1.9-k*0.45,2.2,1.9-k*0.45,0,2.4+k*1.3,0));bake(t)}
 const AVOID=[[0,0,32],[LAKE.x,LAKE.z,LAKE.r+14],[DOME.x,DOME.z,12],[MEADOW.x,MEADOW.z,7],[GROVE.x,GROVE.z,5],[GARDEN.x,GARDEN.z,13],[PLAY.x,PLAY.z,12],[PIER.x,PIER.z,8]];
 const okSpot=(x,z,extra=0)=>AVOID.every(([ax,az,r])=>Math.hypot(x-ax,z-az)>r+extra)&&pathD(x,z)>4+extra;
-for(let i=0;i<900;i++){const x=sr(-215,215),z=sr(-215,215);if(Math.hypot(x,z)>212||!okSpot(x,z))continue;if(SR()<0.33){if(Math.hypot(x,z)>140&&SR()<0.5)addPine(x,z,sr(0.9,1.5));else addTree(x,z,sr(0.8,1.3),SR()<0.3)}}
-for(let i=0;i<110;i++){const a=i/110*TAU+sr(-0.02,0.02),r=sr(218,240);if(SR()<0.5)addPine(Math.cos(a)*r,Math.sin(a)*r,sr(1.4,2.2));else addTree(Math.cos(a)*r,Math.sin(a)*r,sr(1.2,1.8),SR()<0.25)}
+for(let i=0;i<1400;i++){const x=sr(-280,280),z=sr(-280,280);if(Math.hypot(x,z)>276||!okSpot(x,z))continue;if(SR()<0.33){if(Math.hypot(x,z)>140&&SR()<0.5)addPine(x,z,sr(0.9,1.5));else addTree(x,z,sr(0.8,1.3),SR()<0.3)}}
+for(let i=0;i<150;i++){const a=i/150*TAU+sr(-0.02,0.02),r=sr(282,305);if(SR()<0.5)addPine(Math.cos(a)*r,Math.sin(a)*r,sr(1.4,2.2));else addTree(Math.cos(a)*r,Math.sin(a)*r,sr(1.2,1.8),SR()<0.25)}
 // grove where Wolke hides
 for(let i=0;i<9;i++){const a=i/9*TAU,r=sr(7,11);addTree(GROVE.x+Math.cos(a)*r,GROVE.z+Math.sin(a)*r,sr(0.9,1.2),i%3===0)}
 // flowers (instanced); a dense meadow where Sternchen hides
 (()=>{const N=2600,geo=new THREE.SphereGeometry(1,6,4),im=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color:0xffffff}),N);const d=new THREE.Object3D(),c=new THREE.Color();
   const pal=[0xff7eb6,0xffe14d,0xffffff,0xb48cff,0xff9b5a,0x7ec8ff];let k=0;
-  for(let i=0;i<9000&&k<N;i++){let x,z;if(i<500){const a=sr(0,TAU),r=sr(0,14);x=MEADOW.x+Math.cos(a)*r;z=MEADOW.z+Math.sin(a)*r}else{x=sr(-215,215);z=sr(-215,215)}
-    if(Math.hypot(x,z)>212||inLake(x,z)||Math.hypot(x-LAKE.x,z-LAKE.z)<LAKE.r+16||Math.hypot(x-PAD.x,z-PAD.z)<PAD.r+1||pathD(x,z)<2.5)continue;
+  for(let i=0;i<9000&&k<N;i++){let x,z;if(i<500){const a=sr(0,TAU),r=sr(0,14);x=MEADOW.x+Math.cos(a)*r;z=MEADOW.z+Math.sin(a)*r}else{x=sr(-280,280);z=sr(-215,215)}
+    if(Math.hypot(x,z)>276||inLake(x,z)||Math.hypot(x-LAKE.x,z-LAKE.z)<LAKE.r+16||Math.hypot(x-PAD.x,z-PAD.z)<PAD.r+1||pathD(x,z)<2.5)continue;
     const s=sr(0.15,0.3);d.position.set(x,terrainH(x,z)+s*0.8,z);d.scale.set(s,s*0.7,s);d.updateMatrix();im.setMatrixAt(k,d.matrix);im.setColorAt(k,c.set(pick(pal)));k++}
   im.count=k;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;scene.add(im)})();
 // mushrooms
@@ -750,7 +750,7 @@ const MUSHROOMS=[];
 function addMushroom(x,z,s){const h=terrainH(x,z),g=new THREE.Group();g.position.set(x,h,z);g.scale.setScalar(s);g.add(M(TAPG,mat(0xfff6e8),0.3,1,0.3,0,0.5,0));
   const cap=new THREE.Mesh(new THREE.SphereGeometry(1,16,8,0,TAU,0,Math.PI/2),mat(0xff5a7a,{roughness:0.4}));cap.scale.set(0.9,0.6,0.9);cap.position.y=0.95;g.add(cap);
   for(let i=0;i<5;i++){const a=i/5*TAU;g.add(M(SPHLO,mat(0xffffff),0.13,0.06,0.13,Math.cos(a)*0.55,1.3,Math.sin(a)*0.55))}bake(g);MUSHROOMS.push(new V3(x,h,z))}
-for(let i=0;i<80&&MUSHROOMS.length<40;i++){const x=sr(-200,200),z=sr(-200,200);if(okSpot(x,z,4)&&Math.hypot(x,z)<200&&Math.hypot(x,z)>40)addMushroom(x,z,sr(0.6,1.3))}
+for(let i=0;i<80&&MUSHROOMS.length<40;i++){const x=sr(-260,260),z=sr(-260,260);if(okSpot(x,z,4)&&Math.hypot(x,z)<260&&Math.hypot(x,z)>40)addMushroom(x,z,sr(0.6,1.3))}
 // garden of Grandpa Gustav: veggie rows, a scarecrow, a little shed
 (()=>{const g=new THREE.Group();const y=terrainH(GARDEN.x,GARDEN.z);g.position.set(GARDEN.x,y,GARDEN.z);
   g.add(M(new THREE.BoxGeometry(1,1,1),mat(0x9a6b4a,{roughness:1}),16,0.3,11,0,0.05,0));
@@ -789,11 +789,11 @@ for(const I of ISLANDS){const g=new THREE.Group();g.position.set(I.x,I.y,I.z);sc
   const t=new THREE.Group();t.position.set(I.r*0.45,1,-I.r*0.35);t.add(M(TAPG,trunkM,0.25,2,0.25,0,1,0));t.add(M(SPHG,mat(0xffb3d1,{roughness:0.7}),1.3,1.1,1.3,0,2.6,0));g.add(t)}
 // clouds
 const clouds=[];for(let i=0;i<30;i++){const g=new THREE.Group();const n=4+Math.floor(sr(0,3));for(let k=0;k<n;k++)g.add(M(SPHG,mat(0xffffff,{roughness:1,emissive:0xffffff,emissiveIntensity:0.35}),sr(3,6),sr(2,3.5),sr(3,5),k*4-n*2,sr(-0.5,1),sr(-1.5,1.5)));
-  g.position.set(sr(-260,260),sr(58,82),sr(-260,260));scene.add(g);clouds.push(g)}
+  g.position.set(sr(-330,330),sr(58,82),sr(-330,330));scene.add(g);clouds.push(g)}
 // rainbows
 function rainbow(x,y,z,R,ry=0){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=ry;const cs=[0xff5a6e,0xffa04d,0xffe14d,0x7fe07a,0x6fc0ff,0xb48cff];
   cs.forEach((c,i)=>g.add(new THREE.Mesh(new THREE.TorusGeometry(R-i*0.7,0.36,8,64,Math.PI),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.6,depthWrite:false,fog:false}))));scene.add(g)}
-rainbow(0,2,-40,30);rainbow(-70,29,-96,14,0.9);rainbow(150,32,70,10,-0.6);rainbow(LAKE.x,0,LAKE.z,40,0.8);rainbow(-100,4,62,18,1.2);
+rainbow(0,2,-40,30);rainbow(-70,29,-96,14,0.9);rainbow(150,32,70,10,-0.6);rainbow(LAKE.x,0,LAKE.z,70,0.8);rainbow(-100,4,62,18,1.2);
 // sanctuary: stable
 (()=>{const g=new THREE.Group();g.position.set(-14,2,-9);g.rotation.y=0.5;scene.add(g);
   g.add(M(new THREE.BoxGeometry(1,1,1),mat(0xff9eb5,{roughness:0.6}),9,4.4,6,0,2.2,0));
@@ -847,13 +847,26 @@ const NPC_DEFS=[
   {id:'mia',name:'Mia',kid:true,at:[PLAY.x,PLAY.z],scale:0.8,voice:{pitch:1.6,rate:1.05},
     look:{dress:0xffd75e,pattern:'dots',hair:0x2a1a12,skin:0x8d5a3c,shoes:0xff7eb6,iris:0x3a2a1a,curly:true,ribbon:0xff7eb6},
     chat:['Hallo Marie! Spielst du mit uns?','Die Schaukel ist super!','Ich mag Einhörner am allerliebsten!']},
+  // mermaids who always live in the big lake
+  {id:'undine',name:'Undine',swim:true,kid:true,at:[LAKE.x-10,LAKE.z+5],scale:1,voice:{pitch:1.3,rate:1.0},
+    look:{mermaid:true,hair:0x2f9fff,skin:0xffd7bf,iris:0x2a6ad0,tailA:0xff8fd0,tailB:0xb07cff},
+    chat:['Hallo Marie! Komm, schwimm mit uns!','Ich bin Undine. Das Wasser ist herrlich heute!','Blubb blubb! Wer schwimmt am schnellsten?']},
+  {id:'coralie',name:'Coralie',swim:true,kid:true,at:[REEF.x,REEF.z+8],scale:1,voice:{pitch:1.35,rate:1.0},
+    look:{mermaid:true,hair:0xff5f5f,skin:0xc98d6a,iris:0x3a2a1a,curly:true,tailA:0xffb34d,tailB:0xffe14d},
+    chat:['Ich bin Coralie. Im Korallenriff ist mein Zuhause!','Die Korallen leuchten so schön bunt!','Hast du die kleinen Fische gesehen?']},
+  {id:'nina',name:'Nixe Nina',swim:true,kid:true,at:[WRECK.x+8,WRECK.z-6],scale:1,voice:{pitch:1.45,rate:1.0},
+    look:{mermaid:true,hair:0xc59bff,skin:0xf5cba7,iris:0x8a5cff,tailA:0x37d6bf,tailB:0x4f8fff},
+    chat:['Hallo, ich bin Nixe Nina! Die Haie sind meine besten Freunde.','Hihi, Flossi hat mich gekitzelt!','Komm, wir tauchen zum Schiffswrack!']},
+  {id:'perlina',name:'Perlina',swim:true,kid:true,at:[LAKE.x+12,LAKE.z-8],scale:1,voice:{pitch:1.5,rate:0.95},
+    look:{mermaid:true,hair:0xfff0b0,skin:0x8d5a3c,iris:0x3a2a1a,tailA:0x9ff7e8,tailB:0xff9fd6},
+    chat:['Ich bin Perlina. Ich sammle glitzernde Perlen!','In der großen Muschel liegt eine Perle.','Du bist eine tolle Meerjungfrau, Marie!']},
 ];
 const NPCS=NPC_DEFS.map(d=>{const mesh=makeGirl(d.look);mesh.scale.setScalar(d.scale);const pos=new V3(d.at[0],0,d.at[1]);pos.y=groundAt(pos.x,pos.z);mesh.position.copy(pos);scene.add(mesh);
   VOICES[d.id]=d.voice;return Object.assign({},d,{mesh,pos,home:pos.clone(),wave:0,yaw:d.rest||0,shadow:makeShadow(),tasks:[]})});
 const NPC_MAP=Object.fromEntries(NPCS.map(n=>[n.id,n]));const npc=NPC_MAP.lotte;
 const bunnies=[];
 function addBunny(x,z){const m=makeBunny();scene.add(m);bunnies.push({kind:'bunny',name:'Häschen',m,mesh:m,home:new V3(x,0,z),pos:new V3(x,terrainH(x,z),z),tgt:new V3(x,0,z),hop:0,yaw:0,wait:sr(0,3),cd:{},wanderT:0,reach:2.6,h:0.8,happy:0,munch:0,shine:0})}
-for(let i=0;i<14;i++){let x,z;do{x=sr(-190,190);z=sr(-190,190)}while(!okSpot(x,z,2)||Math.hypot(x,z)>195);addBunny(x,z)}
+for(let i=0;i<14;i++){let x,z;do{x=sr(-250,250);z=sr(-250,250)}while(!okSpot(x,z,2)||Math.hypot(x,z)>255);addBunny(x,z)}
 for(let i=0;i<3;i++)addBunny(GARDEN.x+sr(-8,8),GARDEN.z+sr(7,12));
 // butterfly guide (big and bright so it is easy to spot)
 const fly=new THREE.Group();(()=>{const wm=new THREE.MeshBasicMaterial({color:0xff7ec8,side:THREE.DoubleSide,transparent:true,opacity:0.95}),wm2=new THREE.MeshBasicMaterial({color:0x7ec8ff,side:THREE.DoubleSide});
@@ -1256,6 +1269,15 @@ function updateCreatures(dt){
     if(n.id==='ben'){const near=dn<5;if(!near){n.ang=(n.ang||0)+dt*0.85;const tx=PLAY.x+Math.cos(n.ang)*4.5,tz=PLAY.z-7+Math.sin(n.ang)*4.5;
         n.yaw=Math.atan2(-Math.sin(n.ang),Math.cos(n.ang));n.pos.set(tx,groundAt(tx,tz),tz);animGirl(n.mesh,dt,3.8,'human',false,false)}
       else{n.yaw=angLerp(n.yaw,Math.atan2(player.pos.x-n.pos.x,player.pos.z-n.pos.z),damp(4,dt));animGirl(n.mesh,dt,0,'human',false,false)}}
+    else if(n.swim){const dP=n.pos.distanceTo(player.pos),inW=inLake(player.pos.x,player.pos.z)&&player.pos.y<WATER_Y+0.5,near=inW&&dP<14;n.wt=(n.wt||0)-dt;
+      if(!n.tgt||n.wt<=0||hd(n.pos,LAKE)>LAKE.r-12){const a=rnd(0,TAU),r=Math.sqrt(Math.random())*(LAKE.r-20),x=LAKE.x+Math.cos(a)*r,z=LAKE.z+Math.sin(a)*r;
+        n.tgt=new V3(x,Math.random()<0.3?-0.35:rnd(terrainH(x,z)+2,-1.5),z);n.wt=rnd(6,12)}
+      let tg=n.tgt,sp=2.6;if(near){const off=new V3(n.pos.x-player.pos.x,0,n.pos.z-player.pos.z).normalize().multiplyScalar(3.2);tg=player.pos.clone().add(off);tg.y=Math.min(player.pos.y+0.3,-0.35);sp=dP>5?3:0}
+      const dx=tg.x-n.pos.x,dz=tg.z-n.pos.z,dh=Math.hypot(dx,dz);const go=dh>0.6?sp:0;
+      n.yaw=angLerp(n.yaw,near&&dP<6?Math.atan2(player.pos.x-n.pos.x,player.pos.z-n.pos.z):Math.atan2(dx,dz),damp(2,dt));
+      n.pos.x+=Math.sin(n.yaw)*go*dt;n.pos.z+=Math.cos(n.yaw)*go*dt;n.pos.y=clamp(lerp(n.pos.y,tg.y,damp(0.8,dt)),terrainH(n.pos.x,n.pos.z)+1,-0.3);
+      animGirl(n.mesh,dt,go,'mermaid',false,true);if(near&&dP<9){u.arms[1].rotation.x=-2.6+Math.sin(NOW*8)*0.3;u.arms[1].rotation.z=0.4}
+      n.shadow.visible=false;if(Math.random()<dt*2)emit(n.pos.x,n.pos.y+1.8,n.pos.z,0,1,0,0xe8f8ff,0.3,1.4,-1)}
     else if(n.id==='mia'){const th=Math.sin(NOW*1.7)*0.55;SWING.seat.rotation.x=th;const sp=SWING.seat.position;
       n.pos.set(sp.x,sp.y-Math.cos(th)*2.9-0.62,sp.z+Math.sin(th)*2.9);n.yaw=0;u.legs.forEach(l=>{l.rotation.x=-1.45;l.rotation.z=0});u.arms.forEach(a=>{a.rotation.x=-2.7;a.rotation.z=0});u.pivot.rotation.x=th*0.5}
     else{n.yaw=angLerp(n.yaw,dn<15?Math.atan2(player.pos.x-n.pos.x,player.pos.z-n.pos.z):(n.rest||0),damp(3,dt));
@@ -1263,7 +1285,7 @@ function updateCreatures(dt){
       u.arms[1].rotation.x=n.wave>0||(dn<9&&dn>4.8)?-2.6+Math.sin(NOW*8)*0.3:0;u.arms[1].rotation.z=0.25+(n.wave>0?0.3:0)}
     n.mesh.position.copy(n.pos);n.mesh.rotation.y=n.yaw;n.mesh.visible=n.pos.distanceTo(CAMW)<140;
     if(n===ng&&dn<60&&Math.random()<dt*1.4)floatIcon('❕',n.pos.clone().add(new V3(0,3.2*n.scale,0)),1,0.1,0.9);
-    placeShadow(n.shadow,n.pos.x,n.pos.y,n.pos.z,1.6*n.scale)}
+    if(!n.swim)placeShadow(n.shadow,n.pos.x,n.pos.y,n.pos.z,1.6*n.scale)}
   // bunnies (sit still and look at Marie when she comes close)
   for(const b of bunnies){b.happy-=dt;b.munch-=dt;b.wait-=dt;const near=hd(b.pos,player.pos)<4&&player.form==='human';
     if(!near&&b.wait<=0&&b.hop<=0){b.tgt.set(b.home.x+rnd(-6,6),0,b.home.z+rnd(-6,6));b.wait=rnd(1.5,4);b.hop=1}
@@ -1288,7 +1310,7 @@ function updateCreatures(dt){
   if(Math.random()<dt*5)emit(WRECK.x+rnd(-4,4),terrainH(WRECK.x,WRECK.z)+2,WRECK.z+rnd(-3,3),rnd(-0.2,0.2),1,rnd(-0.2,0.2),0xd8f4ff,0.35,3,-0.8);
   if(player.form==='mermaid'&&player.pos.y<WATER_Y-0.8&&Math.random()<dt*5)emit(player.pos.x+rnd(-0.3,0.3),player.pos.y+1.6,player.pos.z+rnd(-0.3,0.3),0,1,0,0xe8f8ff,0.3,1.6,-1.2);
   boat.position.y=WATER_Y+0.35+Math.sin(NOW*1.3)*0.12;boat.rotation.z=Math.sin(NOW*1.1)*0.05;
-  for(const c of clouds){c.position.x+=dt*1.2;if(c.position.x>280)c.position.x=-280}
+  for(const c of clouds){c.position.x+=dt*1.2;if(c.position.x>340)c.position.x=-340}
   if(fireworks>0){fwT-=dt;if(fwT<=0){fwT=0.45;fireworks-=0.45/1.5;burst(new V3(rnd(-15,15)+PAD.x,rnd(14,24),rnd(-15,15)+PAD.z),80,9,1.1,1.8)}}}
 
 /* ================= camera (dives with the mermaid) ================= */
