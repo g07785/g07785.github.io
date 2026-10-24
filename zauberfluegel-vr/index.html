@@ -334,6 +334,9 @@ const POWERS={
   moon:{name:'Mond',icon:'🌙',body:0x3b4a7a,mane:0xdfe8ff,pattern:'galaxy',accent:0xffffff,glow:0xdfe8ff,fx:[0xdfe8ff,0xffffff,0x9fb3ff],speed:1.2},
 };
 const POWER_IDS=Object.keys(POWERS);
+// ein Pferd kann mehrere Superkräfte haben (a.powers); a.power ist die Hauptkraft fürs Aussehen
+const powList=a=>a?(a.powers&&a.powers.length?a.powers:(a.power?[a.power]:[])):[];const hasP=(a,p)=>powList(a).includes(p);
+const powSpeed=a=>Math.max(1,...powList(a).map(p=>POWERS[p].speed||1)),powSize=a=>Math.max(1,...powList(a).map(p=>POWERS[p].size||1));
 /* merge the plain (non-animated) meshes inside each group into one mesh per material */
 function mergeStatic(root,skip){const walk=g=>{const buckets=new Map(),kids=[...g.children];
     for(const c of kids){if(c.isMesh&&!c.isSprite&&!(skip&&skip.has(c))&&!Array.isArray(c.material)&&c.children.length===0){const k=c.material.uuid;if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(c)}else if(c.isGroup||c.type==='Object3D')walk(c)}
@@ -715,6 +718,7 @@ const LINES={
   starStolen:'Oh nein, der Kobold hat dir einen Stern geklaut! Verzaubere ihn, dann bekommst du ihn zurück!',
   tagIntroRun:'Lauf schnell weg, wenn gezählt wird!',tagIntroCatch:'Jetzt fängst du! Bei Los rennst du hinterher!',
   tag3:'Drei!',tag2:'Zwei!',tag1:'Eins!',tagGoRun:'Los, lauf weg!',tagGoCatch:'Los, fang!',
+  mountMulti:'Festhalten! Dieses Superpferd hat ganz viele Superkräfte!',allPowers:'Unglaublich! Dieses Pferd hat jetzt alle Superkräfte! Es ist ein Mega-Pferd!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -1015,11 +1019,11 @@ function hiddenPos(d){if(d.island!=null){const I=ISLANDS[d.island];return new V3
 function createPeg(d,st){const pattern=d.pattern||'plain',accent=d.accent??0xffffff,saddle=d.saddle??0x8a4f2c,power=POWERS[d.power]?d.power:null;
   const mesh=makePegasus({body:d.body,mane:d.mane,pattern,accent,saddle,tack:true,power});scene.add(mesh);
   const a={kind:'pegasus',id:d.id,name:d.name,body:d.body,mane:d.mane,pattern,accent,saddle,need:d.need||null,mesh,ud:mesh.userData,pos:new V3(),vel:new V3(),yaw:Math.random()*TAU,
-    growth:d.growth||0,adult:!!d.adult,box:d.box??null,power,grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
+    growth:d.growth||0,adult:!!d.adult,box:d.box??null,power,powers:(d.powers&&d.powers.length?d.powers:(power?[power]:[])).filter(p=>POWERS[p]),grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
   if(st==='hidden'){a.glow=new THREE.Sprite(new THREE.SpriteMaterial({map:shadowTex,color:0xffc0e8,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));a.glow.scale.setScalar(5);scene.add(a.glow)}
   if(power){a.icon=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture(POWERS[power].icon),transparent:true,depthWrite:false}));a.icon.scale.setScalar(1.1);scene.add(a.icon)}
   pegs.push(a);applyScale(a);return a}
-function applyScale(a){const e=1-Math.pow(1-a.grow,3);a.scale=lerp(0.55,1,e)*(a.power&&POWERS[a.power].size||1);a.mesh.scale.setScalar(a.scale);a.ud.head.scale.setScalar(lerp(1.35,1,e));a.reach=3.2+a.scale*1.4;a.h=3.4*a.scale}
+function applyScale(a){const e=1-Math.pow(1-a.grow,3);a.scale=lerp(0.55,1,e)*powSize(a);a.mesh.scale.setScalar(a.scale);a.ud.head.scale.setScalar(lerp(1.35,1,e));a.reach=3.2+a.scale*1.4;a.h=3.4*a.scale}
 
 
 /* ================= player ================= */
@@ -1037,7 +1041,7 @@ const FORM_SCALE={human:1,unicorn:1.12,fairy:0.55,mermaid:1};
 const state={started:false,stars:0,task:null,met:{},tIdx:{},itemPos:null,itemHeld:false,allDone:false,found:new Set(),nameIdx:0,lastBirth:-999,lastProgress:0,lastAutoHint:0,needHintT:0,wrongT:0,wrongHintT:0,netT:0,taskCount:0,gone:[],mergeSel:null};
 const SAVE_KEY='maries-zauberfluegel-v1';
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({stars:state.stars,task:state.task,taskCount:state.taskCount,gone:state.gone,met:state.met,tIdx:state.tIdx,itemPos:state.itemPos,itemHeld:state.itemHeld,allDone:state.allDone,nameIdx:state.nameIdx,
-  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult,box:a.box,power:a.power}))}))}catch(e){}}
+  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult,box:a.box,power:a.power,powers:a.powers}))}))}catch(e){}}
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
   if(d){state.stars=d.stars|0;state.task=TASK_MAP[d.task]?d.task:null;state.met=d.met||{};if(d.talked)state.met.lotte=true;state.tIdx=d.tIdx||{lotte:d.taskIdx|0};
     state.itemPos=d.itemPos||null;state.taskCount=d.taskCount|0;state.gone=d.gone||[];state.itemHeld=!!d.itemHeld;if(state.task&&TASK_MAP[state.task].fetch&&!state.itemPos&&!state.itemHeld)state.task=null;state.allDone=!!d.allDone;state.nameIdx=d.nameIdx|0;(d.found||[]).forEach(id=>state.found.add(id))}
@@ -1127,7 +1131,7 @@ function care(a,act,berries){a.wanderT=Math.max(a.wanderT||0,3);
   if(a.kind==='pegasus'&&!a.adult){a.growth++;if(a.growth>=GROW_N)growUp(a)}
   state.lastProgress=NOW;save()}
 function growUp(a){a.adult=true;a.growAnim=0;setTimeout(()=>{Voice.say(`Schau mal! ${a.name} ist groß geworden!`,{prio:2});SFX.found()},900)}
-function mount(a){if(a.power){setTimeout(()=>Voice.say(MOUNT_LINES[a.power],{prio:2}),700)}const i=followers.indexOf(a);if(i>=0)followers.splice(i,1);a.prev=a.state;a.state='ridden';player.riding=a;player.pos.copy(a.pos);player.yaw=a.yaw;player.vel.set(0,0,0);
+function mount(a){if(a.power){const PL=powList(a);setTimeout(()=>Voice.say(PL.length>1?LINES.mountMulti:MOUNT_LINES[a.power],{prio:2}),700)}const i=followers.indexOf(a);if(i>=0)followers.splice(i,1);a.prev=a.state;a.state='ridden';player.riding=a;player.pos.copy(a.pos);player.yaw=a.yaw;player.vel.set(0,0,0);
   SFX.jump();say('ride',{prio:1});updateFormBtns(null);taskEvent('ride',a.pos)}
 function dismount(silent){const a=player.riding;if(!a)return;player.riding=null;const nearHome=hd(player.pos,HOME)<34&&player.pos.y<groundAt(player.pos.x,player.pos.z)+6;
   a.state=nearHome?'home':'follow';a.wanderT=0;if(nearHome)assignBox(a);if(!nearHome)followers.unshift(a);a.vel.set(0,0,0);
@@ -1332,8 +1336,8 @@ function updateFlowers(){for(const T of FL_TYPES){if(!T.n)continue;
     const start=(T.head-T.n+FL_CAP)%FL_CAP;let gone=0;
     for(let k=0;k<T.n;k++){const i=(start+k)%FL_CAP,f=T.data[i],age=NOW-f.born;if(age<FL_LIFE-1.2)break;if(age>=FL_LIFE){flSet(T,i,f,0.0001);gone++}else flSet(T,i,f,(FL_LIFE-age)/1.2)}
     T.n-=gone;if(T.dirty){T.m.instanceMatrix.needsUpdate=true;T.dirty=false}}}
-function powerTrail(a,dt,spd,flying){if(a.power==='rainbow')updateRibbon(a,dt,spd>1||flying);
-  else if(a.power==='flower'){if(!a.flLast)a.flLast=a.pos.clone();const mv=hd(a.pos,a.flLast);
+function powerTrail(a,dt,spd,flying){if(hasP(a,'rainbow'))updateRibbon(a,dt,spd>1||flying);
+  if(hasP(a,'flower')){if(!a.flLast)a.flLast=a.pos.clone();const mv=hd(a.pos,a.flLast);
     if(mv>1.1){a.flLast.copy(a.pos);const r=rnd(0.3,1.8),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}
     else if(spd<1){a.flT=(a.flT||0)-dt;if(a.flT<=0){a.flT=4;const r=rnd(1,3.5),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}}}}
 function updatePegs(dt){
@@ -1367,10 +1371,10 @@ function updatePegs(dt){
       a.yaw=ang+Math.PI/2;flying=true;spd=6;if(Math.random()<dt*50)emit(a.pos.x,a.pos.y+1.5,a.pos.z,rnd(-1,1),rnd(0,2),rnd(-1,1),pick(SPARK),0.7,1,0)}
     else if(a.state==='ridden'){spd=Math.hypot(player.vel.x,player.vel.z);flying=player.pos.y>groundAt(player.pos.x,player.pos.z,player.pos.y)+0.5;a.pos.copy(player.pos);a.yaw=player.yaw;a.grazing=false}
     a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(CAMW)<(a.state==='home'?80:150);animPeg(a,dt,spd,flying);
-    if(a.power&&a.mesh.visible){const P=POWERS[a.power];if(a.icon){a.icon.visible=a.state!=='ridden'&&a.state!=='hidden';a.icon.position.set(a.pos.x,a.pos.y+a.h+1.1+Math.sin(NOW*2+a.ud.seed)*0.15,a.pos.z)}
+    if(a.power&&a.mesh.visible){const PL=powList(a),P=POWERS[PL.length>1?PL[Math.floor(NOW*2+a.ud.seed)%PL.length]:a.power];if(a.icon&&PL.length>1){const ic=P.icon;if(a.iconNow!==ic){a.iconNow=ic;a.icon.material.map=emojiTexture(ic)}}if(a.icon){a.icon.visible=a.state!=='ridden'&&a.state!=='hidden';a.icon.position.set(a.pos.x,a.pos.y+a.h+1.1+Math.sin(NOW*2+a.ud.seed)*0.15,a.pos.z)}
       if(Math.random()<dt*(a.state==='ridden'?45:6))emit(a.pos.x+rnd(-1,1)*a.scale,a.pos.y+rnd(0.5,2.5)*a.scale,a.pos.z+rnd(-1,1)*a.scale,rnd(-0.3,0.3),a.state==='ridden'?0.2:0.8,rnd(-0.3,0.3),pick(P.fx),a.state==='ridden'?0.8:0.5,a.state==='ridden'?1.6:1,0)}
     else if(a.icon)a.icon.visible=false;
-    if(a.power==='rainbow'||a.power==='flower')powerTrail(a,dt,a.state==='ridden'?Math.hypot(player.vel.x,player.vel.z):spd,flying);
+    if(hasP(a,'rainbow')||hasP(a,'flower'))powerTrail(a,dt,a.state==='ridden'?Math.hypot(player.vel.x,player.vel.z):spd,flying);
     if(a===state.mergeSel&&Math.random()<dt*2)floatIcon('💞',a.pos.clone().add(new V3(0,a.h+0.8,0)),1,0.3,0.9);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
   if(followers.length&&Math.abs(player.pos.x-HOME.x)<36&&player.pos.z<HOME.z+22&&player.pos.z>HOME.z-STABLE.pitch*2-22&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
 }
@@ -1383,14 +1387,17 @@ const MOUNT_LINES={fire:'Feuerkraft! Jetzt seid ihr superschnell!',ice:'Eiskraft
 function startMerge(a,b){if(!a||!b||a===b||merge)return;state.mergeSel=null;[a,b].forEach(h=>{h.state='merging';h.date=false});merge={a,b,spot:new V3(HOME.x,2,HOME.z),t:0};SFX.transform();say('mergeStart',{prio:2})}
 function removePeg(h){if(h.ribbon)scene.remove(h.ribbon.m);scene.remove(h.mesh);scene.remove(h.shadow);if(h.icon)scene.remove(h.icon);const i=pegs.indexOf(h);if(i>=0)pegs.splice(i,1);const f=followers.indexOf(h);if(f>=0)followers.splice(f,1);
   if(BABY_DEFS.some(d=>d.id===h.id)&&!state.gone.includes(h.id))state.gone.push(h.id);if(h.box!=null)drawSign(h.box)}
-function finishMerge(){const {a,b,spot}=merge;merge=null;const parent=pick([a,b]);removePeg(a);removePeg(b);
-  const pw=pick(POWER_IDS),P=POWERS[pw],base=parent.name.replace(/^[^-]+-/,'');
-  const n=createPeg({id:'s'+Date.now(),name:P.name+'-'+base,power:pw,body:P.body,mane:P.mane,pattern:P.pattern,accent:P.accent,saddle:P.glow,adult:true,growth:GROW_N},'home');
-  n.pos.copy(spot);assignBox(n);burst(spot.clone().add(new V3(0,3,0)),160,10,1.2,2,P.fx);SFX.found();fireworks=2;
-  Voice.say(`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${P.name}!`,{prio:3});state.lastProgress=NOW;save()}
+function finishMerge(){const {a,b,spot}=merge;merge=null;const parent=pick([a,b]);
+  // Kräfte beider Pferde zusammenlegen, und jedes Kreuzen bringt eine neue dazu – bis eines alle hat
+  const had=[...new Set([...powList(a),...powList(b)])],missing=POWER_IDS.filter(p=>!had.includes(p)),powers=had.slice();if(missing.length)powers.push(pick(missing));
+  removePeg(a);removePeg(b);
+  const all=powers.length===POWER_IDS.length,main=all?'rainbow':powers[powers.length-1],P=POWERS[main],base=parent.name.replace(/^[^-]+-/,'');
+  const n=createPeg({id:'s'+Date.now(),name:(all?'Mega':powers.length>1?'Super':P.name)+'-'+base,power:main,powers,body:all?0xffffff:P.body,mane:P.mane,pattern:all?'galaxy':P.pattern,accent:all?0xffd75e:P.accent,saddle:all?0xffd75e:P.glow,adult:true,growth:GROW_N},'home');
+  n.pos.copy(spot);assignBox(n);burst(spot.clone().add(new V3(0,3,0)),all?300:160,all?14:10,1.2,2,all?[0xff4f6e,0xffe14d,0x6fdc6a,0x4fb4ff,0xa87cff,0xffffff]:P.fx);SFX.found();fireworks=all?6:2;
+  Voice.say(all?LINES.allPowers:powers.length>1?`Wow! Das Superpferd hat jetzt ${powers.length} Superkräfte!`:`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${P.name}!`,{prio:3});state.lastProgress=NOW;save()}
 function updatePowers(dt){if(merge){merge.t+=dt;if(merge.t>3.4){finishMerge()}}
   const rp=player.riding&&player.riding.power;
-  if(rp==='music'){powMusicT-=dt;if(powMusicT<=0){powMusicT=0.42;tone(pick(PENTA)*(Math.random()<0.4?2:1),AC?AC.currentTime:0,0.6,'triangle',0.06);floatIcon(pick(['🎵','🎶']),player.pos.clone().add(new V3(rnd(-1,1),3,rnd(-1,1))),1,0.3,0.8)}}}
+  if(hasP(player.riding,'music')){powMusicT-=dt;if(powMusicT<=0){powMusicT=0.42;tone(pick(PENTA)*(Math.random()<0.4?2:1),AC?AC.currentTime:0,0.6,'triangle',0.06);floatIcon(pick(['🎵','🎶']),player.pos.clone().add(new V3(rnd(-1,1),3,rnd(-1,1))),1,0.3,0.8)}}}
 const COAT_COLORS=[0xffc9e3,0xd9e6f5,0x3b3a99,0xd98a45,0x9eeedd,0xfff6ee,0xffe08a,0xc9b3ff,0x8a5a3c,0xf2f2f2,0x2e2e3a,0xffb38a];
 function spawnWild(){let x=0,z=0,ok=false;for(let i=0;i<40&&!ok;i++){const ang=rnd(0,TAU),r=rnd(60,250);x=Math.cos(ang)*r;z=Math.sin(ang)*r;ok=okSpot(x,z,3)&&!inLake(x,z)}if(!ok)return;
   const pattern=pick(PATTERNS),d={id:'w'+Date.now(),name:nextName(),body:pick(COAT_COLORS),mane:pick([0xff4fa3,0x3f9bff,0xd59bff,0xfff0c8,0x1fa898,0xff5f78,0xffd75e,0x7a4cff]),pattern,accent:pick([0xffffff,0xff9fbf,0xffe27a,0x8ea3c2,0x2a8f86]),saddle:pick([0xffffff,0x2f5fb0,0x9b6bd6,0xff7eb6,0xffd75e,0x6a3a1e])};
@@ -1419,7 +1426,7 @@ function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.fo
   const sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);const mx=-sy*fwd+cy*str,mz=-cy*fwd-sy*str;const mag=Math.hypot(mx,mz);
   const lake=inLake(P.x,P.z),gnd=groundAt(P.x,P.z,P.y);
   const swimming=mode==='mermaid'&&lake&&P.y<=WATER_Y+0.25&&player.leap<=0;
-  let spd;switch(mode){case'human':spd=lake&&P.y<=WATER_Y?4.5:8.5;break;case'unicorn':spd=P.y>gnd+0.6?24:15;break;case'ride':spd=(P.y>gnd+0.6?18:12)*(player.riding&&player.riding.power?POWERS[player.riding.power].speed:1);break;case'fairy':spd=9.5;break;default:spd=swimming?14:4.5}if(VR.on)spd*=VR.speedK;
+  let spd;switch(mode){case'human':spd=lake&&P.y<=WATER_Y?4.5:8.5;break;case'unicorn':spd=P.y>gnd+0.6?24:15;break;case'ride':spd=(P.y>gnd+0.6?18:12)*(player.riding?powSpeed(player.riding):1);break;case'fairy':spd=9.5;break;default:spd=swimming?14:4.5}if(VR.on)spd*=VR.speedK;
   if(player.boostT>0){player.boostT-=dt;spd*=1.5;if(Math.random()<dt*25)emit(P.x+rnd(-0.5,0.5),P.y+rnd(0.3,1.5),P.z+rnd(-0.5,0.5),0,0.5,0,pick(SPARK),0.5,0.7,0)}
   player.vel.x=lerp(player.vel.x,mx*spd,damp(7,dt));player.vel.z=lerp(player.vel.z,mz*spd,damp(7,dt));
   const flyer=mode==='unicorn'||mode==='fairy'||mode==='ride';player.leap-=dt;
@@ -1432,12 +1439,12 @@ function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.fo
   const lake2=inLake(P.x,P.z);
   if(lake2&&wasAbove&&P.y<=WATER_Y&&player.vel.y<-6){SFX.splash();burst(new V3(P.x,WATER_Y,P.z),25,4,0.5,0.8,[0xffffff,0x9fd8ff])}
   let fl=groundAt(P.x,P.z,P.y);
-  if(lake2&&mode!=='mermaid'&&!(mode==='ride'&&player.riding.power==='water'))fl=Math.max(fl,mode==='human'?WATER_Y-0.95:WATER_Y);
+  if(lake2&&mode!=='mermaid'&&!(mode==='ride'&&hasP(player.riding,'water')))fl=Math.max(fl,mode==='human'?WATER_Y-0.95:WATER_Y);
   if(mode==='mermaid'&&lake2)fl=fl+0.2;
   if(P.y<fl){P.y=fl;if(player.vel.y<0)player.vel.y=0}
   player.grounded=P.y<=fl+0.06;
   if(swimming&&P.y>WATER_Y-0.35&&player.leap<=0&&player.vel.y<=0.5){P.y=Math.min(P.y,WATER_Y-0.35)}
-  const ceil=player.riding&&player.riding.power==='star'?170:78;if(P.y>ceil){P.y=ceil;player.vel.y=Math.min(0,player.vel.y)}
+  const ceil=player.riding&&hasP(player.riding,'star')?170:78;if(P.y>ceil){P.y=ceil;player.vel.y=Math.min(0,player.vel.y)}
   if(mode!=='fairy'){const dx=P.x-DOME.x,dz=P.z-DOME.z,d=Math.hypot(dx,dz);if(d<4.4&&P.y<DOME_TOP){const k=4.4/(d||1);P.x=DOME.x+dx*k;P.z=DOME.z+dz*k}}
   const dW=Math.hypot(P.x,P.z),dLk=Math.hypot(P.x-LAKE.x,P.z-LAKE.z);if(dW>WORLD_R&&dLk>LAKE.r-6){if(dLk<LAKE.r+20){const k=(LAKE.r-6)/dLk;P.x=LAKE.x+(P.x-LAKE.x)*k;P.z=LAKE.z+(P.z-LAKE.z)*k}else{P.x*=WORLD_R/dW;P.z*=WORLD_R/dW}}
   if(mag>0.08)player.yaw=angLerp(player.yaw,Math.atan2(mx,mz),damp(9,dt));
@@ -1610,7 +1617,7 @@ const cage=new THREE.Group();(()=>{const m=mat(0x5e4030,{roughness:0.7}),g=mat(0
   for(const y of [0.05,2.8]){const r=new THREE.Mesh(RINGG,m);r.scale.set(1.3,1.3,1.5);r.rotation.x=Math.PI/2;r.position.y=y;cage.add(r)}cage.add(M(SPHLO,m,1.35,0.25,1.35,0,2.9,0));
   const lock=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🔒'),transparent:true}));lock.scale.setScalar(0.7);lock.position.set(0,1.3,1.35);cage.add(lock);cage.userData.lock=lock;cage.visible=false;scene.add(cage)})();
 function catchInNet(ship){if(state.captured||!ship||!ship.active)return;const rp=player.riding&&player.riding.power;
-  if(rp==='diamond'){burst(player.pos.clone().add(new V3(0,2,0)),40,6,0.8,1,[0xe8f6ff,0xffffff]);say('netBounce',{prio:1});return}
+  if(hasP(player.riding,'diamond')){burst(player.pos.clone().add(new V3(0,2,0)),40,6,0.8,1,[0xe8f6ff,0xffffff]);say('netBounce',{prio:1});return}
   if(player.riding)dismount(true);state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say(state.ammo<=0?'capturedWait':ship.kind==='kobold'?'capturedLand':'captured',{prio:3});
   if(VR.on){buzz(0,1,300);buzz(1,1,300)}}
 function cageZap(){const c=state.captured;if(!c)return;c.hits++;burst(cage.position.clone().add(new V3(0,1.5,0)),50,5,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);SFX.sparkle();cage.userData.lock.scale.setScalar(0.9);
@@ -1632,8 +1639,8 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
     if(hit)zapHit(hit,s.pos.clone());if(hit||s.life<=0||s.pos.y<terrainH(s.pos.x,s.pos.z)){scene.remove(s.spr);s.spr.material.dispose();SHOTS.splice(i,1)}}
   // bad sharks: chase Marie when she is in the water, bump her, flee for a moment
   for(const b of badSharks){if(!b.alive)continue;const u=b.mesh.userData,d=b.pos.distanceTo(P);b.flash-=dt;b.flee-=dt;b.wanderT-=dt;
-    const rpow=player.riding&&player.riding.power;if(rpow==='heart'&&d<11){b.hp=1;zapHit(b,b.pos.clone());continue}
-    const chase=inW&&d<32&&b.flee<=0&&state.netT<=0&&rpow!=='ghost';
+    const rpow=player.riding&&player.riding.power;if(hasP(player.riding,'heart')&&d<11){b.hp=1;zapHit(b,b.pos.clone());continue}
+    const chase=inW&&d<32&&b.flee<=0&&state.netT<=0&&!hasP(player.riding,'ghost');
     if(b.wanderT<=0||hd(b.pos,LAKE)>LAKE.r-10){const q=seaZone();b.target.set(q.x,rnd(terrainH(q.x,q.z)+2.5,-2.5),q.z);b.wanderT=rnd(6,12)}
     let tg=chase?P.clone().add(new V3(0,0.8,0)):b.target,sp=chase?5.2:3;if(b.flee>0){tg=b.pos.clone().add(b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10));sp=7}
     const dx=tg.x-b.pos.x,dz=tg.z-b.pos.z;b.yaw=angLerp(b.yaw,Math.atan2(dx,dz),damp(chase?3:1.2,dt));b.pos.x+=Math.sin(b.yaw)*sp*dt;b.pos.z+=Math.cos(b.yaw)*sp*dt;
@@ -1650,8 +1657,8 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
       if(s.leaveT>60||hd(s.pos,LAKE)>LAKE.r-8){scene.remove(s.mesh);s.gone=true}}
     else if(state.captured&&state.captured.ship===s){const q=seaPt(150,0);const dx=q.x-s.pos.x,dz=q.z-s.pos.z;s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.4,dt));if(Math.hypot(dx,dz)>10){s.pos.x+=Math.sin(s.yaw)*3*dt;s.pos.z+=Math.cos(s.yaw)*3*dt}
       s.shoutT-=dt;if(s.shoutT<=0){s.shoutT=rnd(10,15);Voice.say(pickNew('piratCap',PIRATE_CAP_LINES),{prio:0,who:'pirat'})}u.pirates.forEach((p,i)=>{p.userData.arms[1].rotation.x=-1.5+Math.sin(NOW*3+i)*0.3})}
-    else{const rpw=player.riding&&player.riding.power,sleepy=rpw==='moon'&&d<55;if(sleepy){s.netT=Math.max(s.netT,2);if(Math.random()<dt*0.8)floatIcon('💤',s.pos.clone().add(new V3(rnd(-2,2),5,rnd(-2,2))),1,0.5,1.2)}
-      const hunt=inW&&d<75&&rpw!=='ghost'&&!sleepy&&!(s.scared>NOW);if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
+    else{const rpw=player.riding&&player.riding.power,sleepy=hasP(player.riding,'moon')&&d<55;if(sleepy){s.netT=Math.max(s.netT,2);if(Math.random()<dt*0.8)floatIcon('💤',s.pos.clone().add(new V3(rnd(-2,2),5,rnd(-2,2))),1,0.5,1.2)}
+      const hunt=inW&&d<75&&!hasP(player.riding,'ghost')&&!sleepy&&!(s.scared>NOW);if(s.wanderT<=0||hd(s.pos,LAKE)>LAKE.r-20){const q=seaZone();s.target.set(q.x,0,q.z);s.wanderT=rnd(10,20)}
       let tg=s.target;if(hunt){const side=new V3(Math.cos(NOW*0.2),0,Math.sin(NOW*0.2)).multiplyScalar(20);tg=P.clone().add(side)}
       const dx=tg.x-s.pos.x,dz=tg.z-s.pos.z,dd=Math.hypot(dx,dz);if(dd>3){s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.7,dt));s.pos.x+=Math.sin(s.yaw)*(hunt?7:4)*dt;s.pos.z+=Math.cos(s.yaw)*(hunt?7:4)*dt}
       if(terrainH(s.pos.x,s.pos.z)>-4){s.pos.x-=Math.sin(s.yaw)*8*dt;s.pos.z-=Math.cos(s.yaw)*8*dt;s.wanderT=0}
@@ -1717,10 +1724,10 @@ function villainStep(v,tg,sp,dt){const dx=tg.x-v.pos.x,dz=tg.z-v.pos.z,d=Math.hy
   const nx=v.pos.x+Math.sin(v.yaw)*sp*dt,nz=v.pos.z+Math.cos(v.yaw)*sp*dt;if(inLake(nx,nz)||inSafe(nx,nz)||Math.hypot(nx,nz)>WORLD_R-20){v.wanderT=0;v.flee=Math.max(v.flee,1.2);return 0}
   v.pos.x=nx;v.pos.z=nz;return sp}
 function updateVillains(dt){const P=player.pos,rpow=player.riding&&player.riding.power,onLand=!inLake(P.x,P.z)&&P.y<groundAt(P.x,P.z,P.y)+4,safe=inSafe(P.x,P.z);
-  const free=!state.captured&&rpow!=='ghost'&&onLand&&!safe;
+  const free=!state.captured&&!hasP(player.riding,'ghost')&&onLand&&!safe;
   KCAMP.g.userData.fire.scale.set(1+Math.sin(NOW*9)*0.12,1+Math.sin(NOW*7)*0.2,1);if(Math.random()<dt*6)emit(KCAMP.x+rnd(-0.3,0.3),terrainH(KCAMP.x,KCAMP.z)+1.5,KCAMP.z+rnd(-0.3,0.3),0,1.4,0,pick([0xff8a2a,0xffd75e]),0.5,0.9,0);
   for(const b of badRexes){if(!b.alive)continue;b.flash-=dt;b.flee-=dt;b.wanderT-=dt;b.roarT-=dt;const d=hd(b.pos,P);
-    if(rpow==='heart'&&d<11){b.hp=1;zapHit(b,b.pos.clone().add(new V3(0,2,0)));continue}
+    if(hasP(player.riding,'heart')&&d<11){b.hp=1;zapHit(b,b.pos.clone().add(new V3(0,2,0)));continue}
     const chase=free&&d<28&&b.flee<=0&&state.netT<=0;let sp=0;
     if(b.flee>0){const aw=b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(b,b.pos.clone().add(aw),6,dt)}
     else if(chase){if(b.roarT<=0){b.roarT=rnd(9,13);floatIcon('💢',b.pos.clone().add(new V3(0,5,0)),2,0.6,1.3);Voice.say(pickNew('rex',REX_LINES),{prio:0,who:'rex'})}sp=villainStep(b,P,Math.min(6,playerRun()*0.72),dt)}
@@ -1812,7 +1819,7 @@ function updatePteros(dt){const P=player.pos,gP=groundAt(P.x,P.z,P.y),air=P.y>gP
     if(!sit&&!p.cmd){const g=groundAt(p.pos.x,p.pos.z,p.pos.y);if(p.st==='soar'&&p.pos.y<g+6)p.pos.y=lerp(p.pos.y,g+6,damp(2,dt))}
     p.mesh.position.copy(p.pos);p.mesh.position.y+=sit?0.5:0;p.mesh.rotation.y=p.yaw;animPtero(p,dt,flap,sit);p.mesh.visible=p.pos.distanceTo(CAMW)<170;placeShadow(p.shadow,p.pos.x,p.pos.y,p.pos.z,2.4)}
   for(const b of badPteros){if(!b.alive)continue;b.flash-=dt;b.flee-=dt;b.swoopCD-=dt;b.screamT-=dt;const d=b.pos.distanceTo(P),rpow=player.riding&&player.riding.power;let flap=false;
-    const can=air&&!inSafe(P.x,P.z)&&rpow!=='ghost'&&d<60;
+    const can=air&&!inSafe(P.x,P.z)&&!hasP(player.riding,'ghost')&&d<60;
     if(b.flee>0){flap=true;const aw=b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(20);flyTo(b,b.pos.clone().add(aw).setY(Math.max(b.pos.y,P.y+12)),16,dt)}
     else if(b.swoop>0){b.swoop-=dt;flap=true;flyTo(b,P.clone().add(new V3(0,0.8,0)),Math.min(22,airSp*0.95),dt);
       if(d<2.8&&bumpCD<=0){bumpCD=3;b.flee=4;b.swoop=0;b.swoopCD=rnd(7,10);const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(14);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y-=7;
@@ -1907,7 +1914,7 @@ function updateCmdFx(dt){updateGuards(dt);updateTag(dt);for(const x of cmdAll())
 let TAG=null;
 // Maries aktuelle Höchstgeschwindigkeit (je nach Gestalt, wie beim Steuern)
 function playerTop(){const P=player.pos,mode=player.riding?'ride':player.form,gnd=groundAt(P.x,P.z,P.y),lake=inLake(P.x,P.z),air=P.y>gnd+0.6;let v;
-  switch(mode){case 'human':v=lake&&P.y<=WATER_Y?4.5:8.5;break;case 'unicorn':v=air?24:15;break;case 'ride':v=(air?18:12)*(player.riding&&player.riding.power?POWERS[player.riding.power].speed:1);break;case 'fairy':v=9.5;break;default:v=lake?14:4.5}
+  switch(mode){case 'human':v=lake&&P.y<=WATER_Y?4.5:8.5;break;case 'unicorn':v=air?24:15;break;case 'ride':v=(air?18:12)*(player.riding?powSpeed(player.riding):1);break;case 'fairy':v=9.5;break;default:v=lake?14:4.5}
   return v*(VR.on?VR.speedK:1)}
 const TAG_L={xCatch:['Hab dich! Jetzt bist du dran!','Gefangen! Hihi, jetzt musst du mich fangen!'],mCatch:['Oh nein, du hast mich erwischt!','Erwischt! Du bist aber schnell!'],
   xMiss:['Puh, du bist zu schnell für mich!','Oh, ich hab dich nicht gekriegt!'],mMiss:['Hihi, du hast mich nicht gekriegt!','Ätsch, ich war schneller!'],
@@ -2009,7 +2016,7 @@ function colorName(hex){const c=new THREE.Color(hex),h={};c.getHSL(h);if(h.l>0.8
 function kiAnimal(a){return a._ki||(a._ki={id:'tier',a,get name(){return a.name},pos:a.pos})}
 function kiNear(){const n=nearNPC();if(n)return n;const q=computeActions().find(x=>x.id==='askA');return q?kiAnimal(q.t):null}
 function kiAnimalInfo(a){if(a.kind==='pegasus'){const art=a.power?'super':a.adult?'pferd':'baby';
-    let i='Dein Fell ist '+colorName(a.body)+' und deine Mähne ist '+colorName(a.mane)+'.';if(a.power&&POWERS[a.power])i+=' Deine Zauberkraft heißt '+POWERS[a.power].name+'.';
+    let i='Dein Fell ist '+colorName(a.body)+' und deine Mähne ist '+colorName(a.mane)+'.';{const PL=powList(a);if(PL.length===1)i+=' Deine Zauberkraft heißt '+POWERS[PL[0]].name+'.';else if(PL.length>1)i+=' Du hast '+PL.length+' Zauberkräfte: '+PL.map(p=>POWERS[p].name).join(', ')+'.'}
     if(player.riding===a)i+=' Marie reitet gerade auf dir.';else if(a.state==='follow')i+=' Marie hat dich gerade gefunden und du fliegst hinter ihr her nach Hause.';return {art,info:i}}
   if(a.kind==='ptero')return {art:'flugsaurier',info:'Deine Farbe ist '+colorName(a.col||0x7fc8ff)+'.'+(a.st==='sit'?' Du sitzt gerade auf dem Boden und ruhst dich aus.':'')};
   if(a.kind==='trex')return {art:'trex',info:''};if(a.kind==='brachio')return {art:'brachio',info:''};if(a.kind==='bunny')return {art:'hase',info:''};
@@ -2179,7 +2186,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
   const names=[...BABY_DEFS.map(d=>d.name),...NEW_NAMES];
   for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
   for(const nm of names)add('erz',`Juhu! Du hast ${nm} gefunden! ${nm} kommt jetzt mit dir mit.`);
-  for(const k in POWERS)add('erz',`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${POWERS[k].name}!`);for(const k in MOUNT_LINES)add('erz',MOUNT_LINES[k]);
+  for(const k in POWERS)add('erz',`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${POWERS[k].name}!`);for(let i=2;i<=POWER_IDS.length;i++)add('erz',`Wow! Das Superpferd hat jetzt ${i} Superkräfte!`);for(const k in MOUNT_LINES)add('erz',MOUNT_LINES[k]);
   PIRATE_LINES.forEach(t=>add('pirat',t));KOBOLD_LINES.forEach(t=>add('kobold',t));KOBOLD_CAP_LINES.forEach(t=>add('kobold',t));add('kobold',KOBOLD_STEAL);add('kobold',KOBOLD_TAUNT);REX_LINES.forEach(t=>add('rex',t));PTERO_LINES.forEach(t=>add('ptero',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
   for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
     for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
