@@ -1663,8 +1663,8 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
       const dx=tg.x-s.pos.x,dz=tg.z-s.pos.z,dd=Math.hypot(dx,dz);if(dd>3){s.yaw=angLerp(s.yaw,Math.atan2(dx,dz),damp(0.7,dt));s.pos.x+=Math.sin(s.yaw)*(hunt?7:4)*dt;s.pos.z+=Math.cos(s.yaw)*(hunt?7:4)*dt}
       if(terrainH(s.pos.x,s.pos.z)>-4){s.pos.x-=Math.sin(s.yaw)*8*dt;s.pos.z-=Math.cos(s.yaw)*8*dt;s.wanderT=0}
       s.netT-=dt;s.shoutT-=dt;
-      if(hunt&&d<38&&s.netT<=0&&state.netT<=0&&P.y>WATER_Y-4){s.netT=rnd(4,6);const from=s.pos.clone().add(new V3(0,4,0)),to=P.clone().add(new V3(0,1,0)),T=Math.max(0.8,from.distanceTo(to)/20);
-        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.7);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:s});SFX.jump()}
+      if(hunt&&d<60&&s.netT<=0&&state.netT<=0&&P.y>WATER_Y-4){s.netT=rnd(3,4.5);const from=s.pos.clone().add(new V3(0,4,0)),T=Math.max(0.7,from.distanceTo(P)/30),to=P.clone().add(new V3(player.vel.x*T+rnd(-1,1),1,player.vel.z*T+rnd(-1,1)));
+        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.9);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:s,r:3.5});SFX.jump()}
       if(hunt&&d<60&&s.shoutT<=0){s.shoutT=rnd(9,14);Voice.say(pickNew('pirat',PIRATE_LINES),{prio:0,who:'pirat'})}}
     s.pos.y=WATER_Y+Math.sin(NOW*1.2+s.yaw)*0.15;s.mesh.position.copy(s.pos);s.mesh.rotation.set(Math.sin(NOW*0.9)*0.04,s.yaw,Math.sin(NOW*1.1)*0.05+(s.flash>0?Math.sin(NOW*40)*0.05:0));
     u.flag.rotation.z=Math.sin(NOW*6)*0.2;s.mesh.visible=s.pos.distanceTo(CAMW)<260}
