@@ -130,13 +130,16 @@ const WATER_Y=0, LAKE={x:240,z:-220,r:240}, WORLD_R=300, LAKE_FLOOR=-18;
 // handy points in the sea, measured from the shore that faces the farm
 const SEA_DIR=(()=>{const l=Math.hypot(LAKE.x,LAKE.z);return{x:-LAKE.x/l,z:-LAKE.z/l,px:LAKE.z/l,pz:-LAKE.x/l}})();
 const seaPt=(fromShore,side=0)=>({x:LAKE.x+SEA_DIR.x*(LAKE.r-fromShore)+SEA_DIR.px*side,z:LAKE.z+SEA_DIR.z*(LAKE.r-fromShore)+SEA_DIR.pz*side});
-const PAD={x:12,z:-4,r:9}, DINO={x:-13,z:13,r:6}, BUSH={x:7,z:17}, DOME={x:-118,z:-14}, NPC_P={x:-3,z:-4};
+const PAD={x:12,z:-4,r:9}, DINO={x:-13,z:13,r:6}, BUSH={x:7,z:17}, DOME={x:-118,z:-14}, NPC_P={x:-6,z:-22};
+// the horse farm: two stable wings with 12 boxes each around a courtyard
+const STABLE={x:-36,z:-28,n:12,bw:4.6,bd:5.5,yard:18}, HOME={x:-36,z:-28};
+const BOXES=[];for(let w=0;w<2;w++)for(let k=0;k<STABLE.n;k++){const x=STABLE.x+(k-(STABLE.n-1)/2)*STABLE.bw,z=STABLE.z+(w?1:-1)*(STABLE.yard/2+STABLE.bd/2);BOXES.push({x,z,w,face:w?Math.PI:0})}
 const GARDEN={x:38,z:44}, PLAY={x:-38,z:34}, MEADOW={x:-100,z:62}, GROVE={x:78,z:118};
 const ISLANDS=[{x:-70,y:28,z:-96,r:9},{x:22,y:40,z:-158,r:8},{x:-150,y:24,z:76,r:7},{x:150,y:32,z:70,r:7.5},{x:-30,y:50,z:135,r:6},{x:-175,y:36,z:-90,r:7}];
 // pier: from the shore towards the lake centre
 const PIER=(()=>{const dx=-LAKE.x,dz=-LAKE.z,l=Math.hypot(dx,dz);return{dx:dx/l,dz:dz/l,x:LAKE.x+dx/l*(LAKE.r+11),z:LAKE.z+dz/l*(LAKE.r+11)}})();
 // sandy paths from the farm to every place, so there is always a road to follow
-const PATHS=[[[2,6],[PIER.x,PIER.z]],[[-6,2],[-40,-6],[DOME.x+10,DOME.z+4]],[[8,12],[GARDEN.x,GARDEN.z-6]],[[-8,12],[PLAY.x+5,PLAY.z-3]],[[PLAY.x-4,PLAY.z+4],[MEADOW.x+8,MEADOW.z-4]],[[GARDEN.x+4,GARDEN.z+6],[GROVE.x-6,GROVE.z-10]]];
+const PATHS=[[[2,6],[PIER.x,PIER.z]],[[-2,2],[-4,-28],[STABLE.x+30,STABLE.z]],[[-6,2],[-40,-6],[DOME.x+10,DOME.z+4]],[[8,12],[GARDEN.x,GARDEN.z-6]],[[-8,12],[PLAY.x+5,PLAY.z-3]],[[PLAY.x-4,PLAY.z+4],[MEADOW.x+8,MEADOW.z-4]],[[GARDEN.x+4,GARDEN.z+6],[GROVE.x-6,GROVE.z-10]]];
 function segD(x,z,a,b){const vx=b[0]-a[0],vz=b[1]-a[1],t=clamp(((x-a[0])*vx+(z-a[1])*vz)/(vx*vx+vz*vz),0,1);return Math.hypot(x-a[0]-vx*t,z-a[1]-vz*t)}
 function pathD(x,z){let d=1e9;for(const p of PATHS)for(let i=0;i<p.length-1;i++)d=Math.min(d,segD(x,z,p[i],p[i+1]));return d}
 function hill(x,z){return Math.sin(x*0.045)*1.6+Math.cos(z*0.05)*1.4+Math.sin((x+z)*0.021)*2.2+Math.sin(x*0.13+1)*Math.cos(z*0.11)*0.5}
@@ -144,6 +147,7 @@ function terrainH(x,z){
   const d=Math.hypot(x,z);
   let h=2+hill(x,z)*0.75*smooth(20,38,d);
   h+=(Math.sin(x*0.021+0.7)*Math.cos(z*0.019)*4.5+Math.sin(z*0.033+x*0.011)*2)*smooth(55,110,d);  // rolling hills further out
+  const fx=Math.max(Math.abs(x-STABLE.x)-31,0),fz=Math.max(Math.abs(z-STABLE.z)-18,0);h=lerp(2,h,smooth(0,14,Math.hypot(fx,fz)));  // flat ground for the horse farm
   h+=smooth(WORLD_R-25,WORLD_R+25,d)*20;
   const dl=Math.hypot(x-LAKE.x,z-LAKE.z);
   const floor=LAKE_FLOOR+Math.sin(x*0.09)*1.1+Math.cos(z*0.08)*1.1+smooth(LAKE.r-40,LAKE.r-6,dl)*9;  // shallow shelf near the shore
@@ -638,7 +642,7 @@ const LINES={
   feed:['Mmmh, lecker!','Knusper, knusper! Danke!','Das schmeckt!','Hmm, noch eins bitte!','Lecker, lecker!','Danke schön, Marie!'],pet:['Das hat es gern!','Kuschelig!','Oh, wie schön!','Da freut es sich!','So weich!','Es schmust mit dir!'],brush:['Jetzt glitzert es!','Schön sauber!','Wie das funkelt!','Blitzeblank!','Alles schön gekämmt!','Jetzt glänzt es wie ein Stern!'],
   ride:['Hü hott! Los geht es!','Festhalten, Marie!','Auf geht es, ab in die Lüfte!'],pick:'Beeren gepflückt!',
   taskDone:['Super gemacht, Marie!','Toll! Danke, Marie!','Du bist super, Marie!','Klasse, Marie!','Das hast du prima gemacht!','Wunderbar, Marie!'],
-  teleport:'Schwupps! Zurück nach Hause!',
+  teleport:'Schwupps! Zurück nach Hause!',wildFoal:'Schau mal! Irgendwo ist ein wildes Fohlen aufgetaucht! Folge dem Schmetterling und bring es nach Hause!',
   zapHit:['Treffer!','Zack! Getroffen!','Gut gezielt!'],sharkFixed:['Puff! Der böse Hai ist jetzt ein lieber Hai!','Verzaubert! Jetzt ist er ganz lieb!'],
   sharkBump:['Aua! Ein böser Hai! Verzaubere ihn mit deinem Zauberstab!','Vorsicht, ein böser Hai! Schieß mit deinem Zauberstab!'],
   netCaught:'Oh nein, ein Netz! Zappel dich schnell frei!',netFree:'Geschafft, du bist frei!',shipBeaten:'Die Piraten geben auf! Sie segeln ganz weit weg!',
@@ -746,7 +750,7 @@ function addTree(x,z,s=1,blossom=false){const h=terrainH(x,z);const t=new THREE.
   t.add(M(SPHMID,mat(cs[0],{roughness:0.7}),1.8,1.6,1.8,0,3.8,0));t.add(M(SPHMID,mat(cs[1],{roughness:0.7}),1.3,1.2,1.3,0.9,4.6,0.3));t.add(M(SPHMID,mat(cs[2],{roughness:0.7}),1.2,1.1,1.2,-0.8,4.4,-0.5));bake(t)}
 function addPine(x,z,s=1){const h=terrainH(x,z);const t=new THREE.Group();t.position.set(x,h,z);t.scale.setScalar(s);t.add(M(TAPG,trunkM,0.3,2,0.3,0,1,0));
   for(let k=0;k<3;k++)t.add(M(new THREE.ConeGeometry(1,1,9),mat(k%2?0x4fb879:0x5fc98a,{roughness:0.8}),1.9-k*0.45,2.2,1.9-k*0.45,0,2.4+k*1.3,0));bake(t)}
-const AVOID=[[0,0,32],[LAKE.x,LAKE.z,LAKE.r+14],[DOME.x,DOME.z,12],[MEADOW.x,MEADOW.z,7],[GROVE.x,GROVE.z,5],[GARDEN.x,GARDEN.z,13],[PLAY.x,PLAY.z,12],[PIER.x,PIER.z,8]];
+const AVOID=[[0,0,32],[STABLE.x,STABLE.z,42],[LAKE.x,LAKE.z,LAKE.r+14],[DOME.x,DOME.z,12],[MEADOW.x,MEADOW.z,7],[GROVE.x,GROVE.z,5],[GARDEN.x,GARDEN.z,13],[PLAY.x,PLAY.z,12],[PIER.x,PIER.z,8]];
 const okSpot=(x,z,extra=0)=>AVOID.every(([ax,az,r])=>Math.hypot(x-ax,z-az)>r+extra)&&pathD(x,z)>4+extra;
 for(let i=0;i<1400;i++){const x=sr(-280,280),z=sr(-280,280);if(Math.hypot(x,z)>276||!okSpot(x,z))continue;if(SR()<0.33){if(Math.hypot(x,z)>140&&SR()<0.5)addPine(x,z,sr(0.9,1.5));else addTree(x,z,sr(0.8,1.3),SR()<0.3)}}
 for(let i=0;i<150;i++){const a=i/150*TAU+sr(-0.02,0.02),r=sr(282,305);if(SR()<0.5)addPine(Math.cos(a)*r,Math.sin(a)*r,sr(1.4,2.2));else addTree(Math.cos(a)*r,Math.sin(a)*r,sr(1.2,1.8),SR()<0.25)}
@@ -808,17 +812,36 @@ const clouds=[];for(let i=0;i<46;i++){const g=new THREE.Group();const n=4+Math.f
 function rainbow(x,y,z,R,ry=0){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=ry;const cs=[0xff5a6e,0xffa04d,0xffe14d,0x7fe07a,0x6fc0ff,0xb48cff];
   cs.forEach((c,i)=>g.add(new THREE.Mesh(new THREE.TorusGeometry(R-i*0.7,0.36,8,64,Math.PI),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0.6,depthWrite:false,fog:false}))));scene.add(g)}
 rainbow(0,2,-40,30);rainbow(-70,29,-96,14,0.9);rainbow(150,32,70,10,-0.6);rainbow(seaPt(90).x,0,seaPt(90).z,70,0.8);rainbow(-100,4,62,18,1.2);
-// sanctuary: stable
-(()=>{const g=new THREE.Group();g.position.set(-14,2,-9);g.rotation.y=0.5;scene.add(g);
-  g.add(M(new THREE.BoxGeometry(1,1,1),mat(0xff9eb5,{roughness:0.6}),9,4.4,6,0,2.2,0));
-  const tr=mat(0xffffff,{roughness:0.5});for(const [x,z] of [[-4.5,3],[4.5,3],[-4.5,-3],[4.5,-3]])g.add(M(new THREE.BoxGeometry(1,1,1),tr,0.35,4.5,0.35,x,2.25,z));
-  const sh=new THREE.Shape();sh.moveTo(-3.8,0);sh.lineTo(3.8,0);sh.lineTo(0,3);sh.lineTo(-3.8,0);const rg=new THREE.ExtrudeGeometry(sh,{depth:10,bevelEnabled:false});rg.translate(0,0,-5);
-  const roof=new THREE.Mesh(rg,mat(0x9b6bd6,{roughness:0.5}));roof.rotation.y=Math.PI/2;roof.position.y=4.4;g.add(roof);
-  g.add(M(new THREE.BoxGeometry(1,1,1),mat(0x8a5a3c),2.6,3,0.2,0,1.5,3.05));
-  for(const s of [-1,1]){const b=M(new THREE.BoxGeometry(1,1,1),tr,0.18,3.6,0.1,0,1.5,3.17);b.rotation.z=s*0.72;g.add(b)}
-  const win=M(CYLG,mat(0xffe9a8,{emissive:0xffc94d,emissiveIntensity:0.6}),0.7,0.15,0.7,0,5.6,3.12);win.rotation.x=Math.PI/2;g.add(win);
-  for(const [x,z] of [[5.5,2.8],[6.2,0.8],[5.6,-1.2]]){const h=M(CYLG,mat(0xf3d36b,{roughness:0.9}),0.8,1.2,0.8,x,0.8,z);h.rotation.z=Math.PI/2;g.add(h)}
-  const sign=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🦄')}));sign.position.set(0,7.6,3.4);sign.scale.setScalar(2);g.add(sign)})();
+// horse farm: every horse has its own box with straw, hay rack, water bucket and a name sign
+const BOX_SIGNS=[];
+(()=>{const box=new THREE.BoxGeometry(1,1,1),{bw,bd,n}=STABLE,pal=[0xffc6dc,0xc9e4ff,0xd9f5c9,0xfff0b3,0xe3d1ff,0xffd9c2];
+  const wood=mat(0xffffff,{roughness:0.6}),straw=mat(0xf3d36b,{roughness:1}),hay=mat(0xe9c46a,{roughness:1}),roofM=mat(0x9b6bd6,{roughness:0.5}),rail=mat(0xff9fc4,{roughness:0.5});
+  for(let w=0;w<2;w++){const g=new THREE.Group();g.position.set(STABLE.x,2,STABLE.z+(w?1:-1)*(STABLE.yard/2+bd/2));g.rotation.y=w?Math.PI:0;const L=n*bw;
+    g.add(M(box,straw,L,0.08,bd,0,0.04,0));
+    for(let k=0;k<n;k++){const x=(k-(n-1)/2)*bw*(w?-1:1),c=pal[(k+w*3)%pal.length];
+      g.add(M(box,mat(c,{roughness:0.6}),bw,3.6,0.3,x,1.8,-bd/2));
+      g.add(M(box,hay,1.4,0.6,0.45,x+0.9,2.6,-bd/2+0.4));for(let h=0;h<5;h++)g.add(M(box,mat(0xd9a441),0.06,0.6,0.06,x+0.4+h*0.25,2.6,-bd/2+0.65));
+      g.add(M(CYLG,mat(0x7ec8ff,{roughness:0.3}),0.35,0.5,0.35,x-1.5,0.25,-bd/2+0.6));g.add(M(CYLG,mat(0x9fe8ff,{emissive:0x4fc8ff,emissiveIntensity:0.3}),0.3,0.02,0.3,x-1.5,0.5,-bd/2+0.6));
+      const gate=M(box,mat(c,{roughness:0.6}),bw*0.42,1.1,0.12,x-bw/2+0.15,0.75,bd/2-0.1-bw*0.21);gate.rotation.y=Math.PI/2;g.add(gate)}
+    for(let k=0;k<=n;k++){const x=(k-n/2)*bw;g.add(M(box,wood,0.25,2.2,bd,x,1.1,0));g.add(M(box,rail,0.32,0.18,bd+0.1,x,2.25,0));g.add(M(box,wood,0.32,3.8,0.32,x,1.9,bd/2))}
+    g.add(M(box,wood,L+0.3,0.35,0.4,0,3.7,bd/2));
+    const roof=M(box,roofM,L+1.4,0.3,bd+2.6,0,4.35,0.2);roof.rotation.x=-0.22;g.add(roof);
+    bake(g)}
+  // name signs (live, they change when a horse moves in)
+  BOXES.forEach((B,i)=>{const c=document.createElement('canvas');c.width=256;c.height=72;const t=new THREE.CanvasTexture(c);t.cv=c;
+    const sp=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.73),new THREE.MeshBasicMaterial({map:t,transparent:true}));sp.position.set(B.x,2+4.2,B.z+(B.w?-1:1)*(bd/2+0.25));sp.rotation.y=B.w?Math.PI:0;scene.add(sp);BOX_SIGNS.push({mesh:sp,tex:t,name:null})});
+  // entrance arch "Maries Pferdehof"
+  const ag=new THREE.Group();ag.position.set(STABLE.x+n*bw/2+3,2,STABLE.z);ag.rotation.y=Math.PI/2;
+  for(const s2 of [-1,1])ag.add(M(box,wood,0.5,6,0.5,s2*5,3,0));ag.add(M(box,mat(0xff9fc4),11,0.5,0.6,0,6,0));bake(ag);
+  const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.fillStyle='#fffaf3';x.beginPath();x.roundRect?x.roundRect(4,4,504,88,40):x.rect(4,4,504,88);x.fill();x.lineWidth=6;x.strokeStyle='#ff7eb6';x.stroke();
+  x.fillStyle='#5b2a86';x.font='800 50px "Baloo 2","Trebuchet MS",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🦄 Maries Pferdehof 🦄',256,50);
+  for(const s2 of [1,-1]){const sg=new THREE.Mesh(new THREE.PlaneGeometry(8,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true}));sg.position.set(STABLE.x+n*bw/2+3+s2*0.35,2+6.9,STABLE.z);sg.rotation.y=s2>0?Math.PI/2:-Math.PI/2;scene.add(sg)}
+  // courtyard: big water trough and flower tubs
+  bake(M(box,mat(0x8fd0ff,{emissive:0x2a7fb0,emissiveIntensity:0.2}),5,0.6,1.4,STABLE.x,2.3,STABLE.z));
+  for(let k=0;k<6;k++){const fx=STABLE.x-24+k*9.6;for(const s2 of [-1,1]){bake(M(CYLG,mat(0xc49a6c),0.6,0.6,0.6,fx,2.3,STABLE.z+s2*6));bake(M(SPHLO,mat(pick([0xff7eb6,0xffe14d,0xb48cff,0xffffff])),0.7,0.45,0.7,fx,2.85,STABLE.z+s2*6))}}})();
+function drawSign(i){const S=BOX_SIGNS[i];if(!S)return;const a=pegs.find(p=>p.box===i&&p.state!=='hidden');const nm=a?a.name:'';if(S.name===nm)return;S.name=nm;
+  const x=S.tex.cv.getContext('2d');x.clearRect(0,0,256,72);x.fillStyle=nm?'#fff6e0':'rgba(255,246,224,0.55)';x.beginPath();x.roundRect?x.roundRect(4,4,248,64,18):x.rect(4,4,248,64);x.fill();
+  x.lineWidth=5;x.strokeStyle='#c4895a';x.stroke();x.fillStyle='#5b2a86';x.font='800 38px "Baloo 2","Trebuchet MS",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(nm||'frei',128,40);S.tex.needsUpdate=true}
 // paddock fence (gate faces centre)
 (()=>{const postM=mat(0xffffff,{roughness:0.5}),railM=mat(0xffd6ea,{roughness:0.5});const n=24;const gateA=Math.atan2(-PAD.z,-PAD.x);
   const pts=[];for(let i=0;i<n;i++){const a=i/n*TAU;pts.push([PAD.x+Math.cos(a)*PAD.r,PAD.z+Math.sin(a)*PAD.r,a])}
@@ -911,7 +934,11 @@ const BABY_DEFS=[
   {id:'b6',name:'Blümchen',body:0xfff6ee,mane:0xff5f78,pattern:'hearts',accent:0xff9fbf,saddle:0xff5f78,dome:true,need:'fairy'},
 ];
 const PATTERNS=['plain','dapple','spots','pinto','stars','hearts','galaxy','rainbow'];
-const NEW_NAMES=['Mondi','Flocke','Kiki','Lilli','Sonni','Bonbon','Pünktchen','Nala','Tupfi','Zuckerl','Luna','Pippa'];
+const NEW_NAMES=['Mondi','Flocke','Kiki','Lilli','Sonni','Bonbon','Pünktchen','Nala','Tupfi','Zuckerl','Luna','Pippa','Stella','Wuschel','Keks','Karamell','Lotti','Rubin','Saphir','Honig','Muffin','Jasmin','Blitz','Sternschnuppe','Paula','Schneeflocke','Puderzucker','Krümel','Fritzi','Goldi'];
+function nextName(){const i=state.nameIdx++;return NEW_NAMES[i%NEW_NAMES.length]+(i>=NEW_NAMES.length?' '+(1+Math.floor(i/NEW_NAMES.length)):'')}
+function assignBox(a){if(a.box!=null&&a.box<BOXES.length&&!pegs.some(p=>p!==a&&p.box===a.box&&p.state!=='hidden')){drawSign(a.box);return}
+  a.box=null;for(let i=0;i<BOXES.length;i++)if(!pegs.some(p=>p!==a&&p.box===i&&p.state!=='hidden')){a.box=i;break}if(a.box!=null)drawSign(a.box)}
+const boxSpot=a=>{const B=BOXES[a.box];return B?new V3(B.x,2,B.z):new V3(HOME.x+rnd(-6,6),2,HOME.z+rnd(-3,3))};
 const pegs=[],followers=[];
 const GROW_N=4;
 function hiddenPos(d){if(d.island!=null){const I=ISLANDS[d.island];return new V3(I.x-1,I.y+1,I.z+1)}if(d.lake)return new V3(PEARL.x+1,terrainH(PEARL.x+1,PEARL.z),PEARL.z);
@@ -919,11 +946,11 @@ function hiddenPos(d){if(d.island!=null){const I=ISLANDS[d.island];return new V3
 function createPeg(d,st){const pattern=d.pattern||'plain',accent=d.accent??0xffffff,saddle=d.saddle??0x8a4f2c;
   const mesh=makePegasus({body:d.body,mane:d.mane,pattern,accent,saddle,tack:true});scene.add(mesh);
   const a={kind:'pegasus',id:d.id,name:d.name,body:d.body,mane:d.mane,pattern,accent,saddle,need:d.need||null,mesh,ud:mesh.userData,pos:new V3(),vel:new V3(),yaw:Math.random()*TAU,
-    growth:d.growth||0,adult:!!d.adult,grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
+    growth:d.growth||0,adult:!!d.adult,box:d.box??null,grow:d.adult?1:0,growAnim:-1,state:st,cd:{},wanderT:0,target:new V3(),shadow:makeShadow(),reach:3.6,h:3.4,hinted:0};
   if(st==='hidden'){a.glow=new THREE.Sprite(new THREE.SpriteMaterial({map:shadowTex,color:0xffc0e8,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));a.glow.scale.setScalar(5);scene.add(a.glow)}
   pegs.push(a);applyScale(a);return a}
 function applyScale(a){const e=1-Math.pow(1-a.grow,3);a.scale=lerp(0.55,1,e);a.mesh.scale.setScalar(a.scale);a.ud.head.scale.setScalar(lerp(1.35,1,e));a.reach=3.2+a.scale*1.4;a.h=3.4*a.scale}
-function randPad(){const ang=Math.random()*TAU,r=Math.sqrt(Math.random())*PAD.r*0.72;return new V3(PAD.x+Math.cos(ang)*r,2,PAD.z+Math.sin(ang)*r)}
+
 
 /* ================= player ================= */
 const player={pos:new V3(0,2,9),vel:new V3(),yaw:Math.PI,form:'human',grounded:true,riding:null,carry:null,trans:0,leap:0,root:new THREE.Group(),forms:{},shadow:makeShadow()};
@@ -940,13 +967,13 @@ const FORM_SCALE={human:1,unicorn:1.12,fairy:0.55,mermaid:1};
 const state={started:false,stars:0,task:null,met:{},tIdx:{},itemPos:null,itemHeld:false,allDone:false,found:new Set(),nameIdx:0,lastBirth:-999,lastProgress:0,lastAutoHint:0,needHintT:0,wrongT:0,wrongHintT:0,netT:0,taskCount:0};
 const SAVE_KEY='maries-zauberfluegel-v1';
 function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({stars:state.stars,task:state.task,taskCount:state.taskCount,met:state.met,tIdx:state.tIdx,itemPos:state.itemPos,itemHeld:state.itemHeld,allDone:state.allDone,nameIdx:state.nameIdx,
-  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult}))}))}catch(e){}}
+  found:[...state.found],pegs:pegs.filter(a=>a.state!=='hidden').map(a=>({id:a.id,name:a.name,body:a.body,mane:a.mane,pattern:a.pattern,accent:a.accent,saddle:a.saddle,growth:a.growth,adult:a.adult,box:a.box}))}))}catch(e){}}
 function load(){let d=null;try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null')}catch(e){}
   if(d){state.stars=d.stars|0;state.task=TASK_MAP[d.task]?d.task:null;state.met=d.met||{};if(d.talked)state.met.lotte=true;state.tIdx=d.tIdx||{lotte:d.taskIdx|0};
     state.itemPos=d.itemPos||null;state.taskCount=d.taskCount|0;state.itemHeld=!!d.itemHeld;if(state.task&&TASK_MAP[state.task].fetch&&!state.itemPos&&!state.itemHeld)state.task=null;state.allDone=!!d.allDone;state.nameIdx=d.nameIdx|0;(d.found||[]).forEach(id=>state.found.add(id))}
   const saved=(d&&d.pegs)||[];
-  for(const def of BABY_DEFS){const s=saved.find(p=>p.id===def.id);if(state.found.has(def.id)){const a=createPeg(Object.assign({},def,s?{growth:s.growth,adult:s.adult}:{}),'home');a.pos.copy(randPad())}else{const a=createPeg(def,'hidden');a.pos.copy(hiddenPos(def));a.home=a.pos.clone()}}
-  for(const s of saved){if(BABY_DEFS.some(b=>b.id===s.id))continue;const a=createPeg(s,'home');a.pos.copy(randPad())}}
+  for(const def of BABY_DEFS){const s=saved.find(p=>p.id===def.id);if(state.found.has(def.id)){const a=createPeg(Object.assign({},def,s?{growth:s.growth,adult:s.adult,box:s.box}:{}),'home');assignBox(a);a.pos.copy(boxSpot(a))}else{const a=createPeg(def,'hidden');a.pos.copy(hiddenPos(def));a.home=a.pos.clone()}}
+  for(const s of saved){if(BABY_DEFS.some(b=>b.id===s.id))continue;const a=createPeg(s,'home');assignBox(a);a.pos.copy(boxSpot(a))}}
 
 /* ================= HUD ================= */
 const $=s=>document.querySelector(s);
@@ -1024,8 +1051,8 @@ function care(a,act,berries){a.wanderT=Math.max(a.wanderT||0,3);
 function growUp(a){a.adult=true;a.growAnim=0;setTimeout(()=>{Voice.say(`Schau mal! ${a.name} ist groß geworden!`,{prio:2});SFX.found()},900)}
 function mount(a){const i=followers.indexOf(a);if(i>=0)followers.splice(i,1);a.prev=a.state;a.state='ridden';player.riding=a;player.pos.copy(a.pos);player.yaw=a.yaw;player.vel.set(0,0,0);
   SFX.jump();say('ride',{prio:1});updateFormBtns(null);taskEvent('ride',a.pos)}
-function dismount(silent){const a=player.riding;if(!a)return;player.riding=null;const nearHome=hd(player.pos,PAD)<PAD.r+14&&player.pos.y<groundAt(player.pos.x,player.pos.z)+6;
-  a.state=nearHome?'home':'follow';a.wanderT=0;if(!nearHome)followers.unshift(a);a.vel.set(0,0,0);
+function dismount(silent){const a=player.riding;if(!a)return;player.riding=null;const nearHome=hd(player.pos,HOME)<34&&player.pos.y<groundAt(player.pos.x,player.pos.z)+6;
+  a.state=nearHome?'home':'follow';a.wanderT=0;if(nearHome)assignBox(a);if(!nearHome)followers.unshift(a);a.vel.set(0,0,0);
   const r=new V3(Math.cos(player.yaw),0,-Math.sin(player.yaw));player.pos.addScaledVector(r,1.6*a.scale+0.6);player.forms.human.position.set(0,0,0);resetSit();if(!silent)SFX.pop();updateFormBtns(null)}
 function resetSit(){const u=player.forms.human.userData;u.legs.forEach(l=>{l.rotation.set(0,0,0)})}
 
@@ -1112,13 +1139,13 @@ function updateItem(dt){const t=curTask();if(!t||!t.fetch||!state.itemPos){itemS
 function foundBaby(a){a.state='celebrate';a.celT=0;a.base=a.pos.clone();state.found.add(a.id);if(a.glow){scene.remove(a.glow);a.glow=null}
   buildSlots();burst(a.pos.clone().add(new V3(0,1.2,0)),90,7,0.9,1.6);SFX.found();floatIcon('💖',a.pos.clone().add(new V3(0,2,0)),5,1,1.2);
   Voice.say(`Juhu! Du hast ${a.name} gefunden! ${a.name} kommt jetzt mit dir mit.`,{prio:2});state.lastProgress=NOW;save()}
-function arriveHome(){followers.forEach(a=>{a.state='home';a.wanderT=0});followers.length=0;
+function arriveHome(){followers.forEach(a=>{a.state='home';a.wanderT=0;assignBox(a)});followers.length=0;
   burst(player.pos.clone().add(new V3(0,2,0)),70,6,0.8,1.5);SFX.star();state.lastProgress=NOW;
   const all=BABY_DEFS.every(d=>state.found.has(d.id))&&!pegs.some(a=>a.state==='follow'||a.state==='hidden'||a.state==='celebrate');
   if(all&&!state.allDone){state.allDone=true;Voice.say(LINES.allFound,{prio:3});fireworks=6}else say('home',{prio:2});save()}
 let fireworks=0,fwT=0;
-function teleportHome(){if(player.riding)dismount(true);burst(player.pos.clone().add(new V3(0,1,0)),50,5);player.pos.set(1,2,10);player.vel.set(0,0,0);trail.length=0;
-  followers.forEach((a,i)=>{a.pos.set(1+Math.sin(i)*2,2,13+i*1.5);a.vel.set(0,0,0)});burst(player.pos.clone().add(new V3(0,1,0)),60,5);SFX.transform();say('teleport',{prio:1});cam.yaw=player.yaw+Math.PI}
+function teleportHome(){if(player.riding)dismount(true);burst(player.pos.clone().add(new V3(0,1,0)),50,5);player.pos.set(HOME.x+STABLE.n*STABLE.bw/2+8,2,HOME.z);player.yaw=-Math.PI/2;player.vel.set(0,0,0);trail.length=0;
+  followers.forEach((a,i)=>{a.pos.set(HOME.x+STABLE.n*STABLE.bw/2+11+i*1.5,2,HOME.z+Math.sin(i)*2);a.vel.set(0,0,0)});burst(player.pos.clone().add(new V3(0,1,0)),60,5);SFX.transform();say('teleport',{prio:1});cam.yaw=player.yaw+Math.PI}
 
 /* ================= guide: butterfly + light beam + golden arrows + screen-edge pointer ================= */
 function taskTarget(t){if(t.ev){const p=t.target();return p||NPC_MAP[t.giver].pos}if(t.fetch)return state.itemHeld?NPC_MAP[t.giver].pos:(state.itemPos?new V3(...state.itemPos):null);return t.target()}
@@ -1126,7 +1153,7 @@ function taskNeed(t){if(t.ev)return null;if(t.fetch&&!state.itemHeld)return t.fe
 function nextGiver(){const g=NPCS.filter(n=>n.tasks.length);return g[state.stars%g.length]}
 function guideTarget(){
   const t=curTask();if(t){const p=taskTarget(t);if(p)return{pos:p,kind:'task',need:taskNeed(t),human:!t.fetch&&!t.form&&!t.ev}}
-  if(followers.length||(player.riding&&player.riding.prev==='follow'))return{pos:new V3(PAD.x,2,PAD.z),kind:'home'};
+  if(followers.length||(player.riding&&player.riding.prev==='follow'))return{pos:new V3(HOME.x,2,HOME.z),kind:'home'};
   let b=null,bd=1e9;for(const a of pegs){if(a.state!=='hidden')continue;const d=a.pos.distanceTo(player.pos);if(d<bd){bd=d;b=a}}
   if(b)return{pos:b.pos,kind:'baby',baby:b,need:b.need,d:bd};
   const n=nextGiver();return{pos:n.pos,kind:'npc',npc:n}}
@@ -1207,33 +1234,38 @@ function updatePegs(dt){
     else if(a.state==='follow'){a.grazing=false;const g=Math.max(groundAt(a.pos.x,a.pos.z,a.pos.y+0.5),inLake(a.pos.x,a.pos.z)&&player.form!=='mermaid'&&!(player.pos.y<WATER_Y-0.5)?WATER_Y:-99);
       if(a.pos.y<g){a.pos.y=g;if(a.vel.y<0)a.vel.y=0}flying=a.pos.y>g+0.6;spd=Math.hypot(a.vel.x,a.vel.z);if(spd>0.3)a.yaw=angLerp(a.yaw,Math.atan2(a.vel.x,a.vel.z),damp(8,dt))}
     else if(a.state==='home'){
-      const dP=hd(a.pos,PAD),near=hd(a.pos,player.pos)<4.5&&player.form==='human'&&!player.riding;
-      a.wanderT-=dt;if(a.wanderT<=0&&!a.date){a.target.copy(randPad());a.wanderT=rnd(4,10)}
-      const tgt=a.date?a.dateTarget:a.target;const dx=tgt.x-a.pos.x,dz=tgt.z-a.pos.z,d=Math.hypot(dx,dz);
-      const sp=near?0:(dP>PAD.r+1?7:(a.date?1.8:(a.adult?1.4:2)));
-      if(d>0.4&&sp>0){spd=sp;a.pos.x+=dx/d*sp*dt;a.pos.z+=dz/d*sp*dt;a.yaw=angLerp(a.yaw,Math.atan2(dx,dz),damp(5,dt));a.grazing=false}
-      else{a.grazing=!near&&!a.date;if(near)a.yaw=angLerp(a.yaw,Math.atan2(player.pos.x-a.pos.x,player.pos.z-a.pos.z),damp(4,dt))}
-      const g=groundAt(a.pos.x,a.pos.z,a.pos.y+0.5);a.pos.y=dP>PAD.r+1?Math.max(g,lerp(a.pos.y,g,damp(3,dt))):g;flying=a.pos.y>g+0.6;
+      if(a.box==null||!BOXES[a.box])assignBox(a);const spot=boxSpot(a),B=BOXES[a.box],toSpot=hd(a.pos,spot),near=hd(a.pos,player.pos)<4.5&&player.form==='human'&&!player.riding;
+      a.wanderT-=dt;if((a.wanderT<=0||toSpot>4&&a.target.distanceTo(spot)>2)&&!a.date){a.target.set(spot.x+rnd(-0.7,0.7),2,spot.z+rnd(-0.9,0.4));a.wanderT=rnd(6,14)}
+      const tgt=a.date?a.dateTarget:a.target;const dx=tgt.x-a.pos.x,dz=tgt.z-a.pos.z,d=Math.hypot(dx,dz);const far=d>4;
+      const sp=a.date?1.8:(far?7:(near?0:0.8));
+      if(d>0.3&&sp>0){spd=sp;a.pos.x+=dx/d*sp*dt;a.pos.z+=dz/d*sp*dt;a.yaw=angLerp(a.yaw,Math.atan2(dx,dz),damp(5,dt));a.grazing=false}
+      else{a.grazing=!near&&!a.date&&Math.sin(NOW*0.3+a.ud.seed)>0.2;if(near)a.yaw=angLerp(a.yaw,Math.atan2(player.pos.x-a.pos.x,player.pos.z-a.pos.z),damp(4,dt));else if(B)a.yaw=angLerp(a.yaw,B.face,damp(1.5,dt))}
+      const g=groundAt(a.pos.x,a.pos.z,a.pos.y+0.5);a.pos.y=d>6&&!a.date?lerp(a.pos.y,g+6,damp(2,dt)):Math.max(g,lerp(a.pos.y,g,damp(4,dt)));flying=a.pos.y>g+0.6;
       if(!a.adult&&NOW-(a.passive||0)>60){a.passive=NOW;if(a.passive>60){a.growth++;if(a.growth>=GROW_N)growUp(a)}}}
     else if(a.state==='ridden'){spd=Math.hypot(player.vel.x,player.vel.z);flying=player.pos.y>groundAt(player.pos.x,player.pos.z,player.pos.y)+0.5;a.pos.copy(player.pos);a.yaw=player.yaw;a.grazing=false}
     a.mesh.position.copy(a.pos);a.mesh.rotation.y=a.yaw;a.mesh.visible=a.pos.distanceTo(CAMW)<150;animPeg(a,dt,spd,flying);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
-  if(followers.length&&hd(player.pos,PAD)<PAD.r+14&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
+  if(followers.length&&hd(player.pos,HOME)<34&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
 }
 // breeding: two grown-up horses become parents
-let breedT=0,date=null;
+let breedT=0,date=null,wildT=40;
+const COAT_COLORS=[0xffc9e3,0xd9e6f5,0x3b3a99,0xd98a45,0x9eeedd,0xfff6ee,0xffe08a,0xc9b3ff,0x8a5a3c,0xf2f2f2,0x2e2e3a,0xffb38a];
+function spawnWild(){let x=0,z=0,ok=false;for(let i=0;i<40&&!ok;i++){const ang=rnd(0,TAU),r=rnd(60,250);x=Math.cos(ang)*r;z=Math.sin(ang)*r;ok=okSpot(x,z,3)&&!inLake(x,z)}if(!ok)return;
+  const pattern=pick(PATTERNS),d={id:'w'+Date.now(),name:nextName(),body:pick(COAT_COLORS),mane:pick([0xff4fa3,0x3f9bff,0xd59bff,0xfff0c8,0x1fa898,0xff5f78,0xffd75e,0x7a4cff]),pattern,accent:pick([0xffffff,0xff9fbf,0xffe27a,0x8ea3c2,0x2a8f86]),saddle:pick([0xffffff,0x2f5fb0,0x9b6bd6,0xff7eb6,0xffd75e,0x6a3a1e])};
+  const a=createPeg(d,'hidden');a.wild=true;a.pos.set(x,terrainH(x,z),z);a.home=a.pos.clone();say('wildFoal',{prio:2});save()}
+function updateWild(dt){if(pegs.some(a=>a.state==='hidden'))return;if(pegs.length>=BOXES.length)return;wildT-=dt;if(wildT<=0){wildT=70;spawnWild()}}
 function updateBreeding(dt){
   if(date){const {a,b}=date;if(a.state!=='home'||b.state!=='home'){a.date=b.date=false;date=null;return}
     if(hd(a.pos,a.dateTarget)<0.5&&hd(b.pos,b.dateTarget)<0.5){date.t+=dt;a.yaw=angLerp(a.yaw,Math.atan2(b.pos.x-a.pos.x,b.pos.z-a.pos.z),damp(5,dt));b.yaw=angLerp(b.yaw,Math.atan2(a.pos.x-b.pos.x,a.pos.z-b.pos.z),damp(5,dt));
       if(Math.random()<dt*2.5)floatIcon('💕',date.mid.clone().add(new V3(0,3.2,0)),1,0.5,1);
-      if(date.t>3.5){const name=NEW_NAMES[state.nameIdx%NEW_NAMES.length]+(state.nameIdx>=NEW_NAMES.length?' '+(1+Math.floor(state.nameIdx/NEW_NAMES.length)):'');state.nameIdx++;
+      if(date.t>3.5){const name=nextName();
         const body=new THREE.Color(a.body).lerp(new THREE.Color(b.body),0.5).getHex();const pa=Math.random()<0.5?a:b,pb=pa===a?b:a;const pattern=Math.random()<0.75?pa.pattern:pick(PATTERNS);
         const n=createPeg({id:'n'+Date.now(),name,body,mane:pb.mane,pattern,accent:pattern===pa.pattern?pa.accent:pick([0xffffff,0xff9fbf,0xffe27a,0x8ea3c2]),saddle:pick([a.saddle,b.saddle,0xffd75e,0x7ec8ff])},'home');
-        n.pos.copy(date.mid);n.yaw=Math.random()*TAU;burst(date.mid.clone().add(new V3(0,1.5,0)),90,6,0.9,1.6);SFX.found();
+        n.pos.copy(date.mid);n.yaw=Math.random()*TAU;assignBox(n);burst(date.mid.clone().add(new V3(0,1.5,0)),90,6,0.9,1.6);SFX.found();
         Voice.say(`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${name}!`,{prio:2});state.lastBirth=NOW;a.date=b.date=false;a.wanderT=b.wanderT=0;date=null;save()}}
     return}
-  breedT-=dt;if(breedT>0)return;breedT=3;if(NOW-state.lastBirth<50||pegs.length>=14)return;
+  breedT-=dt;if(breedT>0)return;breedT=3;if(NOW-state.lastBirth<50||pegs.filter(p=>p.state!=='hidden').length>=BOXES.length)return;
   const ad=pegs.filter(p=>p.state==='home'&&p.adult);if(ad.length<2)return;const a=ad.splice(Math.floor(Math.random()*ad.length),1)[0],b=pick(ad);
-  const mid=a.pos.clone().add(b.pos).multiplyScalar(0.5);mid.x=clamp(mid.x,PAD.x-5,PAD.x+5);mid.z=clamp(mid.z,PAD.z-5,PAD.z+5);mid.y=2;
+  const mid=new V3(HOME.x+rnd(-12,12),2,HOME.z+rnd(-3,3));
   a.date=b.date=true;a.dateTarget=mid.clone().add(new V3(-1.3,0,0));b.dateTarget=mid.clone().add(new V3(1.3,0,0));date={a,b,mid,t:0}}
 
 /* ================= player update ================= */
@@ -1347,7 +1379,7 @@ function updateCreatures(dt){
   if(player.form==='mermaid'&&player.pos.y<WATER_Y-0.8&&Math.random()<dt*5)emit(player.pos.x+rnd(-0.3,0.3),player.pos.y+1.6,player.pos.z+rnd(-0.3,0.3),0,1,0,0xe8f8ff,0.3,1.6,-1.2);
   boat.position.y=WATER_Y+0.35+Math.sin(NOW*1.3)*0.12;boat.rotation.z=Math.sin(NOW*1.1)*0.05;
   for(const c of clouds){c.position.x+=dt*1.2;if(c.position.x>580)c.position.x=-580}
-  if(fireworks>0){fwT-=dt;if(fwT<=0){fwT=0.45;fireworks-=0.45/1.5;burst(new V3(rnd(-15,15)+PAD.x,rnd(14,24),rnd(-15,15)+PAD.z),80,9,1.1,1.8)}}}
+  if(fireworks>0){fwT-=dt;if(fwT<=0){fwT=0.45;fireworks-=0.45/1.5;burst(new V3(rnd(-20,20)+HOME.x,rnd(14,24),rnd(-10,10)+HOME.z),80,9,1.1,1.8)}}}
 
 /* ================= camera (dives with the mermaid) ================= */
 const BG_WATER=new THREE.Color(0x2a9fd6);
@@ -1572,7 +1604,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
-    updateBreeding(dt)}
+    updateBreeding(dt);updateWild(dt)}
   updatePegs(dt);updateCreatures(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
   water.material.emissiveIntensity=0.15+Math.sin(NOW*1.5)*0.05;swayU.value=NOW;
@@ -1597,7 +1629,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
   add('erz','Hallo Marie! Schön, dass du wieder da bist! Deine Tiere haben auf dich gewartet.');
   const names=[...BABY_DEFS.map(d=>d.name),...NEW_NAMES];
   for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
-  for(const d of BABY_DEFS)add('erz',`Juhu! Du hast ${d.name} gefunden! ${d.name} kommt jetzt mit dir mit.`);
+  for(const nm of names)add('erz',`Juhu! Du hast ${nm} gefunden! ${nm} kommt jetzt mit dir mit.`);
   PIRATE_LINES.forEach(t=>add('pirat',t));
   for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
     for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
@@ -1608,8 +1640,8 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
 // debug hook for automated screenshots (harmless in the app)
 window.__mz={sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);updateCombat(0.05);updateCreatures(0.05)}},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
-  showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}a.pos.set(PAD.x-6+(i%3)*5,2,PAD.z-3+Math.floor(i/3)*5);a.yaw=0.6+i;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
-    this.goto(PAD.x+1,2,PAD.z+11,'human',Math.PI);cam.pitch=0.3},
+  showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
+    this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
   closeHorse(){this.showHorses();const a=pegs[3];a.pos.set(PAD.x,2,PAD.z);a.yaw=Math.PI/2;this.goto(PAD.x+1,2,PAD.z+5.5,'human',Math.PI*1.05);cam.pitch=0.15;cam.dragT=99},
   ride(){const a=pegs.find(p=>p.adult)||pegs[0];mount(a);a.mesh.visible=true;player.yaw=Math.PI/2;cam.yaw=Math.PI*0.95;cam.dragT=99},
   dive(){this.goto(LAKE.x,-6,LAKE.z+20,'mermaid',Math.PI)},
