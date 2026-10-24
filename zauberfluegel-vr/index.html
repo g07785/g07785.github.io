@@ -68,6 +68,9 @@ body{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-c
 #start h1 .b{display:block;font-size:clamp(52px,15vw,112px)}
 #play{width:128px;height:128px;border-radius:50%;border:5px solid #fff;cursor:pointer;display:grid;place-items:center;padding:0;
   background:radial-gradient(circle at 35% 28%,#fff8d6,#ffd75e 55%,#f0a81c);box-shadow:0 7px 0 var(--gold-deep),0 0 50px 12px rgba(255,220,120,.7);animation:breathe 1.8s ease-in-out infinite}
+#kiMic{font:800 20px 'Baloo 2',system-ui,sans-serif;color:#5b2a86;background:#fff6fb;border:3px solid var(--gold);border-radius:30px;padding:10px 22px;cursor:pointer}
+#kiMic[disabled]{opacity:.75;cursor:default}
+#kiBox{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:rgba(255,250,243,.95);color:#5b2a86;border:3px solid #ff7eb6;border-radius:22px;padding:10px 16px;font:700 17px/1.35 'Baloo 2',system-ui,sans-serif;white-space:pre-line;text-align:center;pointer-events:none;z-index:20}
 #start .play-row{display:flex;gap:28px;align-items:center}
 #playVR{width:128px;height:128px;border-radius:50%;border:5px solid #fff;cursor:pointer;font-size:62px;padding:0;background:radial-gradient(circle at 35% 28%,#fff,#ffd3e8 60%,#ff9fd0);box-shadow:0 7px 0 #c2508a,0 0 50px 12px rgba(255,160,210,.7);animation:breathe 1.8s ease-in-out infinite;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
 #play svg{width:60px;height:60px;margin-left:10px}
@@ -105,7 +108,9 @@ body{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-c
   <h1><span class="a">Maries</span><span class="b">Zauberflügel</span></h1>
   <div class="play-row"><button id="playVR" hidden aria-label="In VR spielen">🥽</button>
   <button id="play" aria-label="Spielen"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z" fill="#fff" stroke="#5b2a86" stroke-width="1.4" stroke-linejoin="round"/></svg></button></div>
+  <button id="kiMic" hidden>🎤 Mit den Figuren sprechen</button>
 </div>
+<div id="kiBox" hidden></div>
 
 <script src="three.min.js"></script>
 <script>
@@ -653,7 +658,7 @@ const Voice={voice:null,prio:0,last:'',lowT:0,audio:null,queue:[],playing:false,
   stop(){this.queue=[];if(this.audio){try{this.audio.pause()}catch(e){}this.audio=null}this.playing=false;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}},
   next(){const u=this.queue.shift();if(!u){this.playing=false;this.prio=0;this.audio=null;return}
     const a=new Audio(u);this.audio=a;a.volume=1;a.onended=()=>this.next();a.onerror=()=>this.next();a.play().catch(()=>this.next())},
-  say(text,{prio=1,who='erz'}={}){if(!text)return;
+  say(text,{prio=1,who='erz'}={}){if(!text)return;if(KI.state!=='idle'&&prio<3)return;
     const busy=this.busy();if(busy&&prio<this.prio)return;if(prio===0&&(busy||NOW<this.lowT))return;
     this.last=text;onSay(text);this.prio=prio;if(prio===0)this.lowT=NOW+6;
     const spk=VOICES[who]?who:'erz',urls=splitS(text).map(x=>CLIPS[spk+'|'+x]);
@@ -1050,7 +1055,7 @@ $('#btnHome').addEventListener('pointerdown',e=>{e.preventDefault();teleportHome
 addEventListener('keydown',e=>{input.keys[e.code]=true;if(!state.started)return;
   if(e.code==='Space')input.up=true;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=true;
   const fm={Digit1:'human',Digit2:'unicorn',Digit3:'fairy',Digit4:'mermaid'}[e.code];if(fm)setForm(fm);
-  if((e.code==='KeyE'||e.code==='Enter')&&ctxActs[0])doAction(ctxActs[0]);if(e.code==='KeyH')help(true);if(e.code==='KeyF')playerZap()});
+  if((e.code==='KeyE'||e.code==='Enter')&&ctxActs[0])doAction(ctxActs[0]);if(e.code==='KeyH')help(true);if(e.code==='KeyF')playerZap();if(e.code==='KeyT'&&!e.repeat){const n=nearNPC();if(n)kiListen(n)}});
 addEventListener('keyup',e=>{input.keys[e.code]=false;if(e.code==='Space')input.up=false;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=false});
 
 /* ================= transformation ================= */
@@ -1062,7 +1067,8 @@ function nearNPC(){let b=null,bd=1e9;for(const n of NPCS){const d=hd(player.pos,
 function computeActions(){const P=player.pos,acts=[];
   if(player.riding){acts.push({id:'dismount',icon:'👣'});return acts}
   const n=nearNPC(),cur=curTask();
-  if(n){if(cur&&cur.fetch&&state.itemHeld&&cur.giver===n.id)acts.push({id:'give',icon:cur.fetch.icon,n,pulse:true});else acts.push({id:'talk',icon:'💬',n,pulse:!cur&&n.tasks.length>0})}
+  if(n){if(cur&&cur.fetch&&state.itemHeld&&cur.giver===n.id)acts.push({id:'give',icon:cur.fetch.icon,n,pulse:true});else acts.push({id:'talk',icon:'💬',n,pulse:!cur&&n.tasks.length>0});
+    if(KI.ok)acts.push({id:'ask',icon:KI.state==='rec'?'⏹️':KI.state==='send'?'💭':'🎤',n,pulse:KI.state==='rec'})}
   if(!player.carry&&hd(P,BUSHV)<3.9&&Math.abs(P.y-2)<3)acts.push({id:'pick',icon:'🫐'});
   let best=null,bd=1e9;for(const a of [...pegs,trex,bra,...bunnies,...sharks]){if(a.kind==='pegasus'&&a.state!=='home'&&a.state!=='follow')continue;const d=hd(P,a.pos);if(d<a.reach&&Math.abs(P.y-a.pos.y)<3.5&&d<bd){bd=d;best=a}}
   if(best){const food=player.carry==='berries'?'🫐':'🥕';
@@ -1076,6 +1082,7 @@ function headPos(a){const f=new V3(Math.sin(a.yaw),0,Math.cos(a.yaw));return a.p
 function doAction(act){if(!act)return;const a=act.t;
   switch(act.id){
     case 'talk':talkNPC(act.n);break;
+    case 'ask':kiListen(act.n);break;
     case 'give':completeFetch();break;
     case 'pick':player.carry='berries';SFX.pop();burst(BUSHV.clone().add(new V3(0,1.5,0)),20,3,0.5,0.8,[0x8a6bff,0xc8a2ff]);say('pick',{prio:1});break;
     case 'feed':{const berries=player.carry==='berries';if(berries)player.carry=null;floatIcon(berries?'🫐':'🥕',headPos(a),3,0.6,1.1);SFX.munch();a.munch=1.6;care(a,'feed',berries);break}
@@ -1577,6 +1584,42 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
     if(state.netT<=0){netMesh.visible=false;burst(netMesh.position.clone(),40,5);say('netFree',{prio:1})}}
   $('#btnZap').classList.toggle('pulse',!!state.captured||zapTargets().some(t=>t.pos.distanceTo(P)<40))}
 
+/* ================= KI-Figuren: frei sprechen (lokaler KI-Server auf dem PC) =================
+   Nur aktiv, wenn das Spiel vom PC-Server geladen wurde (https://<PC>:8443/). Dort laufen Whisper,
+   ein kleines Sprachmodell und die Stimmen. Sonst bleibt alles wie bisher (feste Sätze). */
+var KI={ok:false,stream:null,rec:null,chunks:[],n:null,state:'idle',t0:0,speech:false,quietT:0,an:null,buf:null,cancel:false,hideT:0,floor:0.01};
+(()=>{if(location.protocol!=='https:'&&location.hostname!=='localhost')return;try{const x=new XMLHttpRequest();x.open('GET','/api/ping');x.timeout=5000;
+  x.onload=()=>{try{KI.ok=x.status===200&&!!JSON.parse(x.responseText).ok}catch(e){}if(KI.ok&&!state.started)$('#kiMic').hidden=false};x.send()}catch(e){}})();
+function kiMic(){if(KI.stream)return Promise.resolve(KI.stream);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return Promise.reject(new Error('kein Mikrofon'));
+  return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(s=>{KI.stream=s;return s})}
+function kiAnalyser(){if(KI.an||!KI.stream)return;try{if(!AC)audioInit();if(!AC)return;const src=AC.createMediaStreamSource(KI.stream);KI.an=AC.createAnalyser();KI.an.fftSize=1024;KI.buf=new Float32Array(KI.an.fftSize);src.connect(KI.an)}catch(e){}}
+$('#kiMic').addEventListener('click',()=>{const b=$('#kiMic');b.disabled=true;b.textContent='🎤 …';
+  kiMic().then(()=>{b.textContent='🎤 Mikrofon ist an ✓'}).catch(()=>{b.disabled=false;b.textContent='🎤 Mikrofon erlauben'})});
+function kiShow(text,sticky){const el=$('#kiBox');if(!text){el.hidden=true;return}el.textContent=text;el.hidden=false;KI.hideT=sticky?1e9:NOW+Math.max(5,text.length*0.08);onSay(text.replace(/\n/g,' '))}
+function kiListen(n){if(!KI.ok||!n)return;if(KI.state==='rec'){kiStop();return}if(KI.state!=='idle')return;
+  Voice.stop();KI.n=n;KI.state='wait';kiShow('🎤 …',true);
+  kiMic().then(s=>{if(KI.state!=='wait')return;kiAnalyser();let mt='';
+      for(const t of ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'])if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t)){mt=t;break}
+      const r=new MediaRecorder(s,mt?{mimeType:mt}:undefined);KI.rec=r;KI.chunks=[];KI.cancel=false;
+      r.ondataavailable=e=>{if(e.data&&e.data.size)KI.chunks.push(e.data)};r.onstop=()=>kiSend(new Blob(KI.chunks,{type:r.mimeType||mt||'audio/webm'}));
+      r.start(250);KI.state='rec';KI.t0=NOW;KI.speech=false;KI.quietT=0;n.wave=1.5;SFX.pop();kiShow('🎤 '+n.name+' hört dir zu …',true)})
+    .catch(()=>{KI.state='idle';kiShow('Das Mikrofon ist nicht erlaubt. Bitte im Browser erlauben.')})}
+function kiStop(cancel){if(KI.state!=='rec')return;KI.cancel=!!cancel;KI.state='send';try{KI.rec.stop()}catch(e){KI.state='idle'}}
+function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;KI.state='idle';kiShow(KI.speech?'':'Ich habe nichts gehört. Tippe nochmal auf 🎤 und sprich!');return}
+  KI.state='send';kiShow('💭 '+n.name+' überlegt …',true);const cur=curTask();
+  const ctx=[player.riding?'Marie reitet gerade auf einem Flügelpferd':'Marie ist gerade '+({human:'ein Mädchen',unicorn:'ein Einhorn',fairy:'eine kleine Fee',mermaid:'eine Meerjungfrau'}[player.form]||'ein Mädchen'),
+    cur?'Ihre Aufgabe: '+cur.line:'',state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
+  const x=new XMLHttpRequest();x.open('POST','/api/talk?npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx));x.timeout=40000;
+  x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
+  x.onerror=x.ontimeout=()=>{KI.state='idle';kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
+function kiAnswer(n,j){n.wave=2.5;Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
+  if(j.audio){Voice.prio=3;Voice.queue=[j.audio];Voice.playing=true;Voice.next()}else Voice.say(j.text,{prio:3,who:n.id})}
+function updateKI(dt){if(KI.hideT&&NOW>KI.hideT){KI.hideT=0;$('#kiBox').hidden=true}if(KI.state!=='rec')return;
+  let lv=0;if(KI.an){KI.an.getFloatTimeDomainData(KI.buf);let q=0;for(let i=0;i<KI.buf.length;i++)q+=KI.buf[i]*KI.buf[i];lv=Math.sqrt(q/KI.buf.length)}
+  const thr=Math.max(0.02,KI.floor*3);if(lv>thr){KI.speech=true;KI.quietT=0}else{if(!KI.speech)KI.floor=lerp(KI.floor,lv,0.05);else KI.quietT+=dt}
+  const t=NOW-KI.t0,far=KI.n&&hd(player.pos,KI.n.pos)>14;
+  if(far||(!KI.speech&&t>7&&KI.an))kiStop(true);else if((KI.speech&&KI.quietT>1.1)||t>12||(!KI.an&&t>6))kiStop()}
+
 /* ================= VR (Meta Quest, WebXR) =================
    First person with comfort settings: snap turn, soft vignette while moving, slower speeds,
    eye height independent of real body height (works seated and standing).
@@ -1637,7 +1680,8 @@ function startVR(){if(!navigator.xr)return;navigator.xr.requestSession('immersiv
 function vrInput(dt){const s=renderer.xr.getSession();VR.mx=VR.my=0;input.up=input.down=false;if(!s)return;
   for(const src of s.inputSources){const gp=src.gamepad;if(!gp)continue;const ax=gp.axes,b=gp.buttons;const sx=ax.length>=4?ax[2]:ax[0]||0,sy=ax.length>=4?ax[3]:ax[1]||0;
     if(src.handedness==='left'){if(Math.hypot(sx,sy)>0.15){VR.mx=sx;VR.my=-sy}
-      if(b[4]&&b[4].pressed&&!VR.xWas)help(true);VR.xWas=!!(b[4]&&b[4].pressed)}
+      if(b[4]&&b[4].pressed&&!VR.xWas)help(true);VR.xWas=!!(b[4]&&b[4].pressed);
+      const yb=!!(b[5]&&b[5].pressed);if(yb&&!VR.yWas){VR.yT=NOW;const n=nearNPC();if(n&&KI.ok)kiListen(n)}if(!yb&&VR.yWas&&NOW-(VR.yT||0)>0.7&&KI.state==='rec')kiStop();VR.yWas=yb}
     else{if(Math.abs(sx)>0.65&&VR.snapReady){VR.rig.rotation.y-=Math.sign(sx)*Math.PI/6;VR.snapReady=false;VR.turnFx=0.35}if(Math.abs(sx)<0.3)VR.snapReady=true;
       if(sy<-0.5)input.up=true;if(sy>0.5)input.down=true;if(b[4]&&b[4].pressed)input.up=true;if(b[5]&&b[5].pressed)input.down=true}}}
 function updateVR(dt){
@@ -1689,7 +1733,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
-    updateBreeding(dt);updateWild(dt);updatePowers(dt)}
+    updateBreeding(dt);updateWild(dt);updatePowers(dt);updateKI(dt)}
   updatePegs(dt);updateCreatures(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
   water.material.emissiveIntensity=0.15+Math.sin(NOW*1.5)*0.05;swayU.value=NOW;
@@ -1740,4 +1784,4 @@ window.__mz={startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){
   info(){return{calls:renderer.info.render.calls,tris:renderer.info.render.triangles,geos:renderer.info.memory.geometries}}};
 })();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'&&location.port==='')navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
