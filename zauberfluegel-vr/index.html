@@ -579,7 +579,7 @@ const SFX={
 const PENTA=[523.25,587.33,659.25,783.99,880,1046.5,1174.66];const BASS=[130.81,174.61,196,220];
 let musicT=0,beat=0,spkT=0,speaking=false;
 function updateMusic(dt){if(!AC||!state.started)return;musicT-=dt;
-  if(NOW>spkT){spkT=NOW+0.3;try{speaking=window.AndroidTTS?window.AndroidTTS.isSpeaking():!!(window.speechSynthesis&&speechSynthesis.speaking)}catch(e){speaking=false}}
+  if(NOW>spkT){spkT=NOW+0.3;try{speaking=Voice.busy()}catch(e){speaking=false}}
   musicGain.gain.value=lerp(musicGain.gain.value,speaking?0.35:1,damp(4,dt));
   if(musicT>0)return;musicT=0.42;beat++;const t=AC.currentTime;
   if(beat%8===0)tone(BASS[(beat/8|0)%4],t,1.8,'sine',0.05,musicGain);
@@ -588,19 +588,28 @@ function updateMusic(dt){if(!AC||!state.started)return;musicT-=dt;
 
 /* ================= voice ================= */
 const VOICES={erz:{pitch:1.3,rate:0.95}};
-const Voice={voice:null,prio:0,last:'',lowT:0,
+// Pre-recorded voice clips (voice/clips.json maps "speaker|sentence" -> file). Devices without a
+// speech engine (e.g. Meta Quest Browser) play these; otherwise the built-in speech is the fallback.
+const CLIPS={};try{fetch('voice/clips.json').then(r=>r.ok?r.json():{}).then(j=>Object.assign(CLIPS,j)).catch(()=>{})}catch(e){}
+const splitS=t=>(t.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[t]).map(x=>x.trim()).filter(Boolean);
+const Voice={voice:null,prio:0,last:'',lowT:0,audio:null,queue:[],playing:false,
   init(){if(!('speechSynthesis' in window))return;const set=()=>{const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));
       for(const p of ['Anna','Petra','Helena','Marlene','Vicki','Katja','Google Deutsch','Hedda','Sabina']){const f=vs.find(v=>v.name.includes(p));if(f){this.voice=f;return}}this.voice=vs[0]||null};
     set();speechSynthesis.onvoiceschanged=set},
+  busy(){if(this.playing)return true;try{if(window.AndroidTTS)return window.AndroidTTS.isSpeaking();return !!(window.speechSynthesis&&speechSynthesis.speaking)}catch(e){return false}},
+  stop(){this.queue=[];if(this.audio){try{this.audio.pause()}catch(e){}this.audio=null}this.playing=false;try{window.speechSynthesis&&speechSynthesis.cancel()}catch(e){}},
+  next(){const u=this.queue.shift();if(!u){this.playing=false;this.prio=0;this.audio=null;return}
+    const a=new Audio(u);this.audio=a;a.volume=1;a.onended=()=>this.next();a.onerror=()=>this.next();a.play().catch(()=>this.next())},
   say(text,{prio=1,who='erz'}={}){if(!text)return;
-    const AT=window.AndroidTTS;if(AT){let busy=false;try{busy=AT.isSpeaking()}catch(e){}if(busy&&prio<this.prio)return;if(prio===0&&(busy||NOW<this.lowT))return;
-      this.last=text;onSay(text);this.prio=prio;if(prio===0)this.lowT=NOW+6;try{AT.speak(text)}catch(e){}return}
-    if(!('speechSynthesis' in window))return;
-    const busy=speechSynthesis.speaking;if(busy&&prio<this.prio)return;if(prio===0&&(busy||NOW<this.lowT))return;
+    const busy=this.busy();if(busy&&prio<this.prio)return;if(prio===0&&(busy||NOW<this.lowT))return;
     this.last=text;onSay(text);this.prio=prio;if(prio===0)this.lowT=NOW+6;
+    const spk=VOICES[who]?who:'erz',urls=splitS(text).map(x=>CLIPS[spk+'|'+x]);
+    if(urls.length&&urls.every(Boolean)){this.stop();this.prio=prio;this.queue=urls.map(f=>'voice/'+f);this.playing=true;this.next();return}
+    const AT=window.AndroidTTS;if(AT){try{AT.speak(text)}catch(e){}return}
+    if(!('speechSynthesis' in window))return;
     const go=()=>{const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';if(this.voice)u.voice=this.voice;const vp=VOICES[who]||VOICES.erz;u.pitch=vp.pitch;u.rate=vp.rate;u.volume=1;
       u.onend=()=>{this.prio=0};speechSynthesis.speak(u)};
-    if(busy){speechSynthesis.cancel();setTimeout(go,40)}else go()}};
+    if(this.playing)this.stop();if(speechSynthesis.speaking){speechSynthesis.cancel();setTimeout(go,40)}else go()}};
 const LINES={
   intro:'Hallo Marie! Willkommen in deinem Zauberland! Die kleinen Flügelpferde haben sich versteckt. Folge dem Schmetterling und den goldenen Pfeilen und finde sie!',
   human:['Marie!','Da ist ja Marie!'],unicorn:['Goldenes Einhorn! Flieg los!','Ich bin ein Einhorn!'],fairy:['Kleine Fee!','Bling! Eine Fee!'],mermaid:['Meerjungfrau! Ab ins Wasser!','Blubb! Eine Meerjungfrau!'],
@@ -1436,8 +1445,21 @@ document.getElementById('playVR').addEventListener('click',()=>{audioInit();star
 if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported('immersive-vr').then(ok=>{if(ok)document.getElementById('playVR').hidden=false}).catch(()=>{});
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume()});
 renderer.setAnimationLoop(loop);
+// every sentence the game can speak, per speaker (used to pre-record voice clips)
+function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>out.add(who+'|'+x));
+  for(const k in LINES){const v=LINES[k];(Array.isArray(v)?v:[v]).forEach(t=>add('erz',t))}
+  add('erz','Hallo Marie! Schön, dass du wieder da bist! Deine Tiere haben auf dich gewartet.');
+  const names=[...BABY_DEFS.map(d=>d.name),...NEW_NAMES];
+  for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
+  for(const d of BABY_DEFS)add('erz',`Juhu! Du hast ${d.name} gefunden! ${d.name} kommt jetzt mit dir mit.`);
+  for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
+    for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
+    if(n.tasks.length){add('erz',`Bei ${n.name} gibt es noch mehr zu tun!`);add('erz',`Geh zu ${n.name}! ${n.er} hat eine Aufgabe für dich. Folge dem Lichtstrahl!`)}}
+  for(const t of TASKS){add(t.giver,t.line);add('erz',t.line);if(t.thanks)add(t.giver,t.thanks);
+    if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
+  return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}a.pos.set(PAD.x-6+(i%3)*5,2,PAD.z-3+Math.floor(i/3)*5);a.yaw=0.6+i;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(PAD.x+1,2,PAD.z+11,'human',Math.PI);cam.pitch=0.3},
