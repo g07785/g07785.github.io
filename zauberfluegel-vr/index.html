@@ -599,7 +599,7 @@ function updateMusic(dt){if(!AC||!state.started)return;musicT-=dt;
 const VOICES={erz:{pitch:1.3,rate:0.95},pirat:{pitch:0.7,rate:1.0}};
 // Pre-recorded voice clips (voice/clips.json maps "speaker|sentence" -> file). Devices without a
 // speech engine (e.g. Meta Quest Browser) play these; otherwise the built-in speech is the fallback.
-const CLIPS={};try{fetch('voice/clips.json').then(r=>r.ok?r.json():{}).then(j=>Object.assign(CLIPS,j)).catch(()=>{})}catch(e){}
+const CLIPS={};try{const xr=new XMLHttpRequest();xr.open('GET','voice/clips.json');xr.onload=()=>{try{if(xr.status===200||xr.status===0)Object.assign(CLIPS,JSON.parse(xr.responseText))}catch(e){}};xr.send()}catch(e){}
 const splitS=t=>(t.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[t]).map(x=>x.trim()).filter(Boolean);
 const Voice={voice:null,prio:0,last:'',lowT:0,audio:null,queue:[],playing:false,
   init(){if(!('speechSynthesis' in window))return;const set=()=>{const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));
