@@ -71,6 +71,7 @@ body{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-c
 #kiMic,#kiGo{font:800 20px 'Baloo 2',system-ui,sans-serif;color:#5b2a86;background:#fff6fb;border:3px solid var(--gold);border-radius:30px;padding:10px 22px;cursor:pointer}
 #kiGo{background:#ffd75e;font-size:22px}
 #kiMic[disabled]{opacity:.75;cursor:default}
+#tagBoard{position:fixed;left:max(12px,env(safe-area-inset-left,0px));top:calc(104px + env(safe-area-inset-top,0px));width:min(290px,38vw);height:auto;z-index:19;pointer-events:none}
 #kiBox{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:rgba(255,250,243,.95);color:#5b2a86;border:3px solid #ff7eb6;border-radius:22px;padding:10px 16px;font:700 17px/1.35 'Baloo 2',system-ui,sans-serif;white-space:pre-line;text-align:center;pointer-events:none;z-index:20}
 #start .play-row{display:flex;gap:28px;align-items:center}
 #playVR{width:128px;height:128px;border-radius:50%;border:5px solid #fff;cursor:pointer;font-size:62px;padding:0;background:radial-gradient(circle at 35% 28%,#fff,#ffd3e8 60%,#ff9fd0);box-shadow:0 7px 0 #c2508a,0 0 50px 12px rgba(255,160,210,.7);animation:breathe 1.8s ease-in-out infinite;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
@@ -647,7 +648,7 @@ function updateMusic(dt){if(!AC||!state.started)return;musicT-=dt;
   if(Math.random()<0.2)tone(pick(PENTA)*2,t+0.21,0.8,'sine',0.018,musicGain)}
 
 /* ================= voice ================= */
-const VOICES={erz:{pitch:1.3,rate:0.95},pirat:{pitch:0.7,rate:1.0}};
+const VOICES={erz:{pitch:1.3,rate:0.95},pirat:{pitch:0.7,rate:1.0},kobold:{pitch:1.8,rate:1.15},rex:{pitch:0.5,rate:0.85}};
 // Pre-recorded voice clips (voice/clips.json maps "speaker|sentence" -> file). Devices without a
 // speech engine (e.g. Meta Quest Browser) play these; otherwise the built-in speech is the fallback.
 const CLIPS={};try{const xr=new XMLHttpRequest();xr.open('GET','voice/clips.json');xr.onload=()=>{try{if(xr.status===200||xr.status===0)Object.assign(CLIPS,JSON.parse(xr.responseText))}catch(e){}};xr.send()}catch(e){}
@@ -694,6 +695,10 @@ const LINES={
   zapHit:['Treffer!','Zack! Getroffen!','Gut gezielt!'],sharkFixed:['Puff! Der böse Hai ist jetzt ein lieber Hai!','Verzaubert! Jetzt ist er ganz lieb!'],
   sharkBump:['Aua! Ein böser Hai! Verzaubere ihn mit deinem Zauberstab!','Vorsicht, ein böser Hai! Schieß mit deinem Zauberstab!'],
   netCaught:'Oh nein, ein Netz! Zappel dich schnell frei!',netFree:'Geschafft, du bist frei!',captured:'Oh nein! Die Piraten haben dich auf ihr Schiff geholt! Befreie dich mit deinem Zauberstab!',cageHit1:'Weiter zaubern! Das Schloss wackelt schon!',cageHit2:'Noch einmal zaubern!',freed:'Puff! Der Käfig ist weg! Schnell, schwimm davon!',onlyWand:'Nur dein Zauberstab kann dich befreien! Zaubere auf das Schloss!',netBounce:'Ha! Das Netz prallt einfach ab!',shipBeaten:'Die Piraten geben auf! Sie segeln ganz weit weg!',
+  rexBump:['Aua! Ein grummeliger T-Rex! Verzaubere ihn mit deinem Zauberstab!','Vorsicht, ein böser T-Rex! Schieß mit deinem Zauberstab!'],
+  rexFixed:['Puff! Der grummelige T-Rex ist jetzt ganz lieb!','Verzaubert! Der T-Rex hat dich jetzt lieb!'],
+  koboldFixed:['Puff! Der Kobold ist jetzt lieb und schenkt dir einen Stern!','Verzaubert! Der Kobold sagt Entschuldigung und schenkt dir einen Stern!'],
+  capturedLand:'Oh nein! Die Kobolde haben dich gefangen! Befreie dich mit deinem Zauberstab!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -1072,7 +1077,7 @@ function computeActions(){const P=player.pos,acts=[];
   if(n){if(cur&&cur.fetch&&state.itemHeld&&cur.giver===n.id)acts.push({id:'give',icon:cur.fetch.icon,n,pulse:true});else acts.push({id:'talk',icon:'💬',n,pulse:!cur&&n.tasks.length>0});
     if(KI.ok)acts.push({id:'ask',icon:KI.state==='rec'?'⏹️':KI.state==='send'?'💭':'🎤',n,pulse:KI.state==='rec'})}
   if(!player.carry&&hd(P,BUSHV)<3.9&&Math.abs(P.y-2)<3)acts.push({id:'pick',icon:'🫐'});
-  let best=null,bd=1e9;for(const a of [...pegs,trex,bra,...bunnies,...sharks]){if(a.kind==='pegasus'&&a.state!=='home'&&a.state!=='follow')continue;const d=hd(P,a.pos);if(d<a.reach&&Math.abs(P.y-a.pos.y)<3.5&&d<bd){bd=d;best=a}}
+  let best=null,bd=1e9;for(const a of [...pegs,trex,bra,...wildRexes,...bunnies,...sharks]){if(a.kind==='pegasus'&&a.state!=='home'&&a.state!=='follow')continue;const d=hd(P,a.pos);if(d<a.reach&&Math.abs(P.y-a.pos.y)<3.5&&d<bd){bd=d;best=a}}
   const a0=acts.length;if(best){const food=player.carry==='berries'?'🫐':'🥕';
     if(best.kind==='shark'){if(player.form==='mermaid')acts.push({id:'pet',icon:'❤️',t:best})}
     else if(player.form!=='human')acts.push({id:'human',icon:'👧',pulse:true});
@@ -1141,6 +1146,8 @@ const TASKS=[
   {id:'dew',giver:'flora',line:'In meinem Blumenhaus liegt ein Tropfen Zaubertau. Nur eine kleine Fee passt hinein. Holst du ihn mir?',
     fetch:{icon:'💧',acc:'den Zaubertau',need:'fairy',at:()=>new V3(DOME.x+1.4,DOME_Y+1.3,DOME.z-1.2)},thanks:'Funkelnder Zaubertau! Du bist die beste Fee, Marie!'},
   {id:'rideHorse',giver:'lotte',needPeg:true,ev:'ride',count:1,line:'Die Pferdchen wollen ausreiten! Setz dich auf ein Pferdchen und reite los!',target:()=>nearestPeg()?.pos},
+  {id:'zapRex',giver:'lotte',ev:'zapRex',count:1,line:'Ein grummeliger T-Rex erschreckt draußen alle Tiere! Mach ihn mit deinem Zauberstab wieder lieb!',target:()=>nearestOf(badRexes.filter(b=>b.alive))?.pos},
+  {id:'zapKob',giver:'gustav',ev:'zapKobold',count:2,line:'Freche Kobolde wollen dich mit ihren Netzen fangen! Verzaubere zwei Kobolde mit deinem Zauberstab!',target:()=>nearestOf(kobolds.filter(k=>k.alive))?.pos},
   {id:'zap3',giver:'kira',ev:'zapShark',count:3,line:'Böse Haie ärgern meine lieben Haie! Verzaubere drei böse Haie mit deinem Zauberstab!',target:()=>nearestOf(badSharks.filter(b=>b.alive))?.pos},
   {id:'pirates',giver:'kira',ev:'beatShip',count:1,line:'Piraten wollen alle mit Netzen fangen! Verjage ein Piratenschiff mit deinem Zauberstab!',target:()=>nearestOf(ships.filter(x=>x.active))?.pos},
   {id:'carrot',giver:'gustav',line:'Hol mir bitte die dickste Karotte aus meinem Gemüsegarten!',
@@ -1273,6 +1280,29 @@ function animPeg(a,dt,spd,flying){const u=a.ud;u.fly=lerp(u.fly,flying?1:0,damp(
   u.tail.rotation.y=Math.sin(NOW*2.2+u.seed)*0.35;u.tail.rotation.x=-0.1-u.fly*0.5;
   u.inner.position.y=flying?Math.sin(NOW*3+u.seed)*0.12:Math.abs(Math.sin(u.ph))*amp*0.15+(a.happy>0?Math.abs(Math.sin(NOW*9))*0.3:0);
   u.inner.rotation.x=flying&&spd>3?-0.12:0;updateReins(u)}
+/* ================= Spuren der Superpferde: echter Regenbogen-Schweif und wachsende Blumen ================= */
+const RB_COLS=[0xff4f6e,0xff9a3c,0xffe14d,0x6fdc6a,0x4fb4ff,0xa87cff].map(c=>new THREE.Color(c)),RB_N=48;
+function makeRibbon(){const g=new THREE.BufferGeometry(),n=RB_N*6*2;g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));
+  const col=new Float32Array(n*3);for(let b=0;b<6;b++)for(let i=0;i<RB_N;i++)for(let k=0;k<2;k++){const v=(b*RB_N+i)*2+k;col.set([RB_COLS[b].r,RB_COLS[b].g,RB_COLS[b].b],v*3)}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));const idx=[];for(let b=0;b<6;b++)for(let i=0;i<RB_N-1;i++){const a=(b*RB_N+i)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}g.setIndex(idx);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.85,depthWrite:false,fog:false}));m.frustumCulled=false;scene.add(m);return {m,pts:[],t:0}}
+function updateRibbon(a,dt,moving){const R=a.ribbon||(a.ribbon=makeRibbon());const top=a.pos.clone().add(new V3(0,2.2*(a.scale||1),0));
+  R.t-=dt;if(moving&&(!R.anchor||R.anchor.distanceTo(top)>0.7)){R.anchor=top.clone();R.pts.splice(1,0,top.clone());if(!R.pts[0])R.pts[0]=top;if(R.pts.length>RB_N)R.pts.pop()}else if(!moving&&R.t<=0&&R.pts.length){R.t=0.04;R.pts.pop()}
+  if(R.pts.length)R.pts[0]=top;const pos=R.m.geometry.attributes.position,W=0.4*(a.scale||1);
+  for(let b=0;b<6;b++)for(let i=0;i<RB_N;i++){const p=R.pts[Math.min(i,R.pts.length-1)]||top,f=1-i/RB_N,y0=(2.5-b)*W*f,v=(b*RB_N+i)*2;pos.setXYZ(v,p.x,p.y+y0+W*0.5*f,p.z);pos.setXYZ(v+1,p.x,p.y+y0-W*0.5*f,p.z)}
+  pos.needsUpdate=true;R.m.visible=R.pts.length>1}
+// Blumen: Instanzen (schnell auch auf der Quest), wachsen aus dem Boden und verblühen nach 30 s
+const FL_TYPES=['🌸','🌼','🌷','🌺'].map(e=>{const g=new THREE.PlaneGeometry(1,1);g.translate(0,0.5,0);const g2=g.clone();g2.rotateY(Math.PI/2);
+  const geo=new THREE.BufferGeometry();const pa=[...g.attributes.position.array,...g2.attributes.position.array],ua=[...g.attributes.uv.array,...g2.attributes.uv.array],ia=[...g.index.array,...g2.index.array.map(i=>i+4)];
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pa,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(ua,2));geo.setIndex(ia);
+  const m=new THREE.InstancedMesh(geo,new THREE.MeshBasicMaterial({map:emojiTexture(e),alphaTest:0.4,side:THREE.DoubleSide,fog:true}),70);m.count=0;m.frustumCulled=false;scene.add(m);return {m,list:[]}});
+const _fm=new THREE.Matrix4(),_fq=new THREE.Quaternion(),_fs=new V3(),_fp=new V3(),_fy=new V3(0,1,0);
+function plantFlower(x,z){if(inLake(x,z))return;const T=pick(FL_TYPES);if(T.list.length>=70)T.list.shift();T.list.push({x,y:groundAt(x,z,999),z,born:NOW,s:rnd(0.9,1.5),r:rnd(0,TAU)})}
+function updateFlowers(){for(const T of FL_TYPES){T.list=T.list.filter(f=>NOW-f.born<30);T.list.forEach((f,i)=>{const age=NOW-f.born,k=Math.min(1,age/0.5)*Math.min(1,(30-age)/1.2);
+      const s=f.s*(k<1?k*(1+Math.sin(k*Math.PI)*0.3):1);_fs.set(s,s,s);_fq.setFromAxisAngle(_fy,f.r);_fp.set(f.x,f.y,f.z);_fm.compose(_fp,_fq,_fs);T.m.setMatrixAt(i,_fm)});
+    T.m.count=T.list.length;T.m.instanceMatrix.needsUpdate=true}}
+function powerTrail(a,dt,spd,flying){if(a.power==='rainbow')updateRibbon(a,dt,spd>1||flying);
+  else if(a.power==='flower'){a.flT=(a.flT||0)-dt;const mv=spd>1;if(a.flT<=0){a.flT=mv?0.09:2.5;const n=mv?2:1;for(let i=0;i<n;i++){const r=mv?rnd(0.5,2.2):rnd(1,3.5),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}}}}
 function updatePegs(dt){
   followers.forEach((a,i)=>{if(a.cmd)return;const tgt=trailAt((i+1)*(2.4+a.scale*1.6));if(a.pos.distanceTo(player.pos)>45){a.pos.copy(tgt);a.vel.set(0,0,0)}
     const want=tgt.sub(a.pos).multiplyScalar(3.2);a.vel.lerp(want,damp(5,dt));a.pos.addScaledVector(a.vel,dt)});
@@ -1307,6 +1337,7 @@ function updatePegs(dt){
     if(a.power&&a.mesh.visible){const P=POWERS[a.power];if(a.icon){a.icon.visible=a.state!=='ridden'&&a.state!=='hidden';a.icon.position.set(a.pos.x,a.pos.y+a.h+1.1+Math.sin(NOW*2+a.ud.seed)*0.15,a.pos.z)}
       if(Math.random()<dt*(a.state==='ridden'?45:6))emit(a.pos.x+rnd(-1,1)*a.scale,a.pos.y+rnd(0.5,2.5)*a.scale,a.pos.z+rnd(-1,1)*a.scale,rnd(-0.3,0.3),a.state==='ridden'?0.2:0.8,rnd(-0.3,0.3),pick(P.fx),a.state==='ridden'?0.8:0.5,a.state==='ridden'?1.6:1,0)}
     else if(a.icon)a.icon.visible=false;
+    if(a.power==='rainbow'||a.power==='flower')powerTrail(a,dt,a.state==='ridden'?Math.hypot(player.vel.x,player.vel.z):spd,flying);
     if(a===state.mergeSel&&Math.random()<dt*2)floatIcon('💞',a.pos.clone().add(new V3(0,a.h+0.8,0)),1,0.3,0.9);placeShadow(a.shadow,a.pos.x,a.pos.y,a.pos.z,2.6*a.scale)}
   if(followers.length&&Math.abs(player.pos.x-HOME.x)<36&&player.pos.z<HOME.z+22&&player.pos.z>HOME.z-STABLE.pitch*2-22&&player.pos.y<groundAt(player.pos.x,player.pos.z)+8)arriveHome();
 }
@@ -1317,7 +1348,7 @@ const MOUNT_LINES={fire:'Feuerkraft! Jetzt seid ihr superschnell!',ice:'Eiskraft
   giant:'Riesenkraft! Ihr seid riesengroß!',flower:'Blumenkraft! Überall, wo ihr seid, blühen Blumen!',water:'Wasserkraft! Ihr könnt zusammen tauchen!',diamond:'Diamantkraft! Kein Netz kann euch fangen!',
   heart:'Herzkraft! Böse Haie werden ganz lieb, wenn ihr kommt!',music:'Musikkraft! Hört mal, wie schön das klingt!',moon:'Mondkraft! Die Piraten werden ganz müde!'};
 function startMerge(a,b){if(!a||!b||a===b||merge)return;state.mergeSel=null;[a,b].forEach(h=>{h.state='merging';h.date=false});merge={a,b,spot:new V3(HOME.x,2,HOME.z),t:0};SFX.transform();say('mergeStart',{prio:2})}
-function removePeg(h){scene.remove(h.mesh);scene.remove(h.shadow);if(h.icon)scene.remove(h.icon);const i=pegs.indexOf(h);if(i>=0)pegs.splice(i,1);const f=followers.indexOf(h);if(f>=0)followers.splice(f,1);
+function removePeg(h){if(h.ribbon)scene.remove(h.ribbon.m);scene.remove(h.mesh);scene.remove(h.shadow);if(h.icon)scene.remove(h.icon);const i=pegs.indexOf(h);if(i>=0)pegs.splice(i,1);const f=followers.indexOf(h);if(f>=0)followers.splice(f,1);
   if(BABY_DEFS.some(d=>d.id===h.id)&&!state.gone.includes(h.id))state.gone.push(h.id);if(h.box!=null)drawSign(h.box)}
 function finishMerge(){const {a,b,spot}=merge;merge=null;const parent=pick([a,b]);removePeg(a);removePeg(b);
   const pw=pick(POWER_IDS),P=POWERS[pw],base=parent.name.replace(/^[^-]+-/,'');
@@ -1349,7 +1380,7 @@ function updateBreeding(dt){
 
 /* ================= player update ================= */
 function updatePlayer(dt){const P=player.pos,mode=player.riding?'ride':player.form;
-  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.netT>0||state.captured){fwd=str=0;input.up=input.down=false}
+  let fwd=0,str=0;if(joy.id!==null){str=joy.x;fwd=-joy.y}if(VR.on){str+=VR.mx;fwd+=VR.my}if(state.netT>0||state.captured||(TAG&&TAG.phase==='count'&&TAG.chaser==='m')){fwd=str=0;input.up=input.down=false}
   const K=input.keys;if(K.KeyW||K.ArrowUp)fwd+=1;if(K.KeyS||K.ArrowDown)fwd-=1;if(K.KeyA||K.ArrowLeft)str-=1;if(K.KeyD||K.ArrowRight)str+=1;
   const il=Math.hypot(fwd,str);if(il>1){fwd/=il;str/=il}
   const sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);const mx=-sy*fwd+cy*str,mz=-cy*fwd-sy*str;const mag=Math.hypot(mx,mz);
@@ -1402,7 +1433,7 @@ function animSimple(c,dt,spd){const u=c.mesh.userData;u.ph+=dt*(2+spd*2.5);const
   if(u.tail)u.tail.rotation.y=Math.sin(NOW*1.8)*0.3;if(u.neck)u.neck.rotation.x=Math.sin(NOW*0.6)*0.08-(c.munch>0?0.25:0);
   u.inner.position.y=(c.happy>0?Math.abs(Math.sin(NOW*9))*0.4:0)+(c.kind==='trex'?Math.abs(Math.sin(u.ph))*amp*0.25:0);u.head.rotation.x=c.munch>0?Math.sin(NOW*14)*0.15:0}
 function updateCreatures(dt){
-  for(const c of [trex,bra]){c.munch=(c.munch||0)-dt;c.happy=(c.happy||0)-dt;c.shine=(c.shine||0)-dt;c.wanderT-=dt;
+  for(const c of [trex,bra,...wildRexes]){c.munch=(c.munch||0)-dt;c.happy=(c.happy||0)-dt;c.shine=(c.shine||0)-dt;c.wanderT-=dt;
     if(c.shine>0&&Math.random()<dt*25)emit(c.pos.x+rnd(-1.5,1.5),c.pos.y+rnd(1,c.h*0.6),c.pos.z+rnd(-1.5,1.5),0,0.6,0,pick(SPARK),0.6,0.8,0);
     const near=hd(c.pos,player.pos)<c.reach+1&&player.form==='human';
     if(c.wanderT<=0){const a=Math.random()*TAU,r=Math.random()*c.r;c.target.set(c.area.x+Math.cos(a)*r,2,c.area.z+Math.sin(a)*r);c.wanderT=rnd(3,8)}
@@ -1512,16 +1543,18 @@ for(let i=0;i<2;i++)spawnShip();
 const PIRATE_LINES=['Arrr! Fangt das Mädchen!','Wirf das Netz, Matrose!','Arrr, die ist ganz schön schnell!','Hoho! Gleich haben wir dich!'];
 const PIRATE_CAP_LINES=['Hoho! Jetzt bist du unsere Gefangene!','Arrr! Aus dem Käfig kommst du nicht raus!','Wir segeln zu unserer Schatzinsel!'];
 const shotTex=shadowTex;
-function zapTargets(){return[...badSharks.filter(b=>b.alive),...ships.filter(s=>s.active)]}
+function zapTargets(){return[...badSharks.filter(b=>b.alive),...ships.filter(s=>s.active),...badRexes.filter(b=>b.alive),...kobolds.filter(k=>k.alive)]}
+const aimPt=t=>t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.kind==='badRex'?t.pos.clone().add(new V3(0,2.6,0)):t.kind==='kobold'?t.pos.clone().add(new V3(0,1.2,0)):t.pos;
 // fire a magic star from `from` in direction `dir`; it homes in on a bad shark / ship that lies roughly ahead
 function shoot(from,dir,cone=0.35){if(zapCD>0)return;zapCD=0.32;if(state.captured){SFX.zap();cageZap();return}dir=dir.clone().normalize();let best=null,bs=-1;
-  for(const t of zapTargets()){const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;const v=c.clone().sub(from);const d=v.length();if(d>90)continue;const dot=v.divideScalar(d).dot(dir);if(dot>Math.cos(cone)&&dot>bs){bs=dot;best=t}}
+  for(const t of zapTargets()){const c=aimPt(t);const v=c.clone().sub(from);const d=v.length();if(d>90)continue;const dot=v.divideScalar(d).dot(dir);if(dot>Math.cos(cone)&&dot>bs){bs=dot;best=t}}
   const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xffe680,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));spr.scale.setScalar(1.6);spr.position.copy(from);scene.add(spr);
   SHOTS.push({spr,pos:from.clone(),vel:dir.multiplyScalar(48),life:2.2,tgt:best});SFX.zap()}
 function playerZap(){const from=player.pos.clone().add(new V3(0,1.4*FORM_SCALE[player.form]+(player.form==='unicorn'?1.5:0),0));const dir=new V3();camera.getWorldDirection(dir);dir.y=Math.max(dir.y,-0.35);
-  const t=zapTargets().sort((a,b)=>a.pos.distanceTo(player.pos)-b.pos.distanceTo(player.pos))[0];if(t&&t.pos.distanceTo(player.pos)<70){shoot(from,(t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos).clone().sub(from),Math.PI)}else shoot(from,dir,0.6)}
+  const t=zapTargets().sort((a,b)=>a.pos.distanceTo(player.pos)-b.pos.distanceTo(player.pos))[0];if(t&&t.pos.distanceTo(player.pos)<70){shoot(from,(aimPt(t)).clone().sub(from),Math.PI)}else shoot(from,dir,0.6)}
 function zapHit(t,p){t.flash=0.4;t.hp--;burst(p,40,6,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);SFX.sparkle();
   if(t.hp>0){say('zapHit',{prio:0});return}
+  if(t.kind==='badRex'||t.kind==='kobold'){villainFixed(t,p);return}
   if(t.kind==='badShark'){t.alive=false;scene.remove(t.mesh);const c=pick([0xff9fc6,0xffc98a,0xb7a4e0,0x7fd0c8]);const m=makeShark(c);scene.add(m);
     sharks.push({kind:'shark',name:'Hai',mesh:m,pos:t.pos.clone(),yaw:t.yaw,target:t.pos.clone(),wanderT:0,cd:{},reach:4.2,h:1.2,speed:3.2,happy:2,munch:0,shine:0});
     floatIcon('💖',t.pos.clone().add(new V3(0,2,0)),5,1,1.2);say('sharkFixed',{prio:2});taskEvent('zapShark',t.pos)}
@@ -1535,22 +1568,23 @@ const cage=new THREE.Group();(()=>{const m=mat(0x5e4030,{roughness:0.7}),g=mat(0
   const lock=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🔒'),transparent:true}));lock.scale.setScalar(0.7);lock.position.set(0,1.3,1.35);cage.add(lock);cage.userData.lock=lock;cage.visible=false;scene.add(cage)})();
 function catchInNet(ship){if(state.captured||!ship||!ship.active)return;const rp=player.riding&&player.riding.power;
   if(rp==='diamond'){burst(player.pos.clone().add(new V3(0,2,0)),40,6,0.8,1,[0xe8f6ff,0xffffff]);say('netBounce',{prio:1});return}
-  if(player.riding)dismount(true);state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say('captured',{prio:3});
+  if(player.riding)dismount(true);state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say(ship.kind==='kobold'?'capturedLand':'captured',{prio:3});
   if(VR.on){buzz(0,1,300);buzz(1,1,300)}}
 function cageZap(){const c=state.captured;if(!c)return;c.hits++;burst(cage.position.clone().add(new V3(0,1.5,0)),50,5,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);SFX.sparkle();cage.userData.lock.scale.setScalar(0.9);
   if(c.hits<3){say(c.hits===1?'cageHit1':'cageHit2',{prio:2});return}
   const s=c.ship,side=new V3(Math.cos(s.yaw),0,-Math.sin(s.yaw));state.captured=null;cage.visible=false;s.netT=14;
+  if(s.kind==='kobold'){const q=s.cagePos||s.pos;player.pos.set(q.x+side.x*2.5,terrainH(q.x,q.z)+0.6,q.z+side.z*2.5);s.cagePos=null;kobolds.forEach(k=>{if(k.alive)k.flee=8})}else
   player.pos.set(s.pos.x+side.x*8,-0.4,s.pos.z+side.z*8);player.vel.set(0,4,0);burst(player.pos.clone(),60,6);SFX.found();say('freed',{prio:3})}
 const netMesh=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),new THREE.MeshBasicMaterial({color:0x8a6a3a,wireframe:true,transparent:true,opacity:0.9}));netMesh.visible=false;scene.add(netMesh);
 function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
-  if(state.captured){const s=state.captured.ship;P.set(s.pos.x,s.pos.y+2.15,s.pos.z);player.vel.set(0,0,0);player.root.position.copy(P);cage.position.copy(P);cage.rotation.y=s.yaw;
+  if(state.captured){const s=state.captured.ship,cp=s.cagePos||s.pos;P.set(cp.x,cp.y+(s.cagePos?0.05:2.15),cp.z);player.vel.set(0,0,0);player.root.position.copy(P);cage.position.copy(P);cage.rotation.y=s.yaw;
     cage.userData.lock.scale.setScalar(lerp(cage.userData.lock.scale.x,0.7,damp(4,dt)));if(Math.random()<dt*1.5)emit(P.x,P.y+3,P.z,rnd(-0.5,0.5),0.5,rnd(-0.5,0.5),0xffd75e,0.5,1,0)}
   const inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.6&&!state.captured;
   // shots
   for(let i=SHOTS.length-1;i>=0;i--){const s=SHOTS[i];s.life-=dt;
-    if(s.tgt&&(s.tgt.alive||s.tgt.active)){const c=s.tgt.kind==='ship'?s.tgt.pos.clone().add(new V3(0,3,0)):s.tgt.pos;const want=c.clone().sub(s.pos).normalize().multiplyScalar(48);s.vel.lerp(want,damp(6,dt))}
+    if(s.tgt&&(s.tgt.alive||s.tgt.active)){const c=aimPt(s.tgt);const want=c.clone().sub(s.pos).normalize().multiplyScalar(48);s.vel.lerp(want,damp(6,dt))}
     s.pos.addScaledVector(s.vel,dt);s.spr.position.copy(s.pos);s.spr.material.rotation+=dt*8;if(Math.random()<dt*40)emit(s.pos.x,s.pos.y,s.pos.z,rnd(-0.5,0.5),rnd(-0.5,0.5),rnd(-0.5,0.5),pick([0xffe680,0xff8ccf,0xffffff]),0.5,0.5,0);
-    let hit=null;for(const t of zapTargets()){const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;if(s.pos.distanceTo(c)<(t.kind==='ship'?6:2.6)){hit=t;break}}
+    let hit=null;for(const t of zapTargets()){const c=aimPt(t);if(s.pos.distanceTo(c)<(t.kind==='ship'?6:t.kind==='badRex'?3.4:2.6)){hit=t;break}}
     if(hit)zapHit(hit,s.pos.clone());if(hit||s.life<=0||s.pos.y<terrainH(s.pos.x,s.pos.z)){scene.remove(s.spr);s.spr.material.dispose();SHOTS.splice(i,1)}}
   // bad sharks: chase Marie when she is in the water, bump her, flee for a moment
   for(const b of badSharks){if(!b.alive)continue;const u=b.mesh.userData,d=b.pos.distanceTo(P);b.flash-=dt;b.flee-=dt;b.wanderT-=dt;
@@ -1586,24 +1620,111 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
   for(let i=ships.length-1;i>=0;i--)if(ships[i].gone){ships.splice(i,1);setTimeout(()=>spawnShip(),45000)}
   // nets in flight
   for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];n.life-=dt;n.vel.y-=14*dt;n.pos.addScaledVector(n.vel,dt);n.m.position.copy(n.pos);n.m.rotation.y+=dt*3;n.m.scale.setScalar(Math.min(1.6,n.m.scale.x+dt*1.2));
-    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<2.6;if(hitP)catchInNet(n.ship);if(hitP||n.life<=0||n.pos.y<WATER_Y-1){scene.remove(n.m);NETS.splice(i,1)}}
+    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<2.6;if(hitP)catchInNet(n.ship);if(hitP||n.life<=0||n.pos.y<WATER_Y-1||(n.life<n.vel.length()&&n.pos.y<terrainH(n.pos.x,n.pos.z)-0.3)){scene.remove(n.m);NETS.splice(i,1)}}
   // caught in a net: wiggle free (moving the stick frees you faster)
   if(state.netT>0){const wig=Math.min(1,Math.hypot(joy.x||0,joy.y||0)+Math.hypot(VR.mx||0,VR.my||0)+(input.up?1:0));state.netT-=dt*(1+wig*1.5);
     netMesh.position.copy(P).add(new V3(0,1*FORM_SCALE[player.form]+(player.form==='unicorn'?1.4:0),0));netMesh.scale.setScalar(1.6*Math.max(FORM_SCALE[player.form],0.7)+Math.sin(NOW*10)*0.05);
     if(state.netT<=0){netMesh.visible=false;burst(netMesh.position.clone(),40,5);say('netFree',{prio:1})}}
   $('#btnZap').classList.toggle('pulse',!!state.captured||zapTargets().some(t=>t.pos.distanceTo(P)<40))}
 
+const BOXG=new THREE.BoxGeometry(1,1,1);
+/* ================= Bösewichte an Land: Grummel-Rexe und Fänger-Kobolde =================
+   Sie jagen Marie nur draußen in der Wildnis. Auf dem Pferdehof, dem Spielplatz und im Garten ist sie sicher.
+   Ein Zauberstern-Treffer macht sie wieder lieb (Rexe bleiben als liebe Dinos, Kobolde schenken einen Stern). */
+const SAFE=[{x:HOME.x,z:HOME.z-28,r:62},{x:PLAY.x,z:PLAY.z,r:24},{x:GARDEN.x,z:GARDEN.z,r:20},{x:NPC_P.x,z:NPC_P.z,r:16}];
+const inSafe=(x,z,m=0)=>SAFE.some(s=>Math.hypot(x-s.x,z-s.z)<s.r+m);
+function landSpot(cx,cz,rmin,rmax,awayFrom,minAway){for(let i=0;i<60;i++){const a=Math.random()*TAU,r=rnd(rmin,rmax),x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+    if(Math.hypot(x,z)>WORLD_R-30||inLake(x,z)||inSafe(x,z,14)||terrainH(x,z)>14)continue;if(awayFrom&&Math.hypot(x-awayFrom.x,z-awayFrom.z)<minAway)continue;return new V3(x,terrainH(x,z),z)}return null}
+// Kobold-Lager: weit weg vom Hof
+const KCAMP=(()=>{let best=null,bs=-1;for(const [x,z] of [[-170,-130],[-190,30],[-120,175],[110,175],[175,40],[-60,-200],[60,-120]]){if(inLake(x,z)||Math.hypot(x,z)>WORLD_R-35||terrainH(x,z)>14)continue;
+    const d=Math.hypot(x-HOME.x,z-HOME.z);if(d>bs){bs=d;best={x,z}}}return best||{x:-170,z:-130}})();
+(()=>{const g=new THREE.Group(),y=terrainH(KCAMP.x,KCAMP.z);g.position.set(KCAMP.x,y,KCAMP.z);scene.add(g);
+  [[-5,-3,0x6a3a8a],[4,-4,0x3a7a3a],[0,5,0x8a3a5a]].forEach(([x,z,c])=>{const t=new THREE.Mesh(new THREE.ConeGeometry(2.6,3.6,6),mat(c,{flatShading:true}));t.position.set(x,1.8,z);g.add(t);
+    const d=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.6,4),mat(0x221a2a));d.position.set(x+Math.sign(-x||1)*0.3,0.8,z+(z>0?-2.1:2.1));g.add(d)});
+  for(let i=0;i<4;i++){const l=M(CYLG,mat(0x6a4a2a),0.18,1.6,0.18,Math.cos(i*1.6)*0.5,0.2,Math.sin(i*1.6)*0.5);l.rotation.z=Math.PI/2;l.rotation.y=i*0.8;g.add(l)}
+  const fire=new THREE.Mesh(new THREE.ConeGeometry(0.55,1.3,7),new THREE.MeshBasicMaterial({color:0xff8a2a,transparent:true,opacity:0.9}));fire.position.y=0.8;g.add(fire);g.userData.fire=fire;
+  for(let i=0;i<14;i++){const a=i/14*TAU,p=M(CYLG,mat(0x7a5a3a),0.12,1.3,0.12,Math.cos(a)*9,0.65,Math.sin(a)*9);g.add(p)}
+  const c=document.createElement('canvas');c.width=512;c.height=160;const x=c.getContext('2d');x.fillStyle='#5a3a1e';x.fillRect(0,0,512,160);x.fillStyle='#ffe9a8';x.font='bold 70px "Baloo 2",sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('Kobold-Lager',256,84);
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(3.6,1.1),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));sg.position.set(0,2.6,9.4);g.add(sg);g.add(M(CYLG,mat(0x6a4a2a),0.12,2.4,0.12,0,1.2,9.3));
+  KCAMP.g=g})();
+function makeBadRex(){const m=makeTrex();m.scale.setScalar(1.35);const tint=new THREE.Color(0x9a78c0);
+  m.traverse(o=>{if(o.isMesh&&o.material){o.material=o.material.clone();if(o.material.map){o.material.map=null;o.material.color.set(0x6e4f96)}else if(o.material.color)o.material.color.multiply(tint)}});
+  const h=m.userData.head,bm=mat(0x2a1a2a);for(const s of [-1,1]){const b=M(BOXG,bm,0.3,0.07,0.07,s*0.22,0.36,0.6);b.rotation.z=s*0.45;h.add(b);h.add(M(SPHLO,new THREE.MeshBasicMaterial({color:0xff3030}),0.05,0.05,0.03,s*0.21,0.16,0.79))}
+  return m}
+function makeKobold(){const m=makeGirl({boy:true,dress:0x5a2a7a,pattern:'stripes',shorts:0x2f2440,hair:0x2f7a2f,skin:0x8fd06a,shoes:0x3a2a2a,iris:0xd02020,freckles:false,hat:false});
+  const u=m.userData,h=u.head;h.add(M(BOXG,mat(0x1a1a22),0.7,0.13,0.1,0,0.06,0.42));for(const s of [-1,1]){const e=M(CONEG,mat(0x8fd06a),0.09,0.35,0.09,s*0.5,0.12,0);e.rotation.z=-s*1.2;h.add(e)}
+  const cap=M(CONEG,mat(0x6a2a8a),0.36,0.6,0.36,0,0.55,0);cap.rotation.x=-0.25;h.add(cap);
+  const net=new THREE.Group();net.add(M(CYLG,mat(0x8a6a3a),0.04,1.8,0.04,0,0.9,0));const ring=new THREE.Mesh(new THREE.TorusGeometry(0.42,0.035,6,16),mat(0x5a4a2a));ring.position.y=1.95;net.add(ring);
+  const bag=new THREE.Mesh(new THREE.SphereGeometry(0.42,10,6,0,TAU,0,Math.PI/2),new THREE.MeshBasicMaterial({color:0x8a6a3a,wireframe:true}));bag.rotation.x=Math.PI;bag.position.y=1.95;net.add(bag);
+  net.position.set(0.55,0.35,0.15);net.rotation.x=0.35;m.add(net);u.net=net;m.scale.setScalar(0.82);return m}
+const badRexes=[],kobolds=[],wildRexes=[];const REX_NAMES=['Rumms','Stampfi','Brummi','Krümel','Polter','Wackel'];
+function spawnBadRex(){const p=landSpot(0,0,60,WORLD_R-40,player.pos,80);if(!p)return;const m=makeBadRex();scene.add(m);
+  badRexes.push({kind:'badRex',name:'Grummel-Rex',mesh:m,pos:p,yaw:rnd(0,TAU),target:p.clone(),wanderT:0,hp:3,alive:true,flash:0,flee:0,roarT:0,shadow:makeShadow(),h:3.2})}
+function spawnKobold(near){const p=near?landSpot(KCAMP.x,KCAMP.z,4,16,player.pos,50):landSpot(0,0,70,WORLD_R-40,player.pos,80);if(!p)return;const m=makeKobold();scene.add(m);
+  kobolds.push({kind:'kobold',name:'Kobold',mesh:m,pos:p,yaw:rnd(0,TAU),target:p.clone(),wanderT:0,hp:2,alive:true,active:true,flash:0,flee:0,netT:3,shoutT:0,shadow:makeShadow(),h:1.6})}
+for(let i=0;i<3;i++)spawnBadRex();for(let i=0;i<4;i++)spawnKobold(i<2);
+const KOBOLD_LINES=['Hihihi! Gleich hab ich dich!','Bleib stehen, kleines Mädchen!','Mein Netz ist schneller als du!'];
+const KOBOLD_CAP_LINES=['Hihihi! Wir bringen dich in unser Lager!','Aus unserem Käfig kommst du nicht raus!'];
+const REX_LINES=['Grrroooaaar!','Grrr! Ich bin der Grummel-Rex!','Grrr! Hier ist mein Wald!'];
+let villainT=40;
+const playerRun=()=>8.5*(VR.on?VR.speedK:1);
+function villainStep(v,tg,sp,dt){const dx=tg.x-v.pos.x,dz=tg.z-v.pos.z,d=Math.hypot(dx,dz);if(d<0.3)return 0;v.yaw=angLerp(v.yaw,Math.atan2(dx,dz),damp(4,dt));
+  const nx=v.pos.x+Math.sin(v.yaw)*sp*dt,nz=v.pos.z+Math.cos(v.yaw)*sp*dt;if(inLake(nx,nz)||inSafe(nx,nz)||Math.hypot(nx,nz)>WORLD_R-20){v.wanderT=0;v.flee=Math.max(v.flee,1.2);return 0}
+  v.pos.x=nx;v.pos.z=nz;return sp}
+function updateVillains(dt){const P=player.pos,rpow=player.riding&&player.riding.power,onLand=!inLake(P.x,P.z)&&P.y<groundAt(P.x,P.z,P.y)+4,safe=inSafe(P.x,P.z);
+  const free=!state.captured&&rpow!=='ghost'&&onLand&&!safe;
+  KCAMP.g.userData.fire.scale.set(1+Math.sin(NOW*9)*0.12,1+Math.sin(NOW*7)*0.2,1);if(Math.random()<dt*6)emit(KCAMP.x+rnd(-0.3,0.3),terrainH(KCAMP.x,KCAMP.z)+1.5,KCAMP.z+rnd(-0.3,0.3),0,1.4,0,pick([0xff8a2a,0xffd75e]),0.5,0.9,0);
+  for(const b of badRexes){if(!b.alive)continue;b.flash-=dt;b.flee-=dt;b.wanderT-=dt;b.roarT-=dt;const d=hd(b.pos,P);
+    if(rpow==='heart'&&d<11){b.hp=1;zapHit(b,b.pos.clone().add(new V3(0,2,0)));continue}
+    const chase=free&&d<28&&b.flee<=0&&state.netT<=0;let sp=0;
+    if(b.flee>0){const aw=b.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(b,b.pos.clone().add(aw),6,dt)}
+    else if(chase){if(b.roarT<=0){b.roarT=rnd(9,13);floatIcon('💢',b.pos.clone().add(new V3(0,5,0)),2,0.6,1.3);Voice.say(pickNew('rex',REX_LINES),{prio:0,who:'rex'})}sp=villainStep(b,P,Math.min(6,playerRun()*0.72),dt)}
+    else{if(b.wanderT<=0){const q=landSpot(b.pos.x,b.pos.z,8,30);if(q)b.target.copy(q);b.wanderT=rnd(6,12)}sp=villainStep(b,b.target,1.8,dt)}
+    if(chase&&d<3&&bumpCD<=0){bumpCD=3;b.flee=3;const push=P.clone().sub(b.pos).setY(0).normalize().multiplyScalar(13);player.vel.x+=push.x;player.vel.z+=push.z;player.vel.y+=5;
+      floatIcon('💫',P.clone().add(new V3(0,2,0)),3,0.6,1);SFX.splash();say('rexBump',{prio:2});if(VR.on){buzz(0,1,200);buzz(1,1,200)}}
+    b.pos.y=terrainH(b.pos.x,b.pos.z);b.mesh.position.copy(b.pos);b.mesh.rotation.y=b.yaw;animSimple(b,dt,sp);b.mesh.userData.inner.scale.setScalar(b.flash>0?1.12:1);
+    b.mesh.visible=b.pos.distanceTo(CAMW)<130;placeShadow(b.shadow,b.pos.x,b.pos.y,b.pos.z,4)}
+  for(const k of kobolds){if(!k.alive)continue;const u=k.mesh.userData,d=hd(k.pos,P);k.flash-=dt;k.flee-=dt;k.wanderT-=dt;k.netT-=dt;k.shoutT-=dt;let sp=0;
+    const mine=state.captured&&state.captured.ship===k;
+    if(mine){const dc=hd(k.pos,KCAMP);if(dc>3)sp=villainStep(k,KCAMP,3.4,dt);else{k.yaw+=dt*2.5;sp=0}
+      const back=new V3(-Math.sin(k.yaw),0,-Math.cos(k.yaw)).multiplyScalar(2.4);k.cagePos=new V3(k.pos.x+back.x,0,k.pos.z+back.z);k.cagePos.y=terrainH(k.cagePos.x,k.cagePos.z);
+      if(k.shoutT<=0){k.shoutT=rnd(10,15);Voice.say(pickNew('kobCap',KOBOLD_CAP_LINES),{prio:0,who:'kobold'})}}
+    else if(state.captured&&hd(k.pos,KCAMP)<40){const a=NOW*0.6+kobolds.indexOf(k)*1.7;sp=villainStep(k,new V3(KCAMP.x+Math.cos(a)*6,0,KCAMP.z+Math.sin(a)*6),2.5,dt)}
+    else if(k.flee>0){const aw=k.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(k,k.pos.clone().add(aw),7,dt)}
+    else if(free&&d<26){sp=d>7?villainStep(k,P,Math.min(6.5,playerRun()*0.8),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(5,dt));
+      if(k.shoutT<=0){k.shoutT=rnd(8,12);Voice.say(pickNew('kob',KOBOLD_LINES),{prio:0,who:'kobold'})}
+      if(d<14&&k.netT<=0&&state.netT<=0){k.netT=rnd(4.5,6.5);u.net.rotation.x=-1.2;const from=k.pos.clone().add(new V3(0,2,0)),to=P.clone().add(new V3(0,1,0)),T=Math.max(0.6,from.distanceTo(to)/16);
+        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.6);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:k});SFX.jump()}}
+    else{if(k.wanderT<=0){const q=landSpot(k.pos.x,k.pos.z,6,25);if(q)k.target.copy(q);k.wanderT=rnd(5,10)}sp=villainStep(k,k.target,2.2,dt)}
+    u.net.rotation.x=lerp(u.net.rotation.x,0.35,damp(3,dt));
+    k.pos.y=terrainH(k.pos.x,k.pos.z);k.mesh.position.copy(k.pos);k.mesh.rotation.y=k.yaw;animGirl(k.mesh,dt,sp,'human',false,false);u.pivot.scale.setScalar(k.flash>0?1.15:1);
+    k.mesh.visible=k.pos.distanceTo(CAMW)<110;placeShadow(k.shadow,k.pos.x,k.pos.y,k.pos.z,1.2)}
+  villainT-=dt;if(villainT<=0){villainT=40;if(badRexes.filter(b=>b.alive).length<3)spawnBadRex();if(kobolds.filter(k=>k.alive).length<4)spawnKobold(Math.random()<0.5);
+    for(const L of [badRexes,kobolds])for(let i=L.length-1;i>=0;i--)if(!L[i].alive&&!L[i].poof)L.splice(i,1)}
+  // verzauberte Kobolde tanzen kurz und verschwinden in Glitzer
+  for(let i=kobolds.length-1;i>=0;i--){const k=kobolds[i];if(!k.poof)continue;k.poof-=dt;k.yaw+=dt*8;k.mesh.rotation.y=k.yaw;k.mesh.position.y=k.pos.y+Math.abs(Math.sin(NOW*9))*0.6;animGirl(k.mesh,dt,3,'human',false,false);
+    if(k.poof<=0){burst(k.pos.clone().add(new V3(0,1,0)),50,5,0.8,1.2);scene.remove(k.mesh);scene.remove(k.shadow);kobolds.splice(i,1)}}}
+function villainFixed(t,p){if(t.kind==='badRex'){t.alive=false;scene.remove(t.mesh);scene.remove(t.shadow);const m=makeTrex();const tint=new THREE.Color(pick([0xffc0e0,0xc0e0ff,0xffe0a0,0xd0c0ff]));
+    m.traverse(o=>{if(o.isMesh&&o.material){o.material=o.material.clone();if(o.material.color)o.material.color.multiply(tint).lerp(new THREE.Color(0xffffff),0.15)}});m.scale.setScalar(1.15);scene.add(m);
+    const used=new Set(wildRexes.map(w=>w.name)),name=REX_NAMES.find(n=>!used.has(n))||'Rexi';
+    const w={kind:'trex',name,mesh:m,pos:t.pos.clone(),yaw:t.yaw,target:new V3(),wanderT:0,cd:{},reach:4.2,h:3.6,speed:2.3,area:{x:t.pos.x,z:t.pos.z},r:9,shadow:makeShadow(),happy:2};wildRexes.push(w);
+    if(wildRexes.length>6){const o=wildRexes.shift();scene.remove(o.mesh);scene.remove(o.shadow)}
+    floatIcon('💖',t.pos.clone().add(new V3(0,4,0)),6,1.2,1.3);say('rexFixed',{prio:2});taskEvent('zapRex',t.pos);return}
+  if(t.kind==='kobold'){t.alive=false;t.active=false;t.poof=3.2;floatIcon('💖',t.pos.clone().add(new V3(0,2.4,0)),4,0.8,1.1);state.stars++;updateStars();floatIcon('⭐',t.pos.clone().add(new V3(0,2,0)),3,0.8,1.2);
+    setTimeout(()=>SFX.star(),200);say('koboldFixed',{prio:2});taskEvent('zapKobold',t.pos);save()}}
+
 /* ================= Befehle an Figuren und Tiere ("Folg mir!", "Flieg hoch!", "Versteck dich!") =================
    Der KI-Server erkennt den Befehl im Gesagten und schickt ihn mit der Antwort. Hier wird er ausgeführt. */
 const CMD_SPEED={npc:7.5,swim:7,pegasus:13,trex:7,brachio:5,bunny:7,shark:8};
 const FOUND_L=['Oh nein, du hast mich gefunden!','Gefunden! Du bist richtig gut im Suchen!','Hihi, da bin ich! Du hast mich gefunden!'];
 const cmdSwims=x=>x.kind==='shark'||!!x.swim, cmdCanFly=x=>x.kind==='pegasus'||!!x.hover;
-const cmdAll=()=>[...NPCS,...pegs,trex,bra,...bunnies,...sharks];
+const cmdAll=()=>[...NPCS,...pegs,trex,bra,...wildRexes,...bunnies,...sharks];
 function cmdHome(x){if(x.kind==='trex'||x.kind==='brachio')return new V3(x.area.x,2,x.area.z);if(x.kind==='bunny')return x.home;if(!x.kind&&!x.swim)return x.home;return null}
-function kiAction(x,act){if(!x||!act)return;if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
+function kiAction(x,act){if(!x||!act)return;if(TAG&&TAG.x===x&&act!=='jump'&&act!=='dance'&&act!=='tag')tagEnd();if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
   switch(act){case 'jump':x.jumpT=1.8;break;case 'dance':x.danceT=4;break;
     case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
     case 'fly':if(!cmdCanFly(x)){x.jumpT=1.8;break}x.cmd={t:'fly',t0:NOW,base:x.pos.clone(),ang:0,after:prev&&(prev.t==='follow'||prev.t==='protect')?prev:null};break;
+    case 'tag':tagStart(x);break;
     case 'hide':{const sp=hideSpot(x);if(!sp){x.jumpT=1.5;break}x.cmd={t:'hide',phase:'wait',t0:NOW,spot:sp,call:0};break}}}
 // Versteck: 16–40 m weg, möglichst hinter Marie (wo sie gerade nicht hinschaut), im richtigen Element (Land/Wasser)
 function hideSpot(x){const P=player.pos,look=camera.getWorldDirection(new V3());look.y=0;look.normalize();const sw=cmdSwims(x),h0=terrainH(x.pos.x,x.pos.z);let best=null,bs=1e9;
@@ -1611,9 +1732,9 @@ function hideSpot(x){const P=player.pos,look=camera.getWorldDirection(new V3());
     if(sw){if(!inLake(cx,cz)||t>-3||hd({x:cx,z:cz},LAKE)>LAKE.r-12)continue}else if(inLake(cx,cz)||Math.hypot(cx,cz)>WORLD_R-15||Math.abs(t-h0)>6)continue;
     const dx=cx-P.x,dz=cz-P.z,dl=Math.hypot(dx,dz)||1,sc=(dx*look.x+dz*look.z)/dl+Math.abs(dl-26)/30;if(sc<bs){bs=sc;best=new V3(cx,sw?rnd(t+1.5,x.kind==='shark'?-2:-0.6):t,cz)}}
   return best}
-function cmdMove(x,dt){const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),max=CMD_SPEED[x.kind||(sw?'swim':'npc')]||7;let tgt=null,sp=0,face=null;
+function cmdMove(x,dt){if(x.cmd&&x.cmd.t==='tag'){const r=tagMove(x,dt);if(r)return r;x.cmd=null;return {spd:0,fly:false}}const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),max=CMD_SPEED[x.kind||(sw?'swim':'npc')]||7;let tgt=null,sp=0,face=null;
   if(c.until&&NOW>c.until){x.cmd={t:'return'};return cmdMove(x,dt)}
-  if(c.t==='protect'&&c.foe&&(c.foe.alive||c.foe.active)&&(sw||fl)){const f=c.foe,fp=f.kind==='ship'?f.pos.clone():f.pos,away=x.pos.clone().sub(fp).setY(0);if(away.lengthSq()<0.01)away.set(1,0,0);away.normalize().multiplyScalar(f.kind==='ship'?9:5);
+  if(c.t==='protect'&&c.foe&&(c.foe.alive||c.foe.active)&&((c.foe.kind==='badRex'||c.foe.kind==='kobold')?!sw:(sw||fl))){const f=c.foe,fp=f.kind==='ship'?f.pos.clone():f.pos,away=x.pos.clone().sub(fp).setY(0);if(away.lengthSq()<0.01)away.set(1,0,0);away.normalize().multiplyScalar(f.kind==='ship'?9:5);
     tgt=fp.clone().add(away);tgt.y=sw?(f.kind==='ship'?-0.6:fp.y):fp.y+(f.kind==='ship'?9:3);sp=max*1.5}
   else if(c.t==='follow'||c.t==='protect'){const L=cmdAll().filter(q=>q.cmd&&(q.cmd.t==='follow'||q.cmd.t==='protect')),i=Math.max(0,L.indexOf(x));
     tgt=trail.length>3?trailAt(3.2+i*2.6+(x.kind==='brachio'?4:0)+followers.length*3):P.clone();const d=hd(x.pos,tgt);
@@ -1646,7 +1767,7 @@ function cmdMove(x,dt){const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x)
 const GUARD_L={shark:['Lass Marie in Ruhe, du böser Hai!','Weg da, böser Hai!'],ship:['Weg da, ihr Piraten!','Lasst Marie in Ruhe, ihr Piraten!'],net:['Das Netz kriegt dich nicht, Marie!'],cage:['Halt durch, Marie, ich hol dich da raus!']};
 function guardSay(x,k){if(NOW<(x.guardSay||0))return;x.guardSay=NOW+18;kiSay(x,pick(GUARD_L[k]))}
 function guardShoot(from,t){const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xff9fe0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));
-  spr.scale.setScalar(2.4);spr.position.copy(from);scene.add(spr);const c=t.kind==='ship'?t.pos.clone().add(new V3(0,3,0)):t.pos;SHOTS.push({spr,pos:from.clone(),vel:c.clone().sub(from).normalize().multiplyScalar(40),life:2.6,tgt:t});SFX.zap()}
+  spr.scale.setScalar(2.4);spr.position.copy(from);scene.add(spr);const c=aimPt(t);SHOTS.push({spr,pos:from.clone(),vel:c.clone().sub(from).normalize().multiplyScalar(40),life:2.6,tgt:t});SFX.zap()}
 function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd||x.cmd.t!=='protect')continue;x.guardCD-=dt;const c=x.cmd;
     const from=x.pos.clone().add(new V3(0,(x.h||2.2)*0.8+(x.kind==='shark'?0:0.6),0));
     // sichtbar: rosa Schutzglitzer und ab und zu ein Schild
@@ -1654,7 +1775,7 @@ function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd|
     x.shieldT=(x.shieldT||0)-dt;if(x.shieldT<=0){x.shieldT=3.5;floatIcon('🛡️',x.pos.clone().add(new V3(0,(x.h||2)+1,0)),1,0.2,0.9)}
     // nächster Feind in Maries Nähe – Wasserwesen und Flieger jagen ihn
     let foe=null,fd=1e9;for(const t of zapTargets()){const d=t.pos.distanceTo(P);if(d<60&&d<fd){fd=d;foe=t}}c.foe=foe;
-    if(foe){const df=foe.pos.distanceTo(x.pos);if(df<28){if(foe.kind==='badShark')foe.flee=Math.max(foe.flee,2.5);else{foe.scared=NOW+6;foe.netT=Math.max(foe.netT,3);
+    if(foe){const df=foe.pos.distanceTo(x.pos);if(df<28){if(foe.kind!=='ship')foe.flee=Math.max(foe.flee,2.5);else{foe.scared=NOW+6;foe.netT=Math.max(foe.netT,3);
         const aw=foe.pos.clone().sub(P).setY(0).normalize().multiplyScalar(60);foe.target.set(foe.pos.x+aw.x,0,foe.pos.z+aw.z);foe.wanderT=6}}}
     if(x.zapA>0){x.zapA-=dt;const u=(x.mesh||{}).userData;if(u&&u.arms)u.arms[1].rotation.x=-2.8}
     for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];if(n.pos.distanceTo(from)<16||n.pos.distanceTo(P)<9){burst(n.pos.clone(),30,5,0.8,1,[0xff9fe0,0xffffff]);scene.remove(n.m);NETS.splice(i,1);SFX.sparkle();guardSay(x,'net')}}
@@ -1663,9 +1784,69 @@ function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd|
     let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<60&&d<bd){bd=d;best=t}}
     if(best&&best.pos.distanceTo(x.pos)<75){x.guardCD=1.2;x.zapA=0.5;if(x.kind)x.happy=0.6;burst(from.clone(),18,4,0.6,0.8,[0xff9fe0,0xffffff]);guardShoot(from,best);guardSay(x,best.kind==='ship'?'ship':'shark')}}}
 // Springen / Tanzen als kleine Einlage über der normalen Bewegung
-function updateCmdFx(dt){updateGuards(dt);for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
+function updateCmdFx(dt){updateGuards(dt);updateTag(dt);for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
     if(x.jumpT>0){x.jumpT-=dt;m.position.y+=Math.abs(Math.sin((1.8-x.jumpT)*Math.PI*1.7))*hh}
     if(x.danceT>0){x.danceT-=dt;const t=4-x.danceT;m.rotation.y=x.yaw+t*7;m.position.y+=Math.abs(Math.sin(t*6))*hh*0.35;if(Math.random()<dt*10)floatIcon('🎵',x.pos.clone().add(new V3(0,(x.h||2)+0.5,0)),1,0.6,0.7)}}}
+/* ================= Fangen spielen ("Fang mich!") =================
+   3 Runden. In jeder Runde fängt erst die Figur Marie, dann fängt Marie die Figur.
+   3-2-1-Countdown, 30 Sekunden pro Jagd, Punkte und Verlauf auf der Tafel. */
+let TAG=null;
+const TAG_L={xCatch:['Hab dich! Jetzt bist du dran!','Gefangen! Hihi, jetzt musst du mich fangen!'],mCatch:['Oh nein, du hast mich erwischt!','Erwischt! Du bist aber schnell!'],
+  xMiss:['Puh, du bist zu schnell für mich!','Oh, ich hab dich nicht gekriegt!'],mMiss:['Hihi, du hast mich nicht gekriegt!','Ätsch, ich war schneller!'],
+  winM:'Du hast gewonnen! Du bist die Fang-Königin!',winX:'Ich habe gewonnen! Das war lustig! Spielen wir nochmal?',tie:'Unentschieden! Das war ein tolles Spiel!'};
+const tagCv=document.createElement('canvas');tagCv.width=560;tagCv.height=330;tagCv.id='tagBoard';tagCv.hidden=true;document.body.appendChild(tagCv);
+const tagTex=new THREE.CanvasTexture(tagCv);const tagMesh=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.365),new THREE.MeshBasicMaterial({map:tagTex,transparent:true,depthTest:false,depthWrite:false,fog:false}));
+tagMesh.renderOrder=997;tagMesh.visible=false;
+function tagStart(x){if(TAG||state.captured)return;if(!tagMesh.parent)VR.rig.add(tagMesh);TAG={x,round:1,chaser:'x',phase:'count',t:3,score:{m:0,x:0},log:[],beep:4};x.cmd={t:'tag'};tagCv.hidden=false;drawTag()}
+function tagEnd(){if(!TAG)return;const x=TAG.x;if(x.cmd&&x.cmd.t==='tag')x.cmd=null;TAG=null;tagCv.hidden=true;tagMesh.visible=false}
+function tagBeep(hi){if(!AC)return;tone(hi?1568:880,AC.currentTime,hi?0.5:0.25,'triangle',0.12)}
+function drawTag(){const T=TAG;if(!T)return;const c=tagCv.getContext('2d'),W=560,H=330,nm=T.x.name;c.clearRect(0,0,W,H);
+  c.fillStyle='rgba(255,250,243,0.95)';c.beginPath();c.roundRect?c.roundRect(6,6,W-12,H-12,34):c.rect(6,6,W-12,H-12);c.fill();c.lineWidth=7;c.strokeStyle='#ff7eb6';c.stroke();
+  c.textAlign='center';c.textBaseline='middle';c.fillStyle='#5b2a86';c.font='800 30px "Baloo 2",system-ui,sans-serif';
+  c.fillText(T.phase==='end'?'Fangen – Endstand':`Fangen – Runde ${Math.min(T.round,3)} von 3`,W/2,40);
+  c.font='800 50px "Baloo 2",system-ui,sans-serif';c.fillText(`Marie ${T.score.m} : ${T.score.x} ${nm}`,W/2,96);
+  c.font='700 30px "Baloo 2",system-ui,sans-serif';
+  let info='';if(T.phase==='count')info=(T.chaser==='x'?'Lauf weg! ':`${nm} läuft weg! `)+(T.t>0.05?Math.ceil(T.t):'LOS!');
+  else if(T.phase==='run')info=(T.chaser==='x'?`${nm} fängt dich!`:`Fang ${nm}!`)+`  ⏱ ${Math.ceil(T.t)} s`;else if(T.phase==='caught')info=T.msg||'';else if(T.phase==='end')info=T.msg||'';
+  c.fillStyle=T.phase==='count'?'#ff4f93':'#5b2a86';c.fillText(info,W/2,146);
+  c.font='600 23px "Baloo 2",system-ui,sans-serif';c.fillStyle='#5b2a86';T.log.slice(-5).forEach((l,i)=>c.fillText(l,W/2,192+i*27));tagTex.needsUpdate=true}
+function tagFlee(x,dt){const P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),sp=Math.min((CMD_SPEED[x.kind||(sw?'swim':'npc')]||7)*1.3,playerRun()*0.82);
+  const away=Math.atan2(x.pos.x-P.x,x.pos.z-P.z)+Math.sin(NOW*0.9+(x.ud?x.ud.seed:0))*0.5;
+  for(const off of [0,0.8,-0.8,1.6,-1.6,2.4,-2.4]){const a=away+off,nx=x.pos.x+Math.sin(a)*sp*dt,nz=x.pos.z+Math.cos(a)*sp*dt,wet=inLake(nx,nz);
+    if((sw&&!wet)||(!sw&&!fl&&wet&&terrainH(nx,nz)<WATER_Y-0.6)||Math.hypot(nx,nz)>WORLD_R-12)continue;x.pos.x=nx;x.pos.z=nz;x.yaw=angLerp(x.yaw,a,damp(8,dt));return sp}
+  return 0}
+function updateTag(dt){const T=TAG;if(!T)return;const x=T.x,P=player.pos;
+  if(!x.cmd||x.cmd.t!=='tag'||state.captured||hd(x.pos,P)>140){tagEnd();return}
+  T.t-=dt;const nm=x.name;
+  if(T.phase==='count'){const n=Math.ceil(T.t);if(n<T.beep&&n>0){T.beep=n;tagBeep(false);onSay(String(n))}
+    if(T.t<=0){T.phase='run';T.t=30;T.t0=NOW;tagBeep(true);onSay('LOS!');floatIcon('🏁',x.pos.clone().add(new V3(0,(x.h||2)+1,0)),1,0.2,1.2)}}
+  else if(T.phase==='run'){const r=(x.kind==='brachio'?4.5:x.kind==='pegasus'?2.8:2.2)*(x.scale||1);
+    if(Math.random()<dt*1.2)floatIcon(T.chaser==='x'?'🏃':'🎯',x.pos.clone().add(new V3(0,(x.h||2)+1.2,0)),1,0.2,1);
+    const caught=hd(x.pos,P)<r&&Math.abs(P.y-x.pos.y)<3.5,tm=(NOW-T.t0).toFixed(1).replace('.',',');
+    if(caught||T.t<=0){const xr=T.chaser==='x';T.phase='caught';T.t=3.2;
+      if(caught){T.score[xr?'x':'m']++;T.log.push(`R${T.round}: ${xr?nm+' fängt Marie':'Marie fängt '+nm} ✓ ${tm} s`);T.msg=xr?'Gefangen! 🙈':'Erwischt! 🎉';
+        x.jumpT=2.2;burst(P.clone().add(new V3(0,1.2,0)),70,7,0.9,1.4);floatIcon(xr?'✋':'🎉',P.clone().add(new V3(0,2.5,0)),5,1,1.3);SFX.found();kiSay(x,pick(xr?TAG_L.xCatch:TAG_L.mCatch));
+        if(VR.on){buzz(0,1,150);buzz(1,1,150)}}
+      else{T.score[xr?'m':'x']++;T.log.push(`R${T.round}: ${xr?'Marie entkommt '+nm:nm+' entkommt Marie'} ✓`);T.msg=xr?'Entkommen! 💨':'Entwischt! 💨';x.danceT=2;kiSay(x,pick(xr?TAG_L.xMiss:TAG_L.mMiss))}}}
+  else if(T.phase==='caught'){if(T.t<=0){if(T.chaser==='x'){T.chaser='m'}else{T.chaser='x';T.round++}
+      if(T.round>3){T.phase='end';T.t=8;const m=T.score.m,xs=T.score.x;T.msg=m>xs?'🏆 Marie gewinnt!':xs>m?`🏆 ${nm} gewinnt!`:'🤝 Unentschieden!';
+        kiSay(x,m>xs?TAG_L.winM:xs>m?TAG_L.winX:TAG_L.tie);for(let i=0;i<4;i++)setTimeout(()=>{burst(P.clone().add(new V3(rnd(-3,3),rnd(3,6),rnd(-3,3))),80,8,1,1.6);SFX.star()},i*500);x.danceT=4}
+      else{T.phase='count';T.t=3;T.beep=4}}}
+  else if(T.phase==='end'&&T.t<=0){tagEnd();return}
+  T.drawT=(T.drawT||0)-dt;if(T.drawT<=0){T.drawT=0.2;drawTag()}
+  if(VR.on){tagMesh.visible=true;const hl=camera.position,a=VR.ctxYaw||0;tagMesh.position.set(hl.x+Math.sin(a)*1.25,hl.y+0.5,hl.z-Math.cos(a)*1.25);tagMesh.rotation.set(0.15,-a,0,'YXZ')}else tagMesh.visible=false}
+// Bewegung der Figur beim Fangen (aus cmdMove aufgerufen)
+function tagMove(x,dt){const T=TAG,P=player.pos;if(!T||T.x!==x)return null;let sp=0;
+  if(T.phase==='count'&&T.chaser==='x'){x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(4,dt));if(hd(x.pos,P)<8){const aw=Math.atan2(x.pos.x-P.x,x.pos.z-P.z),nx=x.pos.x+Math.sin(aw)*6*dt,nz=x.pos.z+Math.cos(aw)*6*dt,wet=inLake(nx,nz);if(cmdSwims(x)===wet||cmdCanFly(x)){x.pos.x=nx;x.pos.z=nz;sp=6}}const n=Math.ceil(T.t);if(n!==x.tagN){x.tagN=n;x.jumpT=0.6}}
+  else if((T.phase==='count'||T.phase==='run')&&T.chaser==='m')sp=tagFlee(x,dt);
+  else if(T.phase==='run'&&T.chaser==='x'){const sw=cmdSwims(x),fl=cmdCanFly(x),v=Math.min((CMD_SPEED[x.kind||(sw?'swim':'npc')]||7)*1.6,playerRun()*1.25);
+    const dx=P.x-x.pos.x,dz=P.z-x.pos.z,d=Math.hypot(dx,dz);if(d>0.3){const nx=x.pos.x+dx/d*v*dt,nz=x.pos.z+dz/d*v*dt,wet=inLake(nx,nz);
+      if(!((sw&&!wet)||(!sw&&!fl&&wet&&terrainH(nx,nz)<WATER_Y-0.6))){x.pos.x=nx;x.pos.z=nz;sp=v}x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(8,dt))}}
+  else x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(4,dt));
+  const sw=cmdSwims(x),fl=cmdCanFly(x),g=groundAt(x.pos.x,x.pos.z,x.pos.y+0.5);let fly=false;
+  if(sw)x.pos.y=clamp(lerp(x.pos.y,Math.min(P.y,-0.4),damp(2,dt)),terrainH(x.pos.x,x.pos.z)+1.2,x.kind==='shark'?WATER_Y-1.6:-0.35);
+  else if(fl){x.pos.y=Math.max(g+(x.hover?0.6:0),lerp(x.pos.y,Math.max(g,P.y)+(x.hover?0.6:0),damp(3,dt)));fly=x.pos.y>g+(x.hover?1.2:0.6)}else x.pos.y=g;
+  return {spd:sp,fly}}
 function kiSay(x,text){kiShow(x.name+': '+text);if(!KI.ok){Voice.say(text,{prio:2,who:x.kind?'erz':x.id});return}
   let q=KI.base+'/api/say?inline='+(KI_APP?1:0)+'&npc='+(x.kind?'tier':x.id)+'&text='+encodeURIComponent(text);if(x.kind){const d=kiAnimalInfo(x);q+='&art='+d.art+'&name='+encodeURIComponent(x.name)}
   const r=new XMLHttpRequest();r.open('GET',q);r.onload=()=>{try{const au=(JSON.parse(r.responseText).audios||[]).map(u=>u[0]==='/'?KI.base+u:u);
@@ -1714,7 +1895,7 @@ function kiStop(cancel){if(KI.state!=='rec')return;KI.cancel=!!cancel;KI.state='
 function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;KI.state='idle';kiShow(KI.speech?'':'Ich habe nichts gehört. Tippe nochmal auf 🎤 und sprich!');return}
   KI.state='send';kiShow('💭 '+n.name+' überlegt …',true);const cur=curTask();
   const ctx=[player.riding?'Marie reitet gerade auf einem Flügelpferd':'Marie ist gerade '+({human:'ein Mädchen',unicorn:'ein Einhorn',fairy:'eine kleine Fee',mermaid:'eine Meerjungfrau'}[player.form]||'ein Mädchen'),
-    cur?'Ihre Aufgabe: '+cur.line:'',(()=>{const c=(n.a||n).cmd;return !c?'':c.t==='follow'?'Du läufst Marie gerade hinterher':c.t==='protect'?'Du beschützt Marie gerade vor bösen Haien und Piraten':c.t==='hide'?'Du spielst gerade Verstecken mit Marie':c.t==='stay'?'Du wartest gerade hier auf Marie':''})(),state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
+    cur?'Ihre Aufgabe: '+cur.line:'',(()=>{const c=(n.a||n).cmd;return !c?'':c.t==='follow'?'Du läufst Marie gerade hinterher':c.t==='protect'?'Du beschützt Marie gerade vor bösen Haien und Piraten':c.t==='tag'?'Du spielst gerade Fangen mit Marie':c.t==='hide'?'Du spielst gerade Verstecken mit Marie':c.t==='stay'?'Du wartest gerade hier auf Marie':''})(),state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
   let q=KI.base+'/api/talk?inline='+(KI_APP?1:0)+'&npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
   const x=new XMLHttpRequest();x.open('POST',q);x.timeout=40000;
   x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
@@ -1836,12 +2017,12 @@ let last=performance.now(),uiT=0,saveT=0;
 const CAMW=new V3();  // camera position in world space (in VR the camera sits inside the rig)
 function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else CAMW.copy(camera.position);const dt=Math.min(0.05,(now-last)/1000);last=now;NOW+=dt;
   if(VR.on)vrInput(dt);
-  if(state.started){updatePlayer(dt);updateCombat(dt);recordTrail();updateGuide(dt);updateItem(dt);if(VR.on)updateVR(dt);
+  if(state.started){updatePlayer(dt);updateCombat(dt);recordTrail();updateGuide(dt);updateItem(dt);updateVillains(dt);if(VR.on)updateVR(dt);
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
     updateBreeding(dt);updateWild(dt);updatePowers(dt);updateKI(dt)}
-  updatePegs(dt);updateCreatures(dt);updateCmdFx(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
+  updatePegs(dt);updateCreatures(dt);updateCmdFx(dt);updateFlowers();updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
   water.material.emissiveIntensity=0.15+Math.sin(NOW*1.5)*0.05;swayU.value=NOW;
   if(VR.on)updateEnv(dt);else updateCamera(dt);renderer.render(scene,camera)}
@@ -1867,7 +2048,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
   for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
   for(const nm of names)add('erz',`Juhu! Du hast ${nm} gefunden! ${nm} kommt jetzt mit dir mit.`);
   for(const k in POWERS)add('erz',`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${POWERS[k].name}!`);for(const k in MOUNT_LINES)add('erz',MOUNT_LINES[k]);
-  PIRATE_LINES.forEach(t=>add('pirat',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
+  PIRATE_LINES.forEach(t=>add('pirat',t));KOBOLD_LINES.forEach(t=>add('kobold',t));KOBOLD_CAP_LINES.forEach(t=>add('kobold',t));REX_LINES.forEach(t=>add('rex',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
   for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
     for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
     if(n.tasks.length){add('erz',`Bei ${n.name} gibt es noch mehr zu tun!`);add('erz',`Geh zu ${n.name}! ${n.er} hat eine Aufgabe für dich. Folge dem Lichtstrahl!`)}}
@@ -1875,7 +2056,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
     if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
   return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={get TAG(){return TAG},tagStart,badRexes,kobolds,wildRexes,KCAMP,villainFixed,kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateVillains(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
