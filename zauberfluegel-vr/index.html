@@ -710,6 +710,7 @@ const LINES={
   capturedWait:'Oh nein, gefangen! Dein Zauberstab ist leer. Warte kurz, bald kommst du frei!',
   autoFree:'Hihi, die Bösewichte sind eingeschlafen! Der Käfig geht auf! Schnell, lauf weg!',
   freedLand:'Puff! Der Käfig ist weg! Schnell, lauf davon!',
+  starStolen:'Oh nein, der Kobold hat dir einen Stern geklaut! Verzaubere ihn, dann bekommst du ihn zurück!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -1293,28 +1294,44 @@ function animPeg(a,dt,spd,flying){const u=a.ud;u.fly=lerp(u.fly,flying?1:0,damp(
   u.inner.position.y=flying?Math.sin(NOW*3+u.seed)*0.12:Math.abs(Math.sin(u.ph))*amp*0.15+(a.happy>0?Math.abs(Math.sin(NOW*9))*0.3:0);
   u.inner.rotation.x=flying&&spd>3?-0.12:0;updateReins(u)}
 /* ================= Spuren der Superpferde: echter Regenbogen-Schweif und wachsende Blumen ================= */
-const RB_COLS=[0xff4f6e,0xff9a3c,0xffe14d,0x6fdc6a,0x4fb4ff,0xa87cff].map(c=>new THREE.Color(c)),RB_N=48;
-function makeRibbon(){const g=new THREE.BufferGeometry(),n=RB_N*6*2;g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));
-  const col=new Float32Array(n*3);for(let b=0;b<6;b++)for(let i=0;i<RB_N;i++)for(let k=0;k<2;k++){const v=(b*RB_N+i)*2+k;col.set([RB_COLS[b].r,RB_COLS[b].g,RB_COLS[b].b],v*3)}
-  g.setAttribute('color',new THREE.BufferAttribute(col,3));const idx=[];for(let b=0;b<6;b++)for(let i=0;i<RB_N-1;i++){const a=(b*RB_N+i)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}g.setIndex(idx);
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.85,depthWrite:false,fog:false}));m.frustumCulled=false;scene.add(m);return {m,pts:[],t:0}}
-function updateRibbon(a,dt,moving){const R=a.ribbon||(a.ribbon=makeRibbon());const top=a.pos.clone().add(new V3(0,2.2*(a.scale||1),0));
-  R.t-=dt;if(moving&&(!R.anchor||R.anchor.distanceTo(top)>0.7)){R.anchor=top.clone();R.pts.splice(1,0,top.clone());if(!R.pts[0])R.pts[0]=top;if(R.pts.length>RB_N)R.pts.pop()}else if(!moving&&R.t<=0&&R.pts.length){R.t=0.04;R.pts.pop()}
-  if(R.pts.length)R.pts[0]=top;const pos=R.m.geometry.attributes.position,W=0.4*(a.scale||1);
-  for(let b=0;b<6;b++)for(let i=0;i<RB_N;i++){const p=R.pts[Math.min(i,R.pts.length-1)]||top,f=1-i/RB_N,y0=(2.5-b)*W*f,v=(b*RB_N+i)*2;pos.setXYZ(v,p.x,p.y+y0+W*0.5*f,p.z);pos.setXYZ(v+1,p.x,p.y+y0-W*0.5*f,p.z)}
-  pos.needsUpdate=true;R.m.visible=R.pts.length>1}
-// Blumen: Instanzen (schnell auch auf der Quest), wachsen aus dem Boden und verblühen nach 30 s
+const RB_COLS=[0xff4f6e,0xff9a3c,0xffe14d,0x6fdc6a,0x4fb4ff,0xa87cff].map(c=>new THREE.Color(c)),RB_CAP=1600,RB_LIFE=600;
+// Regenbogen-Spur: bleibt 10 Minuten in der Welt stehen (bis zu ~1 km lang). Nur neue Stücke werden zur Grafikkarte geschickt.
+function makeRibbon(){const g=new THREE.BufferGeometry(),nv=RB_CAP*12;const pos=new THREE.BufferAttribute(new Float32Array(nv*3),3);pos.setUsage(THREE.DynamicDrawUsage);g.setAttribute('position',pos);
+  const col=new Float32Array(nv*3);for(let k=0;k<RB_CAP;k++)for(let b=0;b<6;b++)for(let j=0;j<2;j++)col.set([RB_COLS[b].r,RB_COLS[b].g,RB_COLS[b].b],((k*6+b)*2+j)*3);
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));const idx=new THREE.BufferAttribute(new Uint32Array((RB_CAP-1)*36),1);idx.setUsage(THREE.DynamicDrawUsage);g.setIndex(idx);g.setDrawRange(0,0);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:0.88,depthWrite:false,fog:true}));m.frustumCulled=false;m.renderOrder=2;scene.add(m);
+  return {m,pts:[],W:0.4,chk:0}}
+function rbWrite(R,k,full){const p=R.pts[k],pos=R.m.geometry.attributes.position,ix=R.m.geometry.index,W=R.W;
+  for(let b=0;b<6;b++){const v=(k*6+b)*2,y0=(2.5-b)*W;pos.setXYZ(v,p.x,p.y+y0+W*0.5,p.z);pos.setXYZ(v+1,p.x,p.y+y0-W*0.5,p.z)}
+  if(k>0){for(let b=0;b<6;b++){const o=((k-1)*6+b)*6,a=((k-1)*6+b)*2,c=(k*6+b)*2;if(p.brk){for(let j=0;j<6;j++)ix.setX(o+j,c)}else{ix.setX(o,a);ix.setX(o+1,a+1);ix.setX(o+2,c);ix.setX(o+3,a+1);ix.setX(o+4,c+1);ix.setX(o+5,c)}}}
+  if(!full){pos.updateRange.offset=k*36;pos.updateRange.count=36;ix.updateRange.offset=Math.max(0,(k-1)*36);ix.updateRange.count=36}else{pos.updateRange.count=-1;ix.updateRange.count=-1}
+  pos.needsUpdate=true;ix.needsUpdate=true;R.m.geometry.setDrawRange(0,Math.max(0,R.pts.length-1)*36)}
+function rbRebuild(R){R.pts.forEach((p,k)=>rbWrite(R,k,true));if(R.pts.length)R.pts[0].brk=false;const g=R.m.geometry;g.attributes.position.updateRange.count=-1;g.index.updateRange.count=-1;g.attributes.position.needsUpdate=g.index.needsUpdate=true;g.setDrawRange(0,Math.max(0,R.pts.length-1)*36)}
+function updateRibbon(a,dt,moving){const R=a.ribbon||(a.ribbon=makeRibbon());R.W=0.4*(a.scale||1);const top=a.pos.clone().add(new V3(0,2.2*(a.scale||1),0));
+  const last=R.pts[R.pts.length-1];if(moving&&(!last||last.distanceTo(top)>0.7)){const p=top.clone();p.born=NOW;p.brk=!!last&&last.distanceTo(top)>8;
+    if(R.pts.length>=RB_CAP){R.pts.splice(0,200);R.pts.push(p);rbRebuild(R)}else{R.pts.push(p);rbWrite(R,R.pts.length-1,false)}}
+  R.chk-=dt;if(R.chk<=0){R.chk=5;let n=0;while(n<R.pts.length&&NOW-R.pts[n].born>RB_LIFE)n++;if(n){R.pts.splice(0,n);rbRebuild(R)}}}
+// Blumen: Instanzen (schnell auch auf der Quest), wachsen aus dem Boden und verblühen nach 10 Minuten.
+// Ringpuffer je Blumensorte; pro Bild werden nur gerade wachsende und verblühende Blumen neu berechnet.
+const FL_LIFE=600,FL_CAP=1500;
 const FL_TYPES=['🌸','🌼','🌷','🌺'].map(e=>{const g=new THREE.PlaneGeometry(1,1);g.translate(0,0.5,0);const g2=g.clone();g2.rotateY(Math.PI/2);
   const geo=new THREE.BufferGeometry();const pa=[...g.attributes.position.array,...g2.attributes.position.array],ua=[...g.attributes.uv.array,...g2.attributes.uv.array],ia=[...g.index.array,...g2.index.array.map(i=>i+4)];
   geo.setAttribute('position',new THREE.Float32BufferAttribute(pa,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(ua,2));geo.setIndex(ia);
-  const m=new THREE.InstancedMesh(geo,new THREE.MeshBasicMaterial({map:emojiTexture(e),alphaTest:0.4,side:THREE.DoubleSide,fog:true}),70);m.count=0;m.frustumCulled=false;scene.add(m);return {m,list:[]}});
+  const m=new THREE.InstancedMesh(geo,new THREE.MeshBasicMaterial({map:emojiTexture(e),alphaTest:0.4,side:THREE.DoubleSide,fog:true}),FL_CAP);m.count=0;m.frustumCulled=false;scene.add(m);
+  return {m,data:new Array(FL_CAP),head:0,n:0,used:0}});
 const _fm=new THREE.Matrix4(),_fq=new THREE.Quaternion(),_fs=new V3(),_fp=new V3(),_fy=new V3(0,1,0);
-function plantFlower(x,z){if(inLake(x,z))return;const T=pick(FL_TYPES);if(T.list.length>=70)T.list.shift();T.list.push({x,y:groundAt(x,z,999),z,born:NOW,s:rnd(0.9,1.5),r:rnd(0,TAU)})}
-function updateFlowers(){for(const T of FL_TYPES){T.list=T.list.filter(f=>NOW-f.born<30);T.list.forEach((f,i)=>{const age=NOW-f.born,k=Math.min(1,age/0.5)*Math.min(1,(30-age)/1.2);
-      const s=f.s*(k<1?k*(1+Math.sin(k*Math.PI)*0.3):1);_fs.set(s,s,s);_fq.setFromAxisAngle(_fy,f.r);_fp.set(f.x,f.y,f.z);_fm.compose(_fp,_fq,_fs);T.m.setMatrixAt(i,_fm)});
-    T.m.count=T.list.length;T.m.instanceMatrix.needsUpdate=true}}
+function flSet(T,i,f,k){const s=f.s*(k<1?k*(1+Math.sin(k*Math.PI)*0.3):1);_fs.set(s,s,s);_fq.setFromAxisAngle(_fy,f.r);_fp.set(f.x,f.y,f.z);_fm.compose(_fp,_fq,_fs);T.m.setMatrixAt(i,_fm);T.dirty=true}
+function plantFlower(x,z){if(inLake(x,z))return;const T=pick(FL_TYPES),i=T.head,f={x,y:groundAt(x,z,999),z,born:NOW,s:rnd(0.9,1.5),r:rnd(0,TAU)};
+  T.data[i]=f;T.head=(i+1)%FL_CAP;T.n=Math.min(T.n+1,FL_CAP);T.used=Math.max(T.used,i+1);T.m.count=T.used;flSet(T,i,f,0.01)}
+function updateFlowers(){for(const T of FL_TYPES){if(!T.n)continue;
+    for(let k=1;k<=T.n;k++){const i=(T.head-k+FL_CAP)%FL_CAP,f=T.data[i],age=NOW-f.born;if(age>=0.7)break;flSet(T,i,f,Math.min(1,age/0.5))}
+    const start=(T.head-T.n+FL_CAP)%FL_CAP;let gone=0;
+    for(let k=0;k<T.n;k++){const i=(start+k)%FL_CAP,f=T.data[i],age=NOW-f.born;if(age<FL_LIFE-1.2)break;if(age>=FL_LIFE){flSet(T,i,f,0.0001);gone++}else flSet(T,i,f,(FL_LIFE-age)/1.2)}
+    T.n-=gone;if(T.dirty){T.m.instanceMatrix.needsUpdate=true;T.dirty=false}}}
 function powerTrail(a,dt,spd,flying){if(a.power==='rainbow')updateRibbon(a,dt,spd>1||flying);
-  else if(a.power==='flower'){a.flT=(a.flT||0)-dt;const mv=spd>1;if(a.flT<=0){a.flT=mv?0.09:2.5;const n=mv?2:1;for(let i=0;i<n;i++){const r=mv?rnd(0.5,2.2):rnd(1,3.5),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}}}}
+  else if(a.power==='flower'){if(!a.flLast)a.flLast=a.pos.clone();const mv=hd(a.pos,a.flLast);
+    if(mv>1.1){a.flLast.copy(a.pos);const r=rnd(0.3,1.8),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}
+    else if(spd<1){a.flT=(a.flT||0)-dt;if(a.flT<=0){a.flT=4;const r=rnd(1,3.5),t=rnd(0,TAU);plantFlower(a.pos.x+Math.cos(t)*r,a.pos.z+Math.sin(t)*r)}}}}
 function updatePegs(dt){
   followers.forEach((a,i)=>{if(a.cmd)return;const tgt=trailAt((i+1)*(2.4+a.scale*1.6));if(a.pos.distanceTo(player.pos)>45){a.pos.copy(tgt);a.vel.set(0,0,0)}
     const want=tgt.sub(a.pos).multiplyScalar(3.2);a.vel.lerp(want,damp(5,dt));a.pos.addScaledVector(a.vel,dt)});
@@ -1454,7 +1471,7 @@ function updateCreatures(dt){
     if(c.cmd)spd=cmdMove(c,dt).spd;
     else if(!near&&d>0.4&&c.munch<=0){spd=c.speed;c.pos.x+=dx/d*spd*dt;c.pos.z+=dz/d*spd*dt;c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),damp(3,dt))}
     else if(near)c.yaw=angLerp(c.yaw,Math.atan2(player.pos.x-c.pos.x,player.pos.z-c.pos.z),damp(3,dt));
-    c.pos.y=hd(c.pos,c.area)<c.r+3?2:terrainH(c.pos.x,c.pos.z);c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
+    if(!(c.cmd&&c.cmd.t==='tag'))c.pos.y=hd(c.pos,c.area)<c.r+3?2:terrainH(c.pos.x,c.pos.z);c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
   // people
   const noTask=!state.task;const ng=noTask?nextGiver():null;
   for(const n of NPCS){n.wave-=dt;const u=n.mesh.userData,dn=hd(n.pos,player.pos);
@@ -1481,7 +1498,7 @@ function updateCreatures(dt){
     if(!n.swim)placeShadow(n.shadow,n.pos.x,n.pos.y,n.pos.z,1.6*n.scale)}
   // bunnies (sit still and look at Marie when she comes close)
   for(const b of bunnies){b.happy-=dt;b.munch-=dt;b.wait-=dt;const near=hd(b.pos,player.pos)<4&&player.form==='human';
-    if(b.cmd){const r=cmdMove(b,dt);b.wait=1;const g=terrainH(b.pos.x,b.pos.z);b.m.visible=b.pos.distanceTo(CAMW)<110;b.m.position.set(b.pos.x,g+(r.spd>0.2?Math.abs(Math.sin(NOW*9))*0.45:0),b.pos.z);b.m.rotation.y=b.yaw;continue}
+    if(b.cmd){const r=cmdMove(b,dt);b.wait=1;const g=b.cmd&&b.cmd.t==='tag'?b.pos.y:terrainH(b.pos.x,b.pos.z);b.m.visible=b.pos.distanceTo(CAMW)<110;b.m.position.set(b.pos.x,g+(r.spd>0.2?Math.abs(Math.sin(NOW*9))*0.45:0),b.pos.z);b.m.rotation.y=b.yaw;continue}
     if(!near&&b.wait<=0&&b.hop<=0){b.tgt.set(b.home.x+rnd(-6,6),0,b.home.z+rnd(-6,6));b.wait=rnd(1.5,4);b.hop=1}
     if(b.hop>0&&!near){const dx=b.tgt.x-b.pos.x,dz=b.tgt.z-b.pos.z,d=Math.hypot(dx,dz);if(d<0.3){b.hop=0}else{b.pos.x+=dx/d*2.5*dt;b.pos.z+=dz/d*2.5*dt;b.yaw=Math.atan2(dx,dz)}}
     if(near)b.yaw=angLerp(b.yaw,Math.atan2(player.pos.x-b.pos.x,player.pos.z-b.pos.z),damp(4,dt));
@@ -1643,7 +1660,7 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
   for(let i=ships.length-1;i>=0;i--)if(ships[i].gone){ships.splice(i,1);setTimeout(()=>spawnShip(),45000)}
   // nets in flight
   for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];n.life-=dt;n.vel.y-=14*dt;n.pos.addScaledVector(n.vel,dt);n.m.position.copy(n.pos);n.m.rotation.y+=dt*3;n.m.scale.setScalar(Math.min(1.6,n.m.scale.x+dt*1.2));
-    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<2.6;if(hitP)catchInNet(n.ship);if(hitP||n.life<=0||n.pos.y<WATER_Y-1||(n.life<n.vel.length()&&n.pos.y<terrainH(n.pos.x,n.pos.z)-0.3)){scene.remove(n.m);NETS.splice(i,1)}}
+    const hitP=n.pos.distanceTo(P.clone().add(new V3(0,1,0)))<(n.r||2.6);if(hitP)catchInNet(n.ship);if(hitP||n.life<=0||n.pos.y<WATER_Y-1||(n.life<n.vel.length()&&n.pos.y<terrainH(n.pos.x,n.pos.z)-0.3)){scene.remove(n.m);NETS.splice(i,1)}}
   // caught in a net: wiggle free (moving the stick frees you faster)
   if(state.netT>0){const wig=Math.min(1,Math.hypot(joy.x||0,joy.y||0)+Math.hypot(VR.mx||0,VR.my||0)+(input.up?1:0));state.netT-=dt*(1+wig*1.5);
     netMesh.position.copy(P).add(new V3(0,1*FORM_SCALE[player.form]+(player.form==='unicorn'?1.4:0),0));netMesh.scale.setScalar(1.6*Math.max(FORM_SCALE[player.form],0.7)+Math.sin(NOW*10)*0.05);
@@ -1686,7 +1703,8 @@ function spawnBadRex(){const p=landSpot(0,0,60,WORLD_R-40,player.pos,80);if(!p)r
 function spawnKobold(near){const p=near?landSpot(KCAMP.x,KCAMP.z,4,16,player.pos,50):landSpot(0,0,70,WORLD_R-40,player.pos,80);if(!p)return;const m=makeKobold();scene.add(m);
   kobolds.push({kind:'kobold',name:'Kobold',mesh:m,pos:p,yaw:rnd(0,TAU),target:p.clone(),wanderT:0,hp:2,alive:true,active:true,flash:0,flee:0,netT:3,shoutT:0,shadow:makeShadow(),h:1.6})}
 for(let i=0;i<3;i++)spawnBadRex();for(let i=0;i<4;i++)spawnKobold(i<2);
-const KOBOLD_LINES=['Hihihi! Gleich hab ich dich!','Bleib stehen, kleines Mädchen!','Mein Netz ist schneller als du!'];
+const KOBOLD_LINES=['Hihihi! Gleich hab ich dich!','Bleib stehen, kleines Mädchen!','Mein Netz ist schneller als du!','Ätsch bätsch, fang mich doch!','Hihihi, du bist viel zu langsam!','Nananana nana!','Na warte, gleich hab ich dich!'];
+const KOBOLD_STEAL='Hihihi, dein Stern gehört jetzt mir!',KOBOLD_TAUNT='Komm doch raus, wenn du dich traust! Hihihi!';
 const KOBOLD_CAP_LINES=['Hihihi! Wir bringen dich in unser Lager!','Aus unserem Käfig kommst du nicht raus!'];
 const REX_LINES=['Grrroooaaar!','Grrr! Ich bin der Grummel-Rex!','Grrr! Hier ist mein Wald!'];
 let villainT=40;
@@ -1714,13 +1732,20 @@ function updateVillains(dt){const P=player.pos,rpow=player.riding&&player.riding
       if(k.shoutT<=0){k.shoutT=rnd(10,15);Voice.say(pickNew('kobCap',KOBOLD_CAP_LINES),{prio:0,who:'kobold'})}}
     else if(state.captured&&hd(k.pos,KCAMP)<40){const a=NOW*0.6+kobolds.indexOf(k)*1.7;sp=villainStep(k,new V3(KCAMP.x+Math.cos(a)*6,0,KCAMP.z+Math.sin(a)*6),2.5,dt)}
     else if(k.flee>0){const aw=k.pos.clone().sub(P).setY(0).normalize().multiplyScalar(10);sp=villainStep(k,k.pos.clone().add(aw),7,dt)}
-    else if(free&&d<26){sp=d>7?villainStep(k,P,Math.min(6.5,playerRun()*0.8),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(5,dt));
-      if(k.shoutT<=0){k.shoutT=rnd(8,12);Voice.say(pickNew('kob',KOBOLD_LINES),{prio:0,who:'kobold'})}
-      if(d<14&&k.netT<=0&&state.netT<=0){k.netT=rnd(4.5,6.5);u.net.rotation.x=-1.2;const from=k.pos.clone().add(new V3(0,2,0)),to=P.clone().add(new V3(0,1,0)),T=Math.max(0.6,from.distanceTo(to)/16);
-        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.6);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:k});SFX.jump()}}
+    else if(free&&d<34){sp=d>1.2?villainStep(k,P,Math.min(9.5,playerRun()*1.08),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(5,dt));
+      if(k.shoutT<=0){k.shoutT=rnd(5,8);Voice.say(pickNew('kob',KOBOLD_LINES),{prio:0,who:'kobold'});floatIcon(pick(['😜','😝','😛']),k.pos.clone().add(new V3(0,2.4,0)),1,0.2,1.1)}
+      // frech: klaut einen Stern, wenn er Marie erwischt
+      k.stealCD=(k.stealCD||0)-dt;if(d<1.9&&k.stealCD<=0&&state.stars>0&&state.netT<=0){k.stealCD=12;state.stars--;k.stolen=(k.stolen||0)+1;updateStars();save();floatIcon('⭐',P.clone().add(new V3(0,2,0)),3,0.5,1.1);
+        Voice.say(KOBOLD_STEAL,{prio:2,who:'kobold'});setTimeout(()=>say('starStolen',{prio:2}),2600);k.flee=6}
+      // zielt dorthin, wo Marie gleich sein wird, und wirft schnell
+      if(d<18&&k.netT<=0&&state.netT<=0){k.netT=rnd(2.8,4.2);u.net.rotation.x=-1.2;const from=k.pos.clone().add(new V3(0,2,0)),T=Math.max(0.45,from.distanceTo(P)/24),to=P.clone().add(new V3(player.vel.x*T+rnd(-0.9,0.9),1,player.vel.z*T+rnd(-0.9,0.9)));
+        const vel=to.clone().sub(from).divideScalar(T);vel.y+=0.5*14*T;const m=new THREE.Mesh(netMesh.geometry,netMesh.material);m.scale.setScalar(0.7);m.position.copy(from);scene.add(m);NETS.push({m,pos:from,vel,life:T+1,ship:k,r:3.3});SFX.jump()}}
+    // Marie ist im sicheren Hof: Kobolde tanzen frech am Zaun und rufen
+    else if(!state.captured&&onLand&&safe&&d<45&&k.flee<=0){const dx=P.x-k.pos.x,dz=P.z-k.pos.z,dd=Math.hypot(dx,dz)||1,nx=k.pos.x+dx/dd*4*dt,nz=k.pos.z+dz/dd*4*dt;k.yaw=angLerp(k.yaw,Math.atan2(dx,dz),damp(5,dt));
+      if(!inSafe(nx,nz,3)&&!inLake(nx,nz)){k.pos.x=nx;k.pos.z=nz;sp=4}else{k.taunt=0.2;if(k.shoutT<=0){k.shoutT=rnd(6,9);Voice.say(KOBOLD_TAUNT,{prio:0,who:'kobold'});floatIcon(pick(['😜','😝']),k.pos.clone().add(new V3(0,2.4,0)),2,0.3,1.2)}}}
     else{if(k.wanderT<=0){const q=landSpot(k.pos.x,k.pos.z,6,25);if(q)k.target.copy(q);k.wanderT=rnd(5,10)}sp=villainStep(k,k.target,2.2,dt)}
-    u.net.rotation.x=lerp(u.net.rotation.x,0.35,damp(3,dt));
-    k.pos.y=terrainH(k.pos.x,k.pos.z);k.mesh.position.copy(k.pos);k.mesh.rotation.y=k.yaw;animGirl(k.mesh,dt,sp,'human',false,false);u.pivot.scale.setScalar(k.flash>0?1.15:1);
+    u.net.rotation.x=lerp(u.net.rotation.x,0.35,damp(3,dt));if(k.stolen&&Math.random()<dt*2)floatIcon('⭐',k.pos.clone().add(new V3(0,2.6,0)),1,0.1,0.8);
+    k.pos.y=terrainH(k.pos.x,k.pos.z);k.mesh.position.copy(k.pos);k.mesh.rotation.y=k.yaw;animGirl(k.mesh,dt,sp,'human',false,false);u.pivot.scale.setScalar(k.flash>0?1.15:1);if(k.taunt>0){k.taunt-=dt;k.mesh.position.y+=Math.abs(Math.sin(NOW*8))*0.4}
     k.mesh.visible=k.pos.distanceTo(CAMW)<110;placeShadow(k.shadow,k.pos.x,k.pos.y,k.pos.z,1.2)}
   villainT-=dt;if(villainT<=0){villainT=40;if(badRexes.filter(b=>b.alive).length<3)spawnBadRex();if(kobolds.filter(k=>k.alive).length<4)spawnKobold(Math.random()<0.5);
     for(const L of [badRexes,kobolds])for(let i=L.length-1;i>=0;i--)if(!L[i].alive&&!L[i].poof)L.splice(i,1)}
@@ -1733,7 +1758,7 @@ function villainFixed(t,p){if(t.kind==='badRex'){t.alive=false;scene.remove(t.me
     const w={kind:'trex',name,mesh:m,pos:t.pos.clone(),yaw:t.yaw,target:new V3(),wanderT:0,cd:{},reach:4.2,h:3.6,speed:2.3,area:{x:t.pos.x,z:t.pos.z},r:9,shadow:makeShadow(),happy:2};wildRexes.push(w);
     if(wildRexes.length>6){const o=wildRexes.shift();scene.remove(o.mesh);scene.remove(o.shadow)}
     floatIcon('💖',t.pos.clone().add(new V3(0,4,0)),6,1.2,1.3);say('rexFixed',{prio:2});taskEvent('zapRex',t.pos);return}
-  if(t.kind==='kobold'){t.alive=false;t.active=false;t.poof=3.2;floatIcon('💖',t.pos.clone().add(new V3(0,2.4,0)),4,0.8,1.1);state.stars++;updateStars();floatIcon('⭐',t.pos.clone().add(new V3(0,2,0)),3,0.8,1.2);
+  if(t.kind==='kobold'){t.alive=false;t.active=false;t.poof=3.2;floatIcon('💖',t.pos.clone().add(new V3(0,2.4,0)),4,0.8,1.1);state.stars+=1+(t.stolen||0);updateStars();floatIcon('⭐',t.pos.clone().add(new V3(0,2,0)),3,0.8,1.2);
     setTimeout(()=>SFX.star(),200);say('koboldFixed',{prio:2});taskEvent('zapKobold',t.pos);save()}}
 
 /* ================= Flugsaurier: liebe (kreisen, landen, lassen sich streicheln) und freche (greifen Marie in der Luft an) ================= */
@@ -1876,6 +1901,10 @@ function updateCmdFx(dt){updateGuards(dt);updateTag(dt);for(const x of cmdAll())
    3 Runden. In jeder Runde fängt erst die Figur Marie, dann fängt Marie die Figur.
    3-2-1-Countdown, 30 Sekunden pro Jagd, Punkte und Verlauf auf der Tafel. */
 let TAG=null;
+// Maries aktuelle Höchstgeschwindigkeit (je nach Gestalt, wie beim Steuern)
+function playerTop(){const P=player.pos,mode=player.riding?'ride':player.form,gnd=groundAt(P.x,P.z,P.y),lake=inLake(P.x,P.z),air=P.y>gnd+0.6;let v;
+  switch(mode){case 'human':v=lake&&P.y<=WATER_Y?4.5:8.5;break;case 'unicorn':v=air?24:15;break;case 'ride':v=(air?18:12)*(player.riding&&player.riding.power?POWERS[player.riding.power].speed:1);break;case 'fairy':v=9.5;break;default:v=lake?14:4.5}
+  return v*(VR.on?VR.speedK:1)}
 const TAG_L={xCatch:['Hab dich! Jetzt bist du dran!','Gefangen! Hihi, jetzt musst du mich fangen!'],mCatch:['Oh nein, du hast mich erwischt!','Erwischt! Du bist aber schnell!'],
   xMiss:['Puh, du bist zu schnell für mich!','Oh, ich hab dich nicht gekriegt!'],mMiss:['Hihi, du hast mich nicht gekriegt!','Ätsch, ich war schneller!'],
   winM:'Du hast gewonnen! Du bist die Fang-Königin!',winX:'Ich habe gewonnen! Das war lustig! Spielen wir nochmal?',tie:'Unentschieden! Das war ein tolles Spiel!'};
@@ -1895,10 +1924,10 @@ function drawTag(){const T=TAG;if(!T)return;const c=tagCv.getContext('2d'),W=560
   else if(T.phase==='run')info=(T.chaser==='x'?`${nm} fängt dich!`:`Fang ${nm}!`)+`  ⏱ ${Math.ceil(T.t)} s`;else if(T.phase==='caught')info=T.msg||'';else if(T.phase==='end')info=T.msg||'';
   c.fillStyle=T.phase==='count'?'#ff4f93':'#5b2a86';c.fillText(info,W/2,146);
   c.font='600 23px "Baloo 2",system-ui,sans-serif';c.fillStyle='#5b2a86';T.log.slice(-5).forEach((l,i)=>c.fillText(l,W/2,192+i*27));tagTex.needsUpdate=true}
-function tagFlee(x,dt){const P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),sp=Math.min((CMD_SPEED[x.kind||(sw?'swim':'npc')]||7)*1.3,playerRun()*0.82);
+function tagFlee(x,dt){const P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x);x.stumble=(x.stumble||0)-dt;if(x.stumble>0)return 0;if(x.stumble<-rnd(6,10)){x.stumble=0.8;floatIcon('💫',x.pos.clone().add(new V3(0,(x.h||2)+0.8,0)),1,0.2,0.9);return 0}const sp=playerTop();
   const away=Math.atan2(x.pos.x-P.x,x.pos.z-P.z)+Math.sin(NOW*0.9+(x.ud?x.ud.seed:0))*0.5;
   for(const off of [0,0.8,-0.8,1.6,-1.6,2.4,-2.4]){const a=away+off,nx=x.pos.x+Math.sin(a)*sp*dt,nz=x.pos.z+Math.cos(a)*sp*dt,wet=inLake(nx,nz);
-    if((sw&&!wet)||(!sw&&!fl&&wet&&terrainH(nx,nz)<WATER_Y-0.6)||Math.hypot(nx,nz)>WORLD_R-12)continue;x.pos.x=nx;x.pos.z=nz;x.yaw=angLerp(x.yaw,a,damp(8,dt));return sp}
+    if(Math.hypot(nx,nz)>WORLD_R-12&&Math.hypot(nx-LAKE.x,nz-LAKE.z)>LAKE.r-8)continue;x.pos.x=nx;x.pos.z=nz;x.yaw=angLerp(x.yaw,a,damp(8,dt));return sp}
   return 0}
 function updateTag(dt){const T=TAG;if(!T)return;const x=T.x,P=player.pos;
   if(!x.cmd||x.cmd.t!=='tag'||state.captured||hd(x.pos,P)>140){tagEnd();return}
@@ -1924,13 +1953,16 @@ function updateTag(dt){const T=TAG;if(!T)return;const x=T.x,P=player.pos;
 function tagMove(x,dt){const T=TAG,P=player.pos;if(!T||T.x!==x)return null;let sp=0;
   if(T.phase==='count'&&T.chaser==='x'){x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(4,dt));if(hd(x.pos,P)<8){const aw=Math.atan2(x.pos.x-P.x,x.pos.z-P.z),nx=x.pos.x+Math.sin(aw)*6*dt,nz=x.pos.z+Math.cos(aw)*6*dt,wet=inLake(nx,nz);if(cmdSwims(x)===wet||cmdCanFly(x)){x.pos.x=nx;x.pos.z=nz;sp=6}}const n=Math.ceil(T.t);if(n!==x.tagN){x.tagN=n;x.jumpT=0.6}}
   else if((T.phase==='count'||T.phase==='run')&&T.chaser==='m')sp=tagFlee(x,dt);
-  else if(T.phase==='run'&&T.chaser==='x'){const sw=cmdSwims(x),fl=cmdCanFly(x),v=Math.min((CMD_SPEED[x.kind||(sw?'swim':'npc')]||7)*1.6,playerRun()*1.25);
+  else if(T.phase==='run'&&T.chaser==='x'){const sw=cmdSwims(x),fl=cmdCanFly(x);x.stumble=(x.stumble||0)-dt;if(x.stumble<-rnd(7,11)){x.stumble=0.7;floatIcon('💫',x.pos.clone().add(new V3(0,(x.h||2)+0.8,0)),1,0.2,0.9)}const v=x.stumble>0?0:playerTop();
     const dx=P.x-x.pos.x,dz=P.z-x.pos.z,d=Math.hypot(dx,dz);if(d>0.3){const nx=x.pos.x+dx/d*v*dt,nz=x.pos.z+dz/d*v*dt,wet=inLake(nx,nz);
-      if(!((sw&&!wet)||(!sw&&!fl&&wet&&terrainH(nx,nz)<WATER_Y-0.6))){x.pos.x=nx;x.pos.z=nz;sp=v}x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(8,dt))}}
+      x.pos.x=nx;x.pos.z=nz;sp=v;x.yaw=angLerp(x.yaw,Math.atan2(dx,dz),damp(8,dt))}}
   else x.yaw=angLerp(x.yaw,Math.atan2(P.x-x.pos.x,P.z-x.pos.z),damp(4,dt));
-  const sw=cmdSwims(x),fl=cmdCanFly(x),g=groundAt(x.pos.x,x.pos.z,x.pos.y+0.5);let fly=false;
-  if(sw)x.pos.y=clamp(lerp(x.pos.y,Math.min(P.y,-0.4),damp(2,dt)),terrainH(x.pos.x,x.pos.z)+1.2,x.kind==='shark'?WATER_Y-1.6:-0.35);
-  else if(fl){x.pos.y=Math.max(g+(x.hover?0.6:0),lerp(x.pos.y,Math.max(g,P.y)+(x.hover?0.6:0),damp(3,dt)));fly=x.pos.y>g+(x.hover?1.2:0.6)}else x.pos.y=g;
+  // Zauber-Fangen: fliegt Marie, fliegt die Figur mit; schwimmt Marie, schwimmt sie mit (gleiche Chancen für alle)
+  const sw=cmdSwims(x),fl=cmdCanFly(x),g=groundAt(x.pos.x,x.pos.z,x.pos.y+0.5),wet=inLake(x.pos.x,x.pos.z),gP=groundAt(P.x,P.z,P.y),mAir=P.y>gP+1.2;let ty;
+  if(mAir)ty=Math.max(g+0.3,P.y+(T.chaser==='m'?rnd(-0.5,0.5):0));else if(wet)ty=sw?clamp(P.y,terrainH(x.pos.x,x.pos.z)+1.2,x.kind==='shark'?WATER_Y-1.2:-0.35):Math.max(g,WATER_Y-0.35);else ty=sw?g+0.8:g;
+  if(x.hover)ty+=0.6;x.pos.y=lerp(x.pos.y,ty,damp(mAir?4:6,dt));if(!mAir&&!wet&&!sw)x.pos.y=Math.max(x.pos.y,g);
+  const fly=x.pos.y>g+(x.hover?1.2:0.6)&&!wet;
+  if((fly&&!fl)||(sw&&!wet)||(!sw&&wet&&x.kind!=='pegasus'))if(Math.random()<dt*25)emit(x.pos.x+rnd(-0.8,0.8),x.pos.y+rnd(0,1.5),x.pos.z+rnd(-0.8,0.8),0,0.4,0,pick(SPARK),0.55,0.8,0);
   return {spd:sp,fly}}
 function kiSay(x,text){kiShow(x.name+': '+text);if(!KI.ok){Voice.say(text,{prio:2,who:x.kind?'erz':x.id});return}
   let q=KI.base+'/api/say?inline='+(KI_APP?1:0)+'&npc='+(x.kind?'tier':x.id)+'&text='+encodeURIComponent(text);if(x.kind){const d=kiAnimalInfo(x);q+='&art='+d.art+'&name='+encodeURIComponent(x.name)}
@@ -2134,7 +2166,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
   for(const n of names){add('erz',`Schau mal! ${n} ist groß geworden!`);add('erz',`Oh! Ein neues Baby-Pferd ist geboren! Es heißt ${n}!`)}
   for(const nm of names)add('erz',`Juhu! Du hast ${nm} gefunden! ${nm} kommt jetzt mit dir mit.`);
   for(const k in POWERS)add('erz',`Wow! Ein Superpferd ist entstanden! Es hat die Superkraft ${POWERS[k].name}!`);for(const k in MOUNT_LINES)add('erz',MOUNT_LINES[k]);
-  PIRATE_LINES.forEach(t=>add('pirat',t));KOBOLD_LINES.forEach(t=>add('kobold',t));KOBOLD_CAP_LINES.forEach(t=>add('kobold',t));REX_LINES.forEach(t=>add('rex',t));PTERO_LINES.forEach(t=>add('ptero',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
+  PIRATE_LINES.forEach(t=>add('pirat',t));KOBOLD_LINES.forEach(t=>add('kobold',t));KOBOLD_CAP_LINES.forEach(t=>add('kobold',t));add('kobold',KOBOLD_STEAL);add('kobold',KOBOLD_TAUNT);REX_LINES.forEach(t=>add('rex',t));PTERO_LINES.forEach(t=>add('ptero',t));PIRATE_CAP_LINES.forEach(t=>add('pirat',t));
   for(const n of NPCS){if(n.hello)add(n.id,n.hello);n.chat.forEach(c=>add(n.id,c));
     for(const g of NPCS)if(g.tasks.length)add(n.id,` Du hilfst gerade ${g.name}.`);
     if(n.tasks.length){add('erz',`Bei ${n.name} gibt es noch mehr zu tun!`);add('erz',`Geh zu ${n.name}! ${n.er} hat eine Aufgabe für dich. Folge dem Lichtstrahl!`)}}
@@ -2142,7 +2174,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
     if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
   return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={pteros,badPteros,get TAG(){return TAG},tagStart,badRexes,kobolds,wildRexes,KCAMP,villainFixed,kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateVillains(0.05);updatePteros(0.05);updateAmmo(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={FL_TYPES,updateFlowers,pteros,badPteros,get TAG(){return TAG},tagStart,badRexes,kobolds,wildRexes,KCAMP,villainFixed,kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateVillains(0.05);updatePteros(0.05);updateAmmo(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
