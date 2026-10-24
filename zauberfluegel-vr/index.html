@@ -627,12 +627,13 @@ const LINES={
   careHint:'Kümmere dich um deine Tiere! Du kannst sie füttern, streicheln und putzen.',
   toNpc:'Geh zu Lotte! Sie hat eine Aufgabe für dich.',
   beHuman:'Werde wieder Marie, dann kannst du die Tiere pflegen!',
-  feed:['Mmmh, lecker!','Knusper, knusper! Danke!','Das schmeckt!'],pet:['Das hat es gern!','Kuschelig!','Oh, wie schön!'],brush:['Jetzt glitzert es!','Schön sauber!','So glänzend!'],
-  ride:['Hü hott! Los geht es!','Festhalten, Marie!'],pick:'Beeren gepflückt!',
-  taskDone:['Super gemacht, Marie!','Toll! Danke, Marie!','Du bist super, Marie!'],
+  feed:['Mmmh, lecker!','Knusper, knusper! Danke!','Das schmeckt!','Hmm, noch eins bitte!','Lecker, lecker!','Danke schön, Marie!'],pet:['Das hat es gern!','Kuschelig!','Oh, wie schön!','Da freut es sich!','So weich!','Es schmust mit dir!'],brush:['Jetzt glitzert es!','Schön sauber!','Wie das funkelt!','Blitzeblank!','Alles schön gekämmt!','Jetzt glänzt es wie ein Stern!'],
+  ride:['Hü hott! Los geht es!','Festhalten, Marie!','Auf geht es, ab in die Lüfte!'],pick:'Beeren gepflückt!',
+  taskDone:['Super gemacht, Marie!','Toll! Danke, Marie!','Du bist super, Marie!','Klasse, Marie!','Das hast du prima gemacht!','Wunderbar, Marie!'],
   teleport:'Schwupps! Zurück nach Hause!',
 };
-const say=(k,o)=>Voice.say(Array.isArray(LINES[k])?pick(LINES[k]):LINES[k],o);
+const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
+const say=(k,o)=>Voice.say(Array.isArray(LINES[k])?pickNew(k,LINES[k]):LINES[k],o);
 
 /* ================= build world ================= */
 // terrain (vertex coloured: meadow, sandy paths, beach, sea floor, mountains)
@@ -1004,7 +1005,7 @@ function doAction(act){if(!act)return;const a=act.t;
 function care(a,act,berries){a.wanderT=Math.max(a.wanderT||0,3);
   if(a.cd[act]&&NOW<a.cd[act])return;a.cd[act]=NOW+1.2;
   const doneTask=checkTask(act,a,berries);
-  if(!doneTask)say(a.kind==='shark'&&act==='pet'?'shark':act,{prio:1});
+  if(!doneTask)say(a.kind==='shark'&&act==='pet'?'shark':act,{prio:0});
   if(a.kind==='pegasus'&&!a.adult){a.growth++;if(a.growth>=GROW_N)growUp(a)}
   state.lastProgress=NOW;save()}
 function growUp(a){a.adult=true;a.growAnim=0;setTimeout(()=>{Voice.say(`Schau mal! ${a.name} ist groß geworden!`,{prio:2});SFX.found()},900)}
@@ -1047,7 +1048,7 @@ const TASK_MAP=Object.fromEntries(TASKS.map(t=>[t.id,t]));
 NPCS.forEach(n=>n.tasks=TASKS.filter(t=>t.giver===n.id));
 const curTask=()=>(state.task&&TASK_MAP[state.task])||null;
 function talkNPC(n){if(!n)return;n.wave=2.5;const v={prio:2,who:n.id},cur=curTask();
-  if(n.kid){Voice.say(pick(n.chat),v);return}
+  if(n.kid){Voice.say(pickNew(n.id,n.chat),v);return}
   if(cur){if(cur.giver===n.id){if(cur.fetch&&state.itemHeld){completeFetch();return}Voice.say(cur.line,v);return}
     Voice.say(pick(n.chat)+' Du hilfst gerade '+NPC_MAP[cur.giver].name+'.',v);return}
   const L=n.tasks,idx=state.tIdx[n.id]|0;let t=null;for(let k=0;k<L.length;k++){const c=L[(idx+k)%L.length];if(c.needPeg&&!anyPeg())continue;state.tIdx[n.id]=(idx+k+1)%L.length;t=c;break}
@@ -1057,7 +1058,7 @@ function talkNPC(n){if(!n)return;n.wave=2.5;const v={prio:2,who:n.id},cur=curTas
   Voice.say(line,v);state.lastProgress=NOW;save()}
 function reward(p){state.task=null;state.itemHeld=false;state.itemPos=null;state.stars++;updateStars();floatIcon('⭐',p,6,1.2,1.3);setTimeout(()=>SFX.star(),250);state.lastProgress=NOW;save()}
 function checkTask(act,a,b){const t=curTask();if(!t||!t.ok||!t.ok(act,a,b))return false;reward(headPos(a));
-  Voice.say(pick(LINES.taskDone)+(Math.random()<0.5?` Bei ${NPC_MAP[t.giver].name} gibt es noch mehr zu tun!`:''),{prio:2});return true}
+  Voice.say(pickNew('taskDone',LINES.taskDone)+(Math.random()<0.5?` Bei ${NPC_MAP[t.giver].name} gibt es noch mehr zu tun!`:''),{prio:2});return true}
 function completeFetch(){const t=curTask();if(!t||!t.fetch||!state.itemHeld)return;const n=NPC_MAP[t.giver];n.wave=3;reward(n.pos.clone().add(new V3(0,3*n.scale,0)));
   burst(n.pos.clone().add(new V3(0,2,0)),70,6,0.8,1.5);Voice.say(t.thanks,{prio:2,who:n.id})}
 // fetch items: a big glowing emoji in the world, carried above Marie's head once picked up
@@ -1101,7 +1102,7 @@ function updateGuide(dt){gT=guideTarget();const P=player.pos,tp=gT.pos;let sugge
   const dir=new V3(tp.x-P.x,tp.y-P.y,tp.z-P.z);const dist=dir.length();dir.normalize();
   const dH=new V3(tp.x-P.x,0,tp.z-P.z);const distH=dH.length();if(distH>0.01)dH.divideScalar(distH);
   if(gT.need&&!canReach(gT.need)&&distH<60){suggest=NEED_FORM[gT.need];
-    if(NOW>state.needHintT){state.needHintT=NOW+28;say(gT.kind==='baby'?NEED_LINE[gT.need]:TASK_NEED_LINE[gT.need],{prio:1})}}
+    if(NOW>state.needHintT){state.needHintT=NOW+50;say(gT.kind==='baby'?NEED_LINE[gT.need]:TASK_NEED_LINE[gT.need],{prio:1})}}
   else if(gT.kind==='task'&&gT.human&&player.form!=='human'&&!player.riding&&dist<14)suggest='human';
   updateFormBtns(suggest);
   // butterfly: flies a few metres ahead of Marie towards the goal, then hovers over it
@@ -1365,8 +1366,8 @@ function pressBtn(b,i){if(NOW<b.userData.cd)return;b.userData.cd=NOW+0.4;SFX.pop
 (()=>{const w=new THREE.Group();w.position.set(0,0.04,0.06);w.rotation.set(-1.0,0,0);
   const bg=new THREE.Mesh(new THREE.PlaneGeometry(0.3,0.17),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.55,fog:false}));bg.position.z=-0.002;w.add(bg);
   [['👧','human'],['🦄','unicorn'],['🧚‍♀️','fairy'],['🧜‍♀️','mermaid']].forEach(([ic,f],k)=>{const b=vrButton(ic,0.062,()=>{setForm(f)});b.position.set(-0.105+k*0.07,0.035,0);b.userData.form=f;w.add(b)});
-  const h=vrButton('🔊',0.05,()=>help(true));h.position.set(-0.105,-0.045,0);w.add(h);
-  const ho=vrButton('🏠',0.05,()=>teleportHome());ho.position.set(-0.045,-0.045,0);w.add(ho);
+  const h=vrButton('🔊',0.05,()=>help(true));h.position.set(-0.105,-0.06,0);w.add(h);
+  const ho=vrButton('🏠',0.05,()=>teleportHome());ho.position.set(-0.03,-0.06,0);w.add(ho);
   const c=document.createElement('canvas');c.width=256;c.height=96;VR.starTex=new THREE.CanvasTexture(c);VR.starTex.cv=c;
   const s=new THREE.Mesh(new THREE.PlaneGeometry(0.13,0.049),new THREE.MeshBasicMaterial({map:VR.starTex,transparent:true,fog:false}));s.position.set(0.065,-0.045,0);w.add(s);VR.wrist=w;drawStarPanel()})();
 function drawStarPanel(){const t=VR.starTex;if(!t)return;const x=t.cv.getContext('2d');x.clearRect(0,0,256,96);x.fillStyle='rgba(255,255,255,0.9)';x.beginPath();x.roundRect?x.roundRect(4,8,248,80,40):x.rect(4,8,248,80);x.fill();
@@ -1397,7 +1398,6 @@ function startVR(){if(!navigator.xr)return;navigator.xr.requestSession('immersiv
 function vrInput(dt){const s=renderer.xr.getSession();VR.mx=VR.my=0;input.up=input.down=false;if(!s)return;
   for(const src of s.inputSources){const gp=src.gamepad;if(!gp)continue;const ax=gp.axes,b=gp.buttons;const sx=ax.length>=4?ax[2]:ax[0]||0,sy=ax.length>=4?ax[3]:ax[1]||0;
     if(src.handedness==='left'){if(Math.hypot(sx,sy)>0.15){VR.mx=sx;VR.my=-sy}
-      if(b[5]&&b[5].pressed&&!VR.yWas)teleportHome();VR.yWas=!!(b[5]&&b[5].pressed);
       if(b[4]&&b[4].pressed&&!VR.xWas)help(true);VR.xWas=!!(b[4]&&b[4].pressed)}
     else{if(Math.abs(sx)>0.65&&VR.snapReady){VR.rig.rotation.y-=Math.sign(sx)*Math.PI/6;VR.snapReady=false;VR.turnFx=0.35}if(Math.abs(sx)<0.3)VR.snapReady=true;
       if(sy<-0.5)input.up=true;if(sy>0.5)input.down=true;if(b[4]&&b[4].pressed)input.up=true;if(b[5]&&b[5].pressed)input.down=true}}}
@@ -1434,7 +1434,7 @@ function updateVR(dt){
     const own=ctr.userData.hand==='left'?targets.filter(b=>b.parent!==VR.wrist):targets;const h=VR_RAY.intersectObjects(own,false)[0];
     ctr.userData.ray.visible=true;ctr.userData.ray.scale.set(1,1,h?h.distance/k:1.2);ctr.userData.ray.material.color.set(h?0xff7eb6:0xfff2a8);
     if(h){ctr.userData.hit=h.object;h.object.userData.hover=1;if(ctr.userData.lastHit!==h.object)buzz(i,0.2,20)}ctr.userData.lastHit=h?h.object:null;
-    const tip=VR.grips[i].userData.tip;tip.getWorldPosition(_cw);for(const b of own){b.getWorldPosition(_cd);if(_cw.distanceTo(_cd)<b.userData.size*0.55*k)pressBtn(b,i)}});
+    const tip=VR.grips[i].userData.tip;tip.getWorldPosition(_cw);for(const b of own){if(b.parent===VR.wrist)continue;b.getWorldPosition(_cd);const inside=_cw.distanceTo(_cd)<b.userData.size*0.55*k,tk='touch'+i;if(inside&&!b.userData[tk])pressBtn(b,i);b.userData[tk]=inside}});
   // things you carry float above your left hand
   const lg=VR.grips.find(g=>g.userData.hand==='left');if(lg&&(state.itemHeld||player.carry==='berries')){lg.getWorldPosition(_cw);if(state.itemHeld){itemSpr.position.set(_cw.x,_cw.y+0.22*k,_cw.z);itemSpr.scale.setScalar(0.3*k)}
     if(player.carry==='berries')berryCarry.position.set(_cw.x,_cw.y+0.15*k,_cw.z)}
@@ -1449,7 +1449,7 @@ function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else 
   if(state.started){updatePlayer(dt);recordTrail();updateGuide(dt);updateItem(dt);if(VR.on)updateVR(dt);
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
-    if(NOW-state.lastProgress>50&&NOW-state.lastAutoHint>50)help(false);
+    if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
     updateBreeding(dt)}
   updatePegs(dt);updateCreatures(dt);updateParticles(dt);updateFloaters(dt);updateMusic(dt);
   dMat.uniforms.uT.value=NOW;dMat.uniforms.uC.value.copy(player.pos);sky.position.copy(VR.on?_cw.setFromMatrixPosition(camera.matrixWorld):camera.position);
