@@ -2189,7 +2189,7 @@ function tagMove(x,dt){const T=TAG,P=player.pos;if(!T||T.x!==x)return null;let s
   if((fly&&!fl)||(sw&&!wet)||(!sw&&wet&&x.kind!=='pegasus'))if(Math.random()<dt*25)emit(x.pos.x+rnd(-0.8,0.8),x.pos.y+rnd(0,1.5),x.pos.z+rnd(-0.8,0.8),0,0.4,0,pick(SPARK),0.55,0.8,0);
   return {spd:sp,fly}}
 function kiSay(x,text){kiShow(x.name+': '+text);if(!KI.ok){Voice.say(text,{prio:2,who:x.kind?'erz':x.id});return}
-  let q=KI.base+'/api/say?inline='+(KI_APP?1:0)+'&npc='+(x.kind?'tier':x.id)+'&text='+encodeURIComponent(text);if(x.kind){const d=kiAnimalInfo(x);q+='&art='+d.art+'&name='+encodeURIComponent(x.name)}
+  let q=KI.base+'/api/say?inline='+(KI.inl?1:0)+'&npc='+(x.kind?'tier':x.id)+'&text='+encodeURIComponent(text);if(x.kind){const d=kiAnimalInfo(x);q+='&art='+d.art+'&name='+encodeURIComponent(x.name)}
   const r=new XMLHttpRequest();r.open('GET',q);r.onload=()=>{try{const au=(JSON.parse(r.responseText).audios||[]).map(u=>u[0]==='/'?KI.base+u:u);
     if(au.length&&KI.state==='idle'){Voice.stop();Voice.prio=2;Voice.queue=au;Voice.playing=true;Voice.next()}}catch(e){}};r.send()}
 
@@ -2199,13 +2199,16 @@ function kiSay(x,text){kiShow(x.name+': '+text);if(!KI.ok){Voice.say(text,{prio:
 var KI={base:'',ok:false,stream:null,rec:null,chunks:[],n:null,state:'idle',t0:0,speech:false,quietT:0,an:null,buf:null,cancel:false,hideT:0,floor:0.01};
 // In der Handy-App (file://) sitzt der KI-PC unter seiner Heimnetz-Adresse, sonst am selben Ort wie das Spiel
 const KI_APP=location.protocol==='file:'&&!!window.AndroidTTS;
-if(KI_APP){KI.base='https://192.168.86.106:8443';try{KI.base=localStorage.getItem('mz_kiBase')||KI.base}catch(e){}}
+if(KI_APP){KI.base='https://192.168.86.106:8443';KI.inl=true;try{KI.base=localStorage.getItem('mz_kiBase')||KI.base}catch(e){}}
+// Website / Quest-App (wagnerroman.de): direkt mit dem KI-PC im Heimnetz sprechen, ohne erst dorthin zu wechseln
+const KI_REMOTE=location.protocol==='https:'&&!location.port&&location.hostname!=='localhost';
+if(KI_REMOTE){let pc='https://192.168.86.106:8443';try{pc=(localStorage.getItem('mz_kiPC')||pc).replace(/\/$/,'')}catch(e){}KI.base=pc;KI.inl=true}
 function kiPing(){if(KI.ok)return;try{const x=new XMLHttpRequest();x.open('GET',KI.base+'/api/ping');x.timeout=5000;
-  x.onload=()=>{try{KI.ok=x.status===200&&!!JSON.parse(x.responseText).ok}catch(e){}if(KI.ok&&!state.started)$('#kiMic').hidden=false};x.send()}catch(e){}}
-if(KI_APP||location.protocol==='https:'||location.hostname==='localhost'){kiPing();if(KI_APP){let n=0;const iv=setInterval(()=>{if(KI.ok||++n>40)clearInterval(iv);else kiPing()},15000)}}
+  x.onload=()=>{try{KI.ok=x.status===200&&!!JSON.parse(x.responseText).ok}catch(e){}if(KI.ok){$('#kiGo').hidden=true;if(!state.started)$('#kiMic').hidden=false}};x.send()}catch(e){}}
+if(KI_APP||location.protocol==='https:'||location.hostname==='localhost'){kiPing();if(KI_APP||KI_REMOTE){let n=0;const iv=setInterval(()=>{if(KI.ok||++n>40)clearInterval(iv);else kiPing()},15000)}}
 // Website-Version: wenn der KI-PC im Heimnetz läuft, einen Knopf dorthin anzeigen
 (()=>{if(location.protocol!=='https:'||location.port)return;let pc='https://192.168.86.106:8443/';try{pc=localStorage.getItem('mz_kiPC')||pc}catch(e){}
-  const im=new Image(),t=setTimeout(()=>{im.onload=null},4000);im.onload=()=>{clearTimeout(t);if(state.started)return;const b=$('#kiGo');b.hidden=false;b.onclick=()=>{location.href=pc}};
+  const im=new Image(),t=setTimeout(()=>{im.onload=null},4000);im.onload=()=>{clearTimeout(t);if(state.started)return;if(KI.ok)return;const b=$('#kiGo');b.hidden=false;b.onclick=()=>{location.href=pc}};
   im.src=pc+'icon-192.png?'+Date.now()})();
 if(location.port==='8443')try{localStorage.setItem('mz_kiPC',location.origin+'/')}catch(e){}
 function kiMic(){if(KI.stream)return Promise.resolve(KI.stream);if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return Promise.reject(new Error('kein Mikrofon'));
@@ -2238,7 +2241,7 @@ function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;
   KI.state='send';kiShow('💭 '+n.name+' überlegt …',true);const cur=curTask();
   const ctx=[player.riding?'Marie reitet gerade auf einem Flügelpferd':'Marie ist gerade '+({human:'ein Mädchen',unicorn:'ein Einhorn',fairy:'eine kleine Fee',mermaid:'eine Meerjungfrau'}[player.form]||'ein Mädchen'),
     cur?'Ihre Aufgabe: '+cur.line:'',(()=>{const c=(n.a||n).cmd;return !c?'':c.t==='follow'?'Du läufst Marie gerade hinterher':c.t==='protect'?'Du beschützt Marie gerade vor bösen Haien und Piraten':c.t==='tag'?'Du spielst gerade Fangen mit Marie':c.t==='hide'?'Du spielst gerade Verstecken mit Marie':c.t==='stay'?'Du wartest gerade hier auf Marie':''})(),state.found.size+' von '+BABY_DEFS.length+' Baby-Pferden gefunden'].filter(Boolean).join('. ');
-  let q=KI.base+'/api/talk?inline='+(KI_APP?1:0)+'&npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
+  let q=KI.base+'/api/talk?inline='+(KI.inl?1:0)+'&npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
   const x=new XMLHttpRequest();x.open('POST',q);x.timeout=40000;
   x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
   x.onerror=x.ontimeout=()=>{KI.state='idle';kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
