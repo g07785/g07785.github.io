@@ -2305,7 +2305,7 @@ function headLocal(){return camera.position}  // pose inside the rig (metres)
 function startVR(){if(!navigator.xr)return;navigator.xr.requestSession('immersive-vr',{optionalFeatures:['local-floor','bounded-floor']}).then(async s=>{
     renderer.xr.setReferenceSpaceType('local-floor');await renderer.xr.setSession(s);try{s.renderState.baseLayer&&(s.renderState.baseLayer.fixedFoveation=1)}catch(e){}
     VR.on=true;VR.rig.add(camera);camera.position.set(0,1.2,0);camera.rotation.set(0,0,0);VR.rig.rotation.y=player.yaw+Math.PI;camera.far=1200;camera.updateProjectionMatrix();
-    dust.visible=false;startGame();s.addEventListener('end',()=>{VR.on=false;scene.add(camera);VR.rig.remove(camera);camera.far=900;dust.visible=true;VR.vign.visible=false;VR.sub.visible=false;VR.arrow.visible=false;VR.ctxGroup.clear();player.root.visible=true;resize()})})
+    dust.visible=false;startGame();s.addEventListener('selectstart',()=>{try{if(!AC)audioInit();if(AC&&AC.state!=='running')AC.resume()}catch(e){}});s.addEventListener('end',()=>{VR.on=false;scene.add(camera);VR.rig.remove(camera);camera.far=900;dust.visible=true;VR.vign.visible=false;VR.sub.visible=false;VR.arrow.visible=false;VR.ctxGroup.clear();player.root.visible=true;resize()})})
   .catch(e=>console.warn('VR start failed',e))}
 function vrInput(dt){const s=renderer.xr.getSession();VR.mx=VR.my=0;input.up=input.down=false;if(!s)return;
   for(const src of s.inputSources){const gp=src.gamepad;if(!gp)continue;const ax=gp.axes,b=gp.buttons;const sx=ax.length>=4?ax[2]:ax[0]||0,sy=ax.length>=4?ax[3]:ax[1]||0;
@@ -2379,7 +2379,10 @@ function startGame(){if(state.started)return;audioInit();if(AC&&AC.state==='susp
   burst(player.pos.clone().add(new V3(0,1,0)),60,5)}
 document.getElementById('play').addEventListener('click',startGame);
 document.getElementById('playVR').addEventListener('click',()=>{audioInit();startVR()});
-if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported('immersive-vr').then(ok=>{if(ok)document.getElementById('playVR').hidden=false}).catch(()=>{});
+// Als Quest-App gestartet (Web-App im Quest Browser): sofort in VR starten, ohne Startbildschirm
+const QUEST_APP='getDigitalGoodsService' in window;
+if(navigator.xr&&navigator.xr.isSessionSupported)navigator.xr.isSessionSupported('immersive-vr').then(ok=>{if(!ok)return;document.getElementById('playVR').hidden=false;
+  if(QUEST_APP&&!state.started)setTimeout(()=>{if(!state.started&&!VR.on){try{audioInit()}catch(e){}startVR()}},600)}).catch(()=>{});
 document.addEventListener('visibilitychange',()=>{if(!AC)return;if(document.hidden)AC.suspend();else AC.resume()});
 renderer.setAnimationLoop(loop);
 // every sentence the game can speak, per speaker (used to pre-record voice clips)

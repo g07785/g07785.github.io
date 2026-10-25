@@ -1,8 +1,26 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "de.wagnerroman.isiteamspiel",
-    "sha256_cert_fingerprints": ["37:18:DB:BB:FD:58:EE:01:EB:BB:0E:D2:43:AC:80:73:7E:44:0F:6C:B9:DC:8D:6F:0B:86:6B:E1:96:21:D2:49"]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "de.wagnerroman.isiteamspiel",
+      "sha256_cert_fingerprints": [
+        "37:18:DB:BB:FD:58:EE:01:EB:BB:0E:D2:43:AC:80:73:7E:44:0F:6C:B9:DC:8D:6F:0B:86:6B:E1:96:21:D2:49"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "de.marie.zauberfluegel.vr",
+      "sha256_cert_fingerprints": [
+        "A0:1C:F0:CC:6C:2D:9D:97:B1:B1:67:65:79:F4:E8:EB:98:DF:09:E6:E9:CE:56:94:A9:00:84:B7:23:3C:CF:81"
+      ]
+    }
   }
-}]
+]
