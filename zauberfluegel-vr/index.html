@@ -1408,8 +1408,9 @@ function startMerge(a,b){if(!a||!b||a===b||merge)return;state.mergeSel=null;[a,b
 function removePeg(h){if(h.ribbon)scene.remove(h.ribbon.m);scene.remove(h.mesh);scene.remove(h.shadow);if(h.icon)scene.remove(h.icon);const i=pegs.indexOf(h);if(i>=0)pegs.splice(i,1);const f=followers.indexOf(h);if(f>=0)followers.splice(f,1);
   if(BABY_DEFS.some(d=>d.id===h.id)&&!state.gone.includes(h.id))state.gone.push(h.id);if(h.box!=null)drawSign(h.box)}
 function finishMerge(){const {a,b,spot}=merge;merge=null;const parent=pick([a,b]);
-  // Kräfte beider Pferde zusammenlegen, und jedes Kreuzen bringt eine neue dazu – bis eines alle hat
-  const had=[...new Set([...powList(a),...powList(b)])],missing=POWER_IDS.filter(p=>!had.includes(p)),powers=had.slice();if(missing.length)powers.push(pick(missing));
+    // zwei Superpferde: Kräfte nur zusammenlegen. Ist ein normales Pferd dabei, bringt es eine neue Kraft mit.
+  const had=[...new Set([...powList(a),...powList(b)])],missing=POWER_IDS.filter(p=>!had.includes(p)),powers=had.slice(),bothSuper=powList(a).length>0&&powList(b).length>0;
+  if(!bothSuper&&missing.length)powers.push(pick(missing));
   removePeg(a);removePeg(b);
   const all=powers.length===POWER_IDS.length,main=all?'rainbow':powers[powers.length-1],P=POWERS[main],base=parent.name.replace(/^[^-]+-/,'');
   const n=createPeg({id:'s'+Date.now(),name:(all?'Mega':powers.length>1?'Super':P.name)+'-'+base,power:main,powers,body:all?0xffffff:P.body,mane:P.mane,pattern:all?'galaxy':P.pattern,accent:all?0xffd75e:P.accent,saddle:all?0xffd75e:P.glow,adult:true,growth:GROW_N},'home');
