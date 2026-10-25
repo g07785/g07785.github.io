@@ -736,7 +736,7 @@ const LINES={
   horseSaved:'Gerettet! Das Pferd fliegt zurück in seinen Stall!',
   kingAppears:'Achtung! Der Kobold-König ist im Kobold-Lager aufgetaucht!',
   kingBeaten:'Wahnsinn! Du hast den Kobold-König besiegt! Er schenkt dir fünf Sterne und lässt alle Pferde frei!',
-  guardJoin:'Juhu, ein Beschützer kommt mit dir mit!',guardLeave:'Dein Beschützer geht wieder nach Hause.',guardFull:'Du hast schon sechs Beschützer! Schick erst einen nach Hause.',
+  guardBye:'Dein Beschützer muss jetzt nach Hause. Er sagt: Tschüss, Marie!',guardJoin:'Juhu, ein Beschützer kommt mit dir mit!',guardLeave:'Dein Beschützer geht wieder nach Hause.',guardFull:'Du hast schon sechs Beschützer! Schick erst einen nach Hause.',
   capturedMath:'Oh nein! Die Piraten haben dich gefangen! Rechne drei Aufgaben richtig, dann geht der Käfig auf!',capturedMathLand:'Oh nein! Die Kobolde haben dich gefangen! Rechne drei Aufgaben richtig, dann geht der Käfig auf!',
   mathHint:'Mit dem Zauberstab geht der Käfig nicht auf. Löse die Rechenaufgabe!',mathCount:'Wie viele Sterne sind das? Zähl mal!',mathPlus11:'Was ist 1 plus 1?',mathPlus12:'Was ist 1 plus 2?',mathPlus21:'Was ist 2 plus 1?',mathPlus13:'Was ist 1 plus 3?',mathPlus31:'Was ist 3 plus 1?',mathPlus22:'Was ist 2 plus 2?',mathPlus14:'Was ist 1 plus 4?',mathPlus41:'Was ist 4 plus 1?',mathPlus23:'Was ist 2 plus 3?',mathPlus32:'Was ist 3 plus 2?',
   mathRight:['Richtig! Super gerechnet!','Ja, genau! Ein Schloss ist offen!','Prima! Das war richtig!'],mathWrong:['Fast! Zähl nochmal ganz genau.','Hmm, nicht ganz. Versuch es nochmal!'],mathDone:'Super! Alle Schlösser sind offen!',
@@ -1080,7 +1080,7 @@ function updateStars(){$('#starN').textContent=state.stars}
 const formBtns=[...document.querySelectorAll('#forms .bubble')];
 function updateFormBtns(suggest){for(const b of formBtns){b.classList.toggle('active',b.dataset.form===player.form&&!player.riding);b.classList.toggle('pulse',b.dataset.form===suggest)}}
 let ctxKey='';const ctxEl=$('#ctx');let ctxActs=[];
-function renderCtx(acts){const key=acts.map(a=>a.id+(a.t?a.t.name:'')+a.icon).join('|');if(key===ctxKey)return;ctxKey=key;ctxActs=acts;ctxEl.innerHTML='';
+function renderCtx(acts){const key='#'+acts.map(a=>a.id+(a.t?a.t.name:'')+a.icon).join('|');if(key===ctxKey)return;ctxKey=key;ctxActs=acts;ctxEl.innerHTML='';
   acts.forEach((a,i)=>{const b=document.createElement('button');b.className='bubble'+(a.pulse?' pulse':'');b.textContent=a.icon;b.setAttribute('aria-label',a.id);
     b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();doAction(ctxActs[i])});ctxEl.appendChild(b)})}
 
@@ -1116,7 +1116,7 @@ function setForm(f){if(state.captured){say('onlyWand',{prio:2});return}if(player
 /* ================= actions ================= */
 function nearNPC(){let b=null,bd=1e9;for(const n of NPCS){const d=hd(player.pos,n.pos);if(d<4.6*Math.max(1,n.scale)&&Math.abs(player.pos.y-n.pos.y)<4&&d<bd){bd=d;b=n}}return b}
 function computeActions(){const P=player.pos,acts=[];
-  if(state.captured){const m=state.captured.math;if(m&&m.q)m.q.opts.forEach(v=>acts.push({id:'ans',icon:String(v),v}));return acts}
+  if(state.captured){const m=state.captured.math;if(m&&m.q)m.q.opts.forEach(v=>acts.push({id:'ans',icon:v+'️⃣',v}));return acts}
   if(RID){RID.o.forEach(v=>acts.push({id:'rid',icon:v,v}));return acts}
   if(player.riding){acts.push({id:'dismount',icon:'👣'});return acts}
   const n=nearNPC(),cur=curTask();
@@ -1519,7 +1519,7 @@ function updateCreatures(dt){
     if(c.cmd)spd=cmdMove(c,dt).spd;
     else if(!near&&d>0.4&&c.munch<=0){spd=c.speed;c.pos.x+=dx/d*spd*dt;c.pos.z+=dz/d*spd*dt;c.yaw=angLerp(c.yaw,Math.atan2(dx,dz),damp(3,dt))}
     else if(near)c.yaw=angLerp(c.yaw,Math.atan2(player.pos.x-c.pos.x,player.pos.z-c.pos.z),damp(3,dt));
-    if(!(c.cmd&&c.cmd.t==='tag'))c.pos.y=hd(c.pos,c.area)<c.r+3?2:terrainH(c.pos.x,c.pos.z);c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
+    if(!(c.cmd&&c.cmd.t==='tag'))c.pos.y=(c===trex||c===bra)&&hd(c.pos,c.area)<c.r+3?2:terrainH(c.pos.x,c.pos.z);c.mesh.position.copy(c.pos);c.mesh.rotation.y=c.yaw;animSimple(c,dt,spd);placeShadow(c.shadow,c.pos.x,c.pos.y,c.pos.z,c.kind==='brachio'?6:3)}
   // people
   const noTask=!state.task;const ng=noTask?nextGiver():null;
   for(const n of NPCS){n.wave-=dt;const u=n.mesh.userData,dn=hd(n.pos,player.pos);
@@ -1816,19 +1816,49 @@ function villainFixed(t,p){if(t.kind==='badRex'){t.alive=false;scene.remove(t.me
 /* ================= Beschützer-Rätsel: erst hilft Marie dem Tier, dann hilft es ihr =================
    Für Kinder, die noch nicht lesen: alles wird vorgelesen, die Antworten sind Bilder (antippen). */
 const RIDDLES=[
-  {k:'rMuh',t:'Welches Tier macht Muh?',o:['🐄','🐷','🐸'],a:'🐄'},{k:'rWau',t:'Welches Tier macht Wau wau?',o:['🐱','🐶','🐔'],a:'🐶'},
-  {k:'rMiau',t:'Welches Tier macht Miau?',o:['🐱','🐮','🦆'],a:'🐱'},{k:'rQuak',t:'Welches Tier macht Quak?',o:['🐸','🐴','🐑'],a:'🐸'},
-  {k:'rFly',t:'Welches Tier kann fliegen?',o:['🐦','🐟','🐢'],a:'🐦'},{k:'rWater',t:'Wer wohnt im Wasser?',o:['🐟','🐈','🐓'],a:'🐟'},
-  {k:'rGelb',t:'Was ist gelb wie die Sonne?',o:['🍌','🍓','🥦'],a:'🍌'},{k:'rRot',t:'Was ist rot?',o:['🍓','🥒','🍇'],a:'🍓'},
-  {k:'rRegen',t:'Was brauchst du, wenn es regnet?',o:['☂️','🕶️','🧤'],a:'☂️'},{k:'rFuss',t:'Was ziehst du an die Füße?',o:['👟','🧢','🧤'],a:'👟'},
-  {k:'rHase',t:'Was frisst ein Hase am liebsten?',o:['🥕','🍕','🍦'],a:'🥕'},{k:'rGross',t:'Welches Tier ist ganz groß?',o:['🐘','🐭','🐞'],a:'🐘'},
-  {k:'rKreis',t:'Wo ist der Kreis?',o:['⚪','🔺','🟥'],a:'⚪'},{k:'rNacht',t:'Was siehst du nachts am Himmel?',o:['🌙','🌈','🌻'],a:'🌙'},
-  {k:'rOdd1',t:'Eins passt nicht dazu. Welches?',show:'🍎 🍌 🍐 🚗',o:['🍎','🍌','🚗'],a:'🚗'},{k:'rOdd2',t:'Eins passt nicht dazu. Welches?',show:'🐶 🐱 🐰 🌳',o:['🐶','🌳','🐱'],a:'🌳'},
-  {k:'rNext1',t:'Was kommt als Nächstes?',show:'🔴 🔵 🔴 🔵 ❓',o:['🔴','🟢','🔵'],a:'🔴'},{k:'rNext2',t:'Was kommt als Nächstes?',show:'⭐ 🌙 ⭐ 🌙 ❓',o:['🌙','☀️','⭐'],a:'⭐'},
-];
+  {k:'rq0',t:'Welches Tier macht Muh?',o:['🐄','🐷','🐸'],a:'🐄'},{k:'rq1',t:'Welches Tier macht Wau wau?',o:['🐱','🐶','🐔'],a:'🐶'},
+  {k:'rq2',t:'Welches Tier macht Miau?',o:['🐱','🐮','🦆'],a:'🐱'},{k:'rq3',t:'Welches Tier macht Quak?',o:['🐸','🐴','🐑'],a:'🐸'},
+  {k:'rq4',t:'Welches Tier macht Mäh?',o:['🐑','🐶','🐟'],a:'🐑'},{k:'rq5',t:'Welches Tier macht Kikeriki?',o:['🐓','🐄','🐱'],a:'🐓'},
+  {k:'rq6',t:'Welches Tier macht Grunz?',o:['🐷','🐦','🐭'],a:'🐷'},{k:'rq7',t:'Welches Tier summt und macht Honig?',o:['🐝','🐌','🐢'],a:'🐝'},
+  {k:'rq8',t:'Welches Tier brüllt ganz laut?',o:['🦁','🐰','🐞'],a:'🦁'},{k:'rq9',t:'Welches Tier macht Huhu in der Nacht?',o:['🦉','🐄','🐸'],a:'🦉'},
+  {k:'rq10',t:'Welches Tier wiehert?',o:['🐴','🐱','🐷'],a:'🐴'},{k:'rq11',t:'Welches Tier piepst?',o:['🐭','🐘','🐄'],a:'🐭'},
+  {k:'rq12',t:'Welches Tier kann fliegen?',o:['🐦','🐟','🐢'],a:'🐦'},{k:'rq13',t:'Wer wohnt im Wasser?',o:['🐟','🐈','🐓'],a:'🐟'},
+  {k:'rq14',t:'Welches Tier ist ganz groß?',o:['🐘','🐭','🐞'],a:'🐘'},{k:'rq15',t:'Welches Tier ist ganz klein?',o:['🐜','🐘','🦒'],a:'🐜'},
+  {k:'rq16',t:'Welches Tier hat einen ganz langen Hals?',o:['🦒','🐷','🐶'],a:'🦒'},{k:'rq17',t:'Welches Tier hat schwarze und weiße Streifen?',o:['🦓','🐸','🐥'],a:'🦓'},
+  {k:'rq18',t:'Welches Tier legt Eier?',o:['🐔','🐶','🐱'],a:'🐔'},{k:'rq19',t:'Welches Tier ist ganz langsam?',o:['🐌','🐆','🐎'],a:'🐌'},
+  {k:'rq20',t:'Welches Tier hat einen Rüssel?',o:['🐘','🐰','🐟'],a:'🐘'},{k:'rq21',t:'Welches Tier hüpft und hat lange Ohren?',o:['🐰','🐍','🐟'],a:'🐰'},
+  {k:'rq22',t:'Welches Tier hat keine Beine?',o:['🐍','🐶','🐔'],a:'🐍'},{k:'rq23',t:'Wer wohnt auf dem Bauernhof?',o:['🐄','🦈','🐧'],a:'🐄'},
+  {k:'rq24',t:'Was frisst ein Hase am liebsten?',o:['🥕','🍕','🍦'],a:'🥕'},{k:'rq25',t:'Was frisst ein Affe am liebsten?',o:['🍌','🥩','🧀'],a:'🍌'},
+  {k:'rq26',t:'Was frisst eine Maus gern?',o:['🧀','🍔','🍩'],a:'🧀'},{k:'rq27',t:'Was frisst ein Hund gern?',o:['🦴','🍦','🍓'],a:'🦴'},
+  {k:'rq28',t:'Was frisst die Kuh?',o:['🌿','🍕','🍬'],a:'🌿'},{k:'rq29',t:'Was ist gelb wie die Sonne?',o:['🍌','🍓','🥦'],a:'🍌'},
+  {k:'rq30',t:'Was ist rot?',o:['🍓','🥒','🍇'],a:'🍓'},{k:'rq31',t:'Was ist grün?',o:['🥒','🍌','🍊'],a:'🥒'},
+  {k:'rq32',t:'Was ist orange?',o:['🥕','🍆','🥦'],a:'🥕'},{k:'rq33',t:'Was ist weiß wie Schnee?',o:['⛄','🍫','🍅'],a:'⛄'},
+  {k:'rq34',t:'Welche Farbe hat der Himmel?',o:['🔵','🟤','🟢'],a:'🔵'},{k:'rq35',t:'Welche Farbe hat das Gras?',o:['🟢','🔴','🟣'],a:'🟢'},
+  {k:'rq36',t:'Was brauchst du, wenn es regnet?',o:['☂️','🕶️','🧤'],a:'☂️'},{k:'rq37',t:'Was ziehst du an die Füße?',o:['👟','🧢','🧤'],a:'👟'},
+  {k:'rq38',t:'Was setzt du auf den Kopf?',o:['🧢','👟','🧦'],a:'🧢'},{k:'rq39',t:'Was ziehst du an die Hände, wenn es kalt ist?',o:['🧤','👟','🕶️'],a:'🧤'},
+  {k:'rq40',t:'Womit isst du Suppe?',o:['🥄','✂️','🖍️'],a:'🥄'},{k:'rq41',t:'Womit malst du ein Bild?',o:['🖍️','🥄','🔑'],a:'🖍️'},
+  {k:'rq42',t:'Womit schneidest du Papier?',o:['✂️','🥄','🧸'],a:'✂️'},{k:'rq43',t:'Wo schläfst du in der Nacht?',o:['🛏️','🚗','🛁'],a:'🛏️'},
+  {k:'rq44',t:'Was fällt im Winter vom Himmel?',o:['❄️','🍎','🌸'],a:'❄️'},{k:'rq45',t:'Was scheint am Tag am Himmel?',o:['☀️','🌙','⭐'],a:'☀️'},
+  {k:'rq46',t:'Was siehst du nachts am Himmel?',o:['🌙','🌈','🌻'],a:'🌙'},{k:'rq47',t:'Was ist ganz heiß?',o:['🔥','🧊','⛄'],a:'🔥'},
+  {k:'rq48',t:'Was ist ganz kalt?',o:['🧊','🔥','☕'],a:'🧊'},{k:'rq49',t:'Was wächst auf dem Baum?',o:['🍎','🥕','🍞'],a:'🍎'},
+  {k:'rq50',t:'Was macht Licht?',o:['💡','🧦','🥄'],a:'💡'},{k:'rq51',t:'Was fährt auf Schienen?',o:['🚂','⛵','🚲'],a:'🚂'},
+  {k:'rq52',t:'Was fliegt hoch am Himmel?',o:['✈️','🚗','🚜'],a:'✈️'},{k:'rq53',t:'Was fährt auf dem Wasser?',o:['⛵','🚌','🚲'],a:'⛵'},
+  {k:'rq54',t:'Wer kommt, wenn es brennt?',o:['🚒','🚜','🚲'],a:'🚒'},{k:'rq55',t:'Was hat zwei Räder und Pedale?',o:['🚲','🚂','✈️'],a:'🚲'},
+  {k:'rq56',t:'Wo ist der Kreis?',o:['⚪','🔺','🟥'],a:'⚪'},{k:'rq57',t:'Wo ist das Dreieck?',o:['🔺','⚪','🟦'],a:'🔺'},
+  {k:'rq58',t:'Wo ist das Viereck?',o:['🟦','🔺','⚪'],a:'🟦'},{k:'rq59',t:'Wo ist der Stern?',o:['⭐','❤️','🌙'],a:'⭐'},
+  {k:'rq60',t:'Wo ist das Herz?',o:['❤️','⭐','🔺'],a:'❤️'},
+  {k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🍎 🍌 🍐 🚗',o:['🍎','🍌','🚗'],a:'🚗'},{k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🐶 🐱 🐰 🌳',o:['🐶','🌳','🐱'],a:'🌳'},
+  {k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🚗 🚌 🚲 🍌',o:['🚌','🍌','🚲'],a:'🍌'},{k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🐟 🐠 🐳 🐈',o:['🐈','🐟','🐳'],a:'🐈'},
+  {k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🔴 🔴 🔵 🔴',o:['🔴','🔵'],a:'🔵'},{k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'⭐ ⭐ 🌙 ⭐',o:['⭐','🌙'],a:'🌙'},
+  {k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'👟 🧦 👢 🍕',o:['🍕','👟','🧦'],a:'🍕'},{k:'rqOdd',t:'Eins passt nicht dazu. Welches?',show:'🌻 🌷 🌹 🐶',o:['🌷','🐶','🌻'],a:'🐶'},
+  {k:'rqNext',t:'Was kommt als Nächstes?',show:'🔴 🔵 🔴 🔵 ❓',o:['🔴','🟢','🔵'],a:'🔴'},{k:'rqNext',t:'Was kommt als Nächstes?',show:'⭐ 🌙 ⭐ 🌙 ❓',o:['🌙','☀️','⭐'],a:'⭐'},
+  {k:'rqNext',t:'Was kommt als Nächstes?',show:'🍎 🍌 🍎 🍌 ❓',o:['🍌','🍎','🍓'],a:'🍎'},{k:'rqNext',t:'Was kommt als Nächstes?',show:'🐶 🐱 🐶 🐱 ❓',o:['🐶','🐱','🐭'],a:'🐶'},
+  {k:'rqNext',t:'Was kommt als Nächstes?',show:'🟢 🟢 🔴 🟢 🟢 ❓',o:['🟢','🔴','🔵'],a:'🔴'},{k:'rqNext',t:'Was kommt als Nächstes?',show:'☀️ ☁️ ☀️ ☁️ ❓',o:['☁️','☀️','🌈'],a:'☀️'},
+  {k:'rqNext',t:'Was kommt als Nächstes?',show:'🔺 ⚪ 🔺 ⚪ ❓',o:['⚪','🔺','⭐'],a:'🔺'}];
+RIDDLES.forEach(q=>{if(!LINES[q.k])LINES[q.k]=q.t});
 const rHead=x=>x.pos.clone().add(new V3(0,(x.h||2)*(x.scale||1)+0.5,0));let RID=null;const ridEl=document.createElement('div');ridEl.id='riddle';ridEl.hidden=true;document.body.appendChild(ridEl);
 function riddleStart(x){if(RID||state.captured)return;if(guardCount()>=GUARD_MAX){say('guardFull',{prio:2});return}
-  let q;do{q=pick(RIDDLES)}while(RIDDLES.length>1&&q===riddleStart.last);riddleStart.last=q;RID={x,q,o:q.o.slice().sort(()=>Math.random()-0.5)};
+  const recent=riddleStart.recent||(riddleStart.recent=[]);let q;for(let i=0;i<30;i++){q=pick(RIDDLES);if(!recent.includes(q))break}recent.push(q);if(recent.length>20)recent.shift();RID={x,q,o:q.o.slice().sort(()=>Math.random()-0.5)};
   x.jumpT=0.8;floatIcon('❓',rHead(x),2,0.4,1.2);ctxKey='';VR.ctxKey='';riddleShow();say('riddleIntro',{prio:3});setTimeout(()=>{if(RID&&RID.q===q)say(q.k,{prio:3})},4600)}
 function riddleShow(){if(!RID){ridEl.hidden=true;return}const q=RID.q;ridEl.innerHTML='<div class="who">'+RID.x.name+' 🛡️ ❓</div>'+(q.show?'<div class="q">'+q.show+'</div>':'')+'<div class="hint">'+q.t+'</div>';ridEl.hidden=false;if(VR.on)onSay((q.show?q.show+'  ':'')+q.t)}
 function riddleAnswer(v){if(!RID||RID.busy)return;const x=RID.x;
@@ -1873,8 +1903,8 @@ function updateChallenge(dt){state.hurtT-=dt;if(state.faintT>0){state.faintT-=dt
 let raidT=200,raidOn=0;
 function spawnRaider(){const a=rnd(0,TAU),r=SAFE[0].r+22,x=SAFE[0].x+Math.cos(a)*r,z=SAFE[0].z+Math.sin(a)*r;if(inLake(x,z))return;const m=makeKobold();scene.add(m);
   kobolds.push({kind:'kobold',name:'Kobold',mesh:m,pos:new V3(x,terrainH(x,z),z),yaw:rnd(0,TAU),target:new V3(),wanderT:0,hp:2,alive:true,active:true,flash:0,flee:0,netT:3,shoutT:0,shadow:makeShadow(),h:1.6,raid:true})}
-function updateRaid(dt){if(state.danger<2)return;raidT-=dt;if(raidT<=0&&!raidOn&&!state.captured){raidT=rnd(200,280);raidOn=90;const n=1+state.danger;for(let i=0;i<n;i++)spawnRaider();say('raid',{prio:3});SFX.splash()}
-  if(raidOn>0){raidOn-=dt;if(raidOn<=0||!kobolds.some(k=>k.alive&&k.raid)){raidOn=0;kobolds.forEach(k=>{if(k.raid&&!k.carry)k.raid=false})}}}
+function updateRaid(dt){if(state.danger<2)return;raidT-=dt;if(raidT<=0&&!raidOn&&!state.captured){raidT=rnd(200,280);raidOn=100;const n=3+state.danger*2;for(let i=0;i<n;i++)spawnRaider();if(!king||!king.alive)spawnKing();if(king)king.raidJoin=true;say('raid',{prio:3});SFX.splash()}
+  if(raidOn>0){raidOn-=dt;if(raidOn<=0||!kobolds.some(k=>k.alive&&k.raid)){raidOn=0;kobolds.forEach(k=>{if(k.raid&&!k.carry)k.raid=false});if(king)king.raidJoin=false}}}
 // Bewegung eines Überfall-Kobolds (aus der Kobold-Schleife); true = erledigt
 function raiderStep(k,dt){const P=player.pos;if(k.carry){const h=k.carry;const dc=hd(k.pos,KCAMP);let sp=0;if(dc>6)sp=villainStep(k,KCAMP,4*DSP(),dt,true);
     else{h.state='kidnapped';h.pen=new V3(KCAMP.x+rnd(-6,6),0,KCAMP.z+rnd(-6,6));h.pen.y=terrainH(h.pen.x,h.pen.z);k.carry=null;k.raid=false}
@@ -1890,13 +1920,14 @@ function raiderStep(k,dt){const P=player.pos;if(k.carry){const h=k.carry;const d
 function raidRelease(k){const h=k.carry;if(!h)return;k.carry=null;h.state='home';h.wanderT=0;floatIcon('💖',h.pos.clone().add(new V3(0,3,0)),5,1,1.2);setTimeout(()=>say('horseSaved',{prio:3}),1500)}
 // --- Kobold-König: ab Stufe 3 bewacht er das Lager ---
 let king=null,kingT=20;
-function updateKing(dt){if(state.danger<3)return;if(king&&!king.alive){king=null;kingT=360}if(king)return;kingT-=dt;if(kingT>0)return;
-  const p=landSpot(KCAMP.x,KCAMP.z,2,8);if(!p)return;const m=makeKobold();m.scale.setScalar(1.6);const cr=new THREE.Group();const g=mat(0xffd23a,{metalness:0.6,roughness:0.25,emissive:0x664400,emissiveIntensity:0.4});
+function updateKing(dt){if(king&&!king.alive){king=null;kingT=360}if(state.danger<3||king)return;kingT-=dt;if(kingT>0)return;spawnKing()}
+function spawnKing(){const p=landSpot(KCAMP.x,KCAMP.z,2,8);if(!p)return;const m=makeKobold();m.scale.setScalar(1.6);const cr=new THREE.Group();const g=mat(0xffd23a,{metalness:0.6,roughness:0.25,emissive:0x664400,emissiveIntensity:0.4});
   cr.add(M(CYLG,g,0.42,0.18,0.42));for(let i=0;i<5;i++){const c=M(CONEG,g,0.09,0.28,0.09,Math.cos(i/5*TAU)*0.36,0.2,Math.sin(i/5*TAU)*0.36);cr.add(c)}cr.position.y=0.62;m.userData.head.add(cr);scene.add(m);
   king={kind:'kobold',king:true,name:'Kobold-König',mesh:m,pos:p,yaw:0,target:p.clone(),wanderT:0,hp:10,alive:true,active:true,flash:0,flee:0,netT:2,shoutT:0,shadow:makeShadow(),h:2.6};kobolds.push(king);
   say('kingAppears',{prio:2})}
 function kingStep(k,dt){const P=player.pos,d=hd(k.pos,P),dc=hd(k.pos,KCAMP);let sp=0;
-  if(dc>40)sp=villainStep(k,KCAMP,5,dt,true);else if(d<45&&!state.captured){sp=d>9?villainStep(k,P,4.5*DSP(),dt):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(4,dt));
+  if(k.raidJoin&&d>14){sp=villainStep(k,d<60?P:new V3(SAFE[0].x,0,SAFE[0].z),6*DSP(),dt,true);if(k.shoutT<=0){k.shoutT=rnd(7,10);Voice.say(KING_LINE,{prio:0,who:'kobold'})}}
+  else if(!k.raidJoin&&dc>40)sp=villainStep(k,KCAMP,5,dt,true);else if(d<45&&!state.captured){sp=d>9?villainStep(k,P,4.5*DSP(),dt,k.raidJoin):0;if(!sp)k.yaw=angLerp(k.yaw,Math.atan2(P.x-k.pos.x,P.z-k.pos.z),damp(4,dt));
     if(k.shoutT<=0){k.shoutT=rnd(7,10);Voice.say(KING_LINE,{prio:0,who:'kobold'})}
     if(d<36&&k.netT<=0&&state.netT<=0){k.netT=3/DSP();k.mesh.userData.net.rotation.x=-1.2;for(const off of [-0.32,0,0.32]){const from=k.pos.clone().add(new V3(0,3,0)),T=Math.max(0.5,from.distanceTo(P)/26),base=P.clone().add(new V3(player.vel.x*T,1,player.vel.z*T)),dir=base.clone().sub(from);
         const r=dir.length(),a=Math.atan2(dir.x,dir.z)+off,to=new V3(from.x+Math.sin(a)*Math.hypot(dir.x,dir.z),base.y,from.z+Math.cos(a)*Math.hypot(dir.x,dir.z));
@@ -1975,7 +2006,7 @@ const cmdAll=()=>[...NPCS,...pegs,trex,bra,...wildRexes,...bunnies,...sharks,...
 function cmdHome(x){if(x.kind==='trex'||x.kind==='brachio')return new V3(x.area.x,2,x.area.z);if(x.kind==='bunny')return x.home;if(!x.kind&&!x.swim)return x.home;return null}
 function kiAction(x,act){if(!x||!act)return;if(TAG&&TAG.x===x&&act!=='jump'&&act!=='dance'&&act!=='tag')tagEnd();if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
   switch(act){case 'jump':x.jumpT=1.8;break;case 'dance':x.danceT=4;break;
-    case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':if(!(prev&&prev.t==='protect')&&guardCount()>=GUARD_MAX){say('guardFull',{prio:2});break}if(!(prev&&prev.t==='protect')&&!x._ridOk){riddleStart(x);break}x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
+    case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':if(!(prev&&prev.t==='protect')&&guardCount()>=GUARD_MAX){say('guardFull',{prio:2});break}if(!(prev&&prev.t==='protect')&&!x._ridOk){riddleStart(x);break}x.cmd={t:'protect',until:NOW+300};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
     case 'fly':if(!cmdCanFly(x)){x.jumpT=1.8;break}x.cmd={t:'fly',t0:NOW,base:x.pos.clone(),ang:0,after:prev&&(prev.t==='follow'||prev.t==='protect')?prev:null};break;
     case 'tag':tagStart(x);break;
     case 'hide':{const sp=hideSpot(x);if(!sp){x.jumpT=1.5;break}x.cmd={t:'hide',phase:'wait',t0:NOW,spot:sp,call:0};break}}}
@@ -1986,7 +2017,7 @@ function hideSpot(x){const P=player.pos,look=camera.getWorldDirection(new V3());
     const dx=cx-P.x,dz=cz-P.z,dl=Math.hypot(dx,dz)||1,sc=(dx*look.x+dz*look.z)/dl+Math.abs(dl-26)/30;if(sc<bs){bs=sc;best=new V3(cx,sw?rnd(t+1.5,x.kind==='shark'?-2:-0.6):t,cz)}}
   return best}
 function cmdMove(x,dt){if(x.cmd&&x.cmd.t==='tag'){const r=tagMove(x,dt);if(r)return r;x.cmd=null;return {spd:0,fly:false}}const c=x.cmd,P=player.pos,sw=cmdSwims(x),fl=cmdCanFly(x),max=CMD_SPEED[x.kind||(sw?'swim':'npc')]||7;let tgt=null,sp=0,face=null;
-  if(c.until&&NOW>c.until){x.cmd={t:'return'};return cmdMove(x,dt)}
+  if(c.until&&NOW>c.until){if(c.t==='protect'){x.jumpT=1;floatIcon('👋',x.pos.clone().add(new V3(0,(x.h||2)*(x.scale||1)+1,0)),3,0.5,1.2);kiShow(x.name+': Tschüss, Marie! Ich muss jetzt nach Hause.');say('guardBye',{prio:2})}x.cmd={t:'return'};return cmdMove(x,dt)}
   if(c.t==='protect'&&c.foe&&(c.foe.alive||c.foe.active)&&((c.foe.kind==='badRex'||c.foe.kind==='kobold')?!sw:c.foe.kind==='badPtero'?fl:(sw||fl))){const f=c.foe,fp=f.kind==='ship'?f.pos.clone():f.pos,away=x.pos.clone().sub(fp).setY(0);if(away.lengthSq()<0.01)away.set(1,0,0);away.normalize().multiplyScalar(f.kind==='ship'?9:5);
     tgt=fp.clone().add(away);tgt.y=sw?(f.kind==='ship'?-0.6:fp.y):fp.y+(f.kind==='ship'?9:3);sp=max*1.5}
   else if(c.t==='follow'||c.t==='protect'){const L=cmdAll().filter(q=>q.cmd&&(q.cmd.t==='follow'||q.cmd.t==='protect')),i=Math.max(0,L.indexOf(x));
@@ -2042,8 +2073,19 @@ function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd|
     if(state.captured){x.guardCD=2.4;guardSay(x,'cage');continue}
     let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<60&&d<bd){bd=d;best=t}}
     if(best&&best.pos.distanceTo(x.pos)<75){x.guardCD=1.2;x.zapA=0.5;if(x.kind)x.happy=0.6;burst(from.clone(),18,4,0.6,0.8,[GUARD_COL[x.kind]||0xff9fe0,0xffffff]);if(x.kind==='trex')floatIcon('🔥',from.clone(),1,0.2,1);guardShoot(from,best,x);guardSay(x,best.king?'king':{ship:'ship',badShark:'shark',kobold:'kobold',badRex:'rex',badPtero:'ptero'}[best.kind]||'shark')}}}
+// Niemand steht im anderen: sanftes Auseinanderschieben von Figuren und Tieren
+const SEP_R={pegasus:1.3,trex:1.5,brachio:3,bunny:0.45,shark:1.3,ptero:1.2,kobold:0.7,badRex:1.7};
+function sepMovable(x){return !!(x.cmd||x.state==='follow'||x.swim||x.kind==='trex'||x.kind==='bunny'||x.kind==='kobold'||x.kind==='badRex')}
+function updateSeparation(){const L=[...NPCS.filter(n=>n.id!=='mia'||n.cmd),...pegs.filter(a=>a.cmd||a.state==='follow'),trex,bra,...wildRexes,...bunnies,...sharks,...pteros.filter(p=>p.st==='sit'||p.cmd),...kobolds.filter(k=>k.alive),...badRexes.filter(b=>b.alive)].filter(Boolean);
+  const P=player.pos;
+  for(let i=0;i<L.length;i++){const a=L[i],ra=(SEP_R[a.kind]||0.7)*(a.kind==='pegasus'||!a.kind?(a.scale||1):1);
+    if(sepMovable(a)&&a.state!=='ridden'){const dx=a.pos.x-P.x,dz=a.pos.z-P.z,d=Math.hypot(dx,dz),m=ra+0.6;if(d<m&&d>0.001&&Math.abs(a.pos.y-P.y)<2.5){const k=(m-d)/d;a.pos.x+=dx*k;a.pos.z+=dz*k}}
+    for(let j=i+1;j<L.length;j++){const b=L[j];if(Math.abs(a.pos.y-b.pos.y)>2.5)continue;const rb=(SEP_R[b.kind]||0.7)*(b.kind==='pegasus'||!b.kind?(b.scale||1):1),dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=ra+rb;
+      if(d>=m)continue;const ma=sepMovable(a),mb=sepMovable(b);if(!ma&&!mb)continue;let nx=dx,nz=dz,dd=d;if(dd<0.001){nx=Math.random()-0.5;nz=Math.random()-0.5;dd=Math.hypot(nx,nz)}
+      const ov=m-d,wa=ma&&mb?0.5:ma?1:0,wb=ma&&mb?0.5:mb?1:0;a.pos.x-=nx/dd*ov*wa;a.pos.z-=nz/dd*ov*wa;b.pos.x+=nx/dd*ov*wb;b.pos.z+=nz/dd*ov*wb}}
+  for(const x of L){const m=x.m||x.mesh;if(m){m.position.x=x.pos.x;m.position.z=x.pos.z}}}
 // Springen / Tanzen als kleine Einlage über der normalen Bewegung
-function updateCmdFx(dt){updateGuards(dt);updateTag(dt);for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
+function updateCmdFx(dt){updateGuards(dt);updateTag(dt);if(state.started)updateSeparation();for(const x of cmdAll()){if(!(x.jumpT>0||x.danceT>0))continue;const m=x.m||x.mesh,hh=x.kind==='brachio'?1.4:x.kind==='pegasus'?1.6:x.kind==='bunny'?0.7:1.1;
     if(x.jumpT>0){x.jumpT-=dt;m.position.y+=Math.abs(Math.sin((1.8-x.jumpT)*Math.PI*1.7))*hh}
     if(x.danceT>0){x.danceT-=dt;const t=4-x.danceT;m.rotation.y=x.yaw+t*7;m.position.y+=Math.abs(Math.sin(t*6))*hh*0.35;if(Math.random()<dt*10)floatIcon('🎵',x.pos.clone().add(new V3(0,(x.h||2)+0.5,0)),1,0.6,0.7)}}}
 /* ================= Fangen spielen ("Fang mich!") =================
@@ -2262,7 +2304,7 @@ function updateVR(dt){
   VR.turnFx=Math.max(0,(VR.turnFx||0)-dt);const sp=Math.hypot(player.vel.x,player.vel.z)+Math.abs(player.vel.y)*0.6;
   const vs=clamp(sp/9,0,1)*0.75+VR.turnFx*2;VR.vign.material.uniforms.uS.value=lerp(VR.vign.material.uniforms.uS.value,clamp(vs,0,0.85),damp(6,dt));VR.vign.visible=VR.vign.material.uniforms.uS.value>0.02;
   // context actions as bubbles at chest height in front of you
-  const acts=computeActions(),key=acts.map(q=>q.id+q.icon+(q.t?q.t.name:'')).join('|');
+  const acts=computeActions(),key='#'+acts.map(q=>q.id+q.icon+(q.t?q.t.name:'')).join('|');
   if(key!==VR.ctxKey){VR.ctxKey=key;VR.btns=VR.btns.filter(b=>!VR.ctxGroup.children.includes(b));VR.ctxGroup.clear();
     acts.forEach((q,i)=>{const b=vrButton(q.icon,0.11,()=>{doAction(q);VR.ctxKey=''},q.pulse?'#ff7eb6':'#ffc93c');b.position.set((i-(acts.length-1)/2)*0.135,0,0);b.userData.pulse=q.pulse;VR.ctxGroup.add(b)})}
   const want=Math.atan2(_cd.x*c-_cd.z*s,-(_cd.x*s+_cd.z*c));VR.ctxYaw=angLerp(VR.ctxYaw??want,want,damp(3,dt));
@@ -2333,7 +2375,7 @@ function allVoiceLines(){const out=new Set(),add=(who,t)=>splitS(t).forEach(x=>o
     if(t.fetch){const g=NPC_MAP[t.giver].name;add('erz',`Juhu, gefunden! Jetzt bring ${t.fetch.acc} zu ${g}!`);add('erz',`Bring ${t.fetch.acc} zu ${g}! Folge den goldenen Pfeilen.`)}}
   return [...out].map(k=>{const i=k.indexOf('|');return{who:k.slice(0,i),text:k.slice(i+1)}})}
 // debug hook for automated screenshots (harmless in the app)
-window.__mz={hurt,get king(){return king},spawnRaider,setRaid(t){raidT=t},FL_TYPES,updateFlowers,pteros,badPteros,get TAG(){return TAG},tagStart,badRexes,kobolds,wildRexes,KCAMP,villainFixed,kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateVillains(0.05);updatePteros(0.05);updateAmmo(0.05);updateChallenge(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05)}},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
+window.__mz={hurt,get king(){return king},spawnRaider,setRaid(t){raidT=t},FL_TYPES,updateFlowers,pteros,badPteros,get TAG(){return TAG},tagStart,badRexes,kobolds,wildRexes,KCAMP,villainFixed,kiAction,hideSpot,bra,startMerge,POWERS,cage,catchInNet:(sh)=>catchInNet(sh),get merge(){return merge},sim(sec){for(let t=0;t<sec;t+=0.05){NOW+=0.05;updatePlayer(0.05);recordTrail();updateCombat(0.05);updateVillains(0.05);updatePteros(0.05);updateAmmo(0.05);updateChallenge(0.05);updateCreatures(0.05);updatePegs(0.05);updateCmdFx(0.05);updatePowers(0.05);updateRiddle()}renderCtx(computeActions())},get NOW(){return NOW},badSharks,ships,playerZap,taskEvent,TASK_MAP,allVoiceLines,Voice,CLIPS,VR,scene,renderer,LAKE,player,state,cam,pegs,sharks,bunnies,NPCS,NPC_MAP,setForm,talkNPC,doAction,computeActions,curTask,trex,
   goto(x,y,z,form,yaw){if(form&&form!==player.form){player.form=form;for(const k in player.forms)player.forms[k].visible=k===form}player.pos.set(x,y,z);player.vel.set(0,0,0);if(yaw!=null){player.yaw=yaw;cam.yaw=yaw+Math.PI}},
   showHorses(){pegs.forEach((a,i)=>{a.state='home';if(a.glow){scene.remove(a.glow);a.glow=null}assignBox(a);a.pos.copy(boxSpot(a));a.yaw=BOXES[a.box].face;a.wanderT=99;if(i%2){a.grow=1;a.adult=true;applyScale(a)}});
     this.goto(HOME.x+6,2,HOME.z-1,'human',-Math.PI/2);cam.pitch=0.22;cam.dragT=99},
