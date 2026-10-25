@@ -79,6 +79,11 @@ body{touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-c
 #hearts{font-size:18px;letter-spacing:1px;margin-top:6px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
 #danger{display:inline-block;margin-top:6px;font:800 15px 'Baloo 2',system-ui,sans-serif;color:#5b2a86;background:rgba(255,255,255,.85);border:2px solid var(--gold);border-radius:999px;padding:1px 10px}#danger.hot{background:#ffe0ea;border-color:#ff4f6e}
 #hurtFlash{position:fixed;inset:0;pointer-events:none;z-index:30;box-shadow:inset 0 0 120px 40px rgba(255,40,80,.0)}#hurtFlash.on{animation:hurtfl .7s ease-out}@keyframes hurtfl{0%{box-shadow:inset 0 0 140px 60px rgba(255,40,80,.75)}100%{box-shadow:inset 0 0 140px 60px rgba(255,40,80,0)}}
+#riddle{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);background:rgba(255,250,243,.96);border:4px solid #ff7eb6;border-radius:28px;padding:10px 22px 12px;text-align:center;color:#5b2a86;z-index:22;pointer-events:none;box-shadow:0 8px 24px rgba(91,42,134,.25)}
+#riddle .who{font:800 20px 'Baloo 2',system-ui,sans-serif}#riddle .q{font-size:44px;line-height:1.2;margin:4px 0}#riddle .hint{font:700 20px 'Baloo 2',system-ui,sans-serif}#riddle.shake{animation:mshake .45s}
+#math{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);background:rgba(255,250,243,.96);border:4px solid #ffc93c;border-radius:28px;padding:10px 22px 12px;text-align:center;color:#5b2a86;z-index:22;pointer-events:none;box-shadow:0 8px 24px rgba(91,42,134,.25)}
+#math .locks{font-size:30px;letter-spacing:6px}#math .q{font-size:46px;line-height:1.2;margin:4px 0}#math .hint{font:700 18px 'Baloo 2',system-ui,sans-serif}
+#math.shake{animation:mshake .45s}@keyframes mshake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 12px))}75%{transform:translateX(calc(-50% + 12px))}}
 #kiBox{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:min(560px,calc(100vw - 32px));background:rgba(255,250,243,.95);color:#5b2a86;border:3px solid #ff7eb6;border-radius:22px;padding:10px 16px;font:700 17px/1.35 'Baloo 2',system-ui,sans-serif;white-space:pre-line;text-align:center;pointer-events:none;z-index:20}
 #start .play-row{display:flex;gap:28px;align-items:center}
 #playVR{width:128px;height:128px;border-radius:50%;border:5px solid #fff;cursor:pointer;font-size:62px;padding:0;background:radial-gradient(circle at 35% 28%,#fff,#ffd3e8 60%,#ff9fd0);box-shadow:0 7px 0 #c2508a,0 0 50px 12px rgba(255,160,210,.7);animation:breathe 1.8s ease-in-out infinite;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
@@ -732,6 +737,11 @@ const LINES={
   kingAppears:'Achtung! Der Kobold-König ist im Kobold-Lager aufgetaucht!',
   kingBeaten:'Wahnsinn! Du hast den Kobold-König besiegt! Er schenkt dir fünf Sterne und lässt alle Pferde frei!',
   guardJoin:'Juhu, ein Beschützer kommt mit dir mit!',guardLeave:'Dein Beschützer geht wieder nach Hause.',guardFull:'Du hast schon sechs Beschützer! Schick erst einen nach Hause.',
+  capturedMath:'Oh nein! Die Piraten haben dich gefangen! Rechne drei Aufgaben richtig, dann geht der Käfig auf!',capturedMathLand:'Oh nein! Die Kobolde haben dich gefangen! Rechne drei Aufgaben richtig, dann geht der Käfig auf!',
+  mathHint:'Mit dem Zauberstab geht der Käfig nicht auf. Löse die Rechenaufgabe!',mathCount:'Wie viele Sterne sind das? Zähl mal!',mathPlus11:'Was ist 1 plus 1?',mathPlus12:'Was ist 1 plus 2?',mathPlus21:'Was ist 2 plus 1?',mathPlus13:'Was ist 1 plus 3?',mathPlus31:'Was ist 3 plus 1?',mathPlus22:'Was ist 2 plus 2?',mathPlus14:'Was ist 1 plus 4?',mathPlus41:'Was ist 4 plus 1?',mathPlus23:'Was ist 2 plus 3?',mathPlus32:'Was ist 3 plus 2?',
+  mathRight:['Richtig! Super gerechnet!','Ja, genau! Ein Schloss ist offen!','Prima! Das war richtig!'],mathWrong:['Fast! Zähl nochmal ganz genau.','Hmm, nicht ganz. Versuch es nochmal!'],mathDone:'Super! Alle Schlösser sind offen!',
+  riddleIntro:'Ich helfe dir gerne! Aber vorher musst du mir bei einem Rätsel helfen. Hör gut zu!',rMuh:'Welches Tier macht Muh?',rWau:'Welches Tier macht Wau wau?',rMiau:'Welches Tier macht Miau?',rQuak:'Welches Tier macht Quak?',rFly:'Welches Tier kann fliegen?',rWater:'Wer wohnt im Wasser?',rGelb:'Was ist gelb wie die Sonne?',rRot:'Was ist rot?',rRegen:'Was brauchst du, wenn es regnet?',rFuss:'Was ziehst du an die Füße?',rHase:'Was frisst ein Hase am liebsten?',rGross:'Welches Tier ist ganz groß?',rKreis:'Wo ist der Kreis?',rNacht:'Was siehst du nachts am Himmel?',rOdd1:'Eins passt nicht dazu. Welches?',rOdd2:'Eins passt nicht dazu. Welches?',rNext1:'Was kommt als Nächstes?',rNext2:'Was kommt als Nächstes?',
+  riddleRight:'Richtig! Danke, dass du mir geholfen hast! Jetzt beschütze ich dich!',riddleWrong:'Hmm, das ist es nicht. Hör nochmal genau hin!',
   progress2:'Super! Noch zwei!',progress1:'Super! Noch einer!',
 };
 const lastPick={};function pickNew(k,arr){if(arr.length<2)return arr[0];let t;do{t=pick(arr)}while(t===lastPick[k]);lastPick[k]=t;return t}
@@ -1094,6 +1104,7 @@ $('#btnHelp').addEventListener('pointerdown',e=>{e.preventDefault();help(true)})
 $('#btnHome').addEventListener('pointerdown',e=>{e.preventDefault();teleportHome()});
 addEventListener('keydown',e=>{input.keys[e.code]=true;if(!state.started)return;
   if(e.code==='Space')input.up=true;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=true;
+  if(state.captured&&/^(Digit|Numpad)[0-9]$/.test(e.code)){mathAnswer(+e.code.slice(-1));return}
   const fm={Digit1:'human',Digit2:'unicorn',Digit3:'fairy',Digit4:'mermaid'}[e.code];if(fm)setForm(fm);
   if((e.code==='KeyE'||e.code==='Enter')&&ctxActs[0])doAction(ctxActs[0]);if(e.code==='KeyH')help(true);if(e.code==='KeyF')playerZap();if(e.code==='KeyT'&&!e.repeat){const n=kiNear();if(n)kiListen(n)}});
 addEventListener('keyup',e=>{input.keys[e.code]=false;if(e.code==='Space')input.up=false;if(e.code==='ShiftLeft'||e.code==='KeyC')input.down=false});
@@ -1105,6 +1116,8 @@ function setForm(f){if(state.captured){say('onlyWand',{prio:2});return}if(player
 /* ================= actions ================= */
 function nearNPC(){let b=null,bd=1e9;for(const n of NPCS){const d=hd(player.pos,n.pos);if(d<4.6*Math.max(1,n.scale)&&Math.abs(player.pos.y-n.pos.y)<4&&d<bd){bd=d;b=n}}return b}
 function computeActions(){const P=player.pos,acts=[];
+  if(state.captured){const m=state.captured.math;if(m&&m.q)m.q.opts.forEach(v=>acts.push({id:'ans',icon:String(v),v}));return acts}
+  if(RID){RID.o.forEach(v=>acts.push({id:'rid',icon:v,v}));return acts}
   if(player.riding){acts.push({id:'dismount',icon:'👣'});return acts}
   const n=nearNPC(),cur=curTask();
   if(n){if(cur&&cur.fetch&&state.itemHeld&&cur.giver===n.id)acts.push({id:'give',icon:cur.fetch.icon,n,pulse:true});else acts.push({id:'talk',icon:'💬',n,pulse:!cur&&n.tasks.length>0});
@@ -1126,8 +1139,10 @@ function doAction(act){if(!act)return;const a=act.t;
     case 'talk':talkNPC(act.n);break;
     case 'ask':kiListen(act.n);break;
     case 'askA':kiListen(kiAnimal(act.t));break;
+    case 'ans':mathAnswer(act.v);break;
+    case 'rid':riddleAnswer(act.v);break;
     case 'guard':{const g=act.t;if(g.cmd&&g.cmd.t==='protect'){g.cmd={t:'return'};floatIcon('👋',headPos(g),2,0.4,1);say('guardLeave',{prio:2})}
-      else if(guardCount()>=GUARD_MAX)say('guardFull',{prio:2});else{kiAction(g,'protect');g.jumpT=1.2;floatIcon('🛡️',headPos(g),3,0.5,1.2);SFX.found();say('guardJoin',{prio:2})}break}
+      else if(guardCount()>=GUARD_MAX)say('guardFull',{prio:2});else riddleStart(g);break}
     case 'freeHorse':act.t.state='home';act.t.wanderT=0;burst(act.t.pos.clone().add(new V3(0,2,0)),60,6);SFX.found();floatIcon('💖',act.t.pos.clone().add(new V3(0,3,0)),5,1,1.2);say('horseSaved',{prio:3});break;
     case 'give':completeFetch();break;
     case 'pick':player.carry='berries';SFX.pop();burst(BUSHV.clone().add(new V3(0,1.5,0)),20,3,0.5,0.8,[0x8a6bff,0xc8a2ff]);say('pick',{prio:1});break;
@@ -1294,7 +1309,7 @@ function updatePointer(tp,distH){if(!state.started||distH<6){ptrEl.hidden=true;r
   if(!behind&&Math.abs(x)<0.8&&Math.abs(y)<0.7){ptrEl.hidden=true;return}
   const m=Math.max(Math.abs(x)/0.72,Math.abs(y)/0.52,1e-3);x/=m;y/=m;const W=innerWidth,H=innerHeight;
   ptrEl.hidden=false;ptrEl.style.transform=`translate(${(x*0.5+0.5)*W}px,${(-y*0.5+0.5)*H}px) translate(-50%,-50%)`;ptrArrow.style.transform=`rotate(${-Math.atan2(y,x)}rad)`}
-function help(manual){if(!gT)gT=guideTarget();const pr={prio:manual?2:0};
+function help(manual){if(manual&&RID){say(RID.q.k,{prio:3});return}if(manual&&state.captured&&state.captured.math&&state.captured.math.q){say(state.captured.math.q.say,{prio:3});return}if(!gT)gT=guideTarget();const pr={prio:manual?2:0};
   if(gT.kind==='task'){const t=curTask();
     if(gT.need&&!canReach(gT.need))say(TASK_NEED_LINE[gT.need],pr);
     else if(gT.human&&player.form!=='human'&&!player.riding)say('beHuman',pr);
@@ -1616,8 +1631,9 @@ function updateAmmo(dt){const P=player.pos,home=Math.hypot(P.x-SAFE[0].x,P.z-SAF
   if(home&&state.ammo<AMMO_MAX){state.ammoT-=dt;if(state.ammoT<=0){state.ammoT=0.22;state.ammo++;updateAmmoUI();emit(P.x+rnd(-0.6,0.6),P.y+rnd(1,2.2),P.z+rnd(-0.6,0.6),0,1.2,0,pick([0xffe680,0xff8ccf,0xffffff]),0.6,0.8,0);
       if(state.ammo===AMMO_MAX){SFX.sparkle();if(state.ammoWasLow){state.ammoWasLow=false;say('ammoFull',{prio:1})}}}}}
 function shoot(from,dir,cone=0.35){if(zapCD>0)return;zapCD=0.32;
+  if(state.captured){zapCD=0.6;if(NOW>(state.mathHintT||0)){state.mathHintT=NOW+8;say('mathHint',{prio:2})}return}
   if(state.ammo<=0){zapCD=0.6;if(AC)slide(500,180,AC.currentTime,0.25,0.06,'sine');floatIcon('💨',from.clone(),1,0.2,0.8);if(NOW>(state.noAmmoT||0)){state.noAmmoT=NOW+7;say(state.captured?'noAmmoCage':'noAmmo',{prio:2})}return}
-  state.ammo--;updateAmmoUI();if(state.ammo<=4)state.ammoWasLow=true;if(state.ammo===3)say('ammoLow',{prio:1});if(state.captured){SFX.zap();cageZap();return}dir=dir.clone().normalize();let best=null,bs=-1;
+  state.ammo--;updateAmmoUI();if(state.ammo<=4)state.ammoWasLow=true;if(state.ammo===3)say('ammoLow',{prio:1});dir=dir.clone().normalize();let best=null,bs=-1;
   for(const t of zapTargets()){const c=aimPt(t);const v=c.clone().sub(from);const d=v.length();if(d>90)continue;const dot=v.divideScalar(d).dot(dir);if(dot>Math.cos(cone)&&dot>bs){bs=dot;best=t}}
   const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:shotTex,color:0xffe680,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,fog:false}));spr.scale.setScalar(1.6);spr.position.copy(from);scene.add(spr);
   SHOTS.push({spr,pos:from.clone(),vel:dir.multiplyScalar(48),life:2.2,tgt:best});SFX.zap()}
@@ -1640,16 +1656,16 @@ const cage=new THREE.Group();(()=>{const m=mat(0x5e4030,{roughness:0.7}),g=mat(0
   const lock=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTexture('🔒'),transparent:true}));lock.scale.setScalar(0.7);lock.position.set(0,1.3,1.35);cage.add(lock);cage.userData.lock=lock;cage.visible=false;scene.add(cage)})();
 function catchInNet(ship){if(state.captured||!ship||!ship.active)return;const rp=player.riding&&player.riding.power;
   if(hasP(player.riding,'diamond')){burst(player.pos.clone().add(new V3(0,2,0)),40,6,0.8,1,[0xe8f6ff,0xffffff]);say('netBounce',{prio:1});return}
-  if(player.riding)dismount(true);hurt();if(state.hp<=0)return;state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say(state.ammo<=0?'capturedWait':ship.kind==='kobold'?'capturedLand':'captured',{prio:3});
+  if(player.riding)dismount(true);hurt();if(state.hp<=0)return;state.captured={ship,hits:0};player.vel.set(0,0,0);cage.visible=true;SFX.splash();say(ship.kind==='kobold'?'capturedMathLand':'capturedMath',{prio:3});state.captured.math={solved:0,q:null};setTimeout(()=>{if(state.captured)mathNext()},4200);mathShow();
   if(VR.on){buzz(0,1,300);buzz(1,1,300)}}
 function cageZap(){const c=state.captured;if(!c)return;c.hits++;burst(cage.position.clone().add(new V3(0,1.5,0)),50,5,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);SFX.sparkle();cage.userData.lock.scale.setScalar(0.9);
   if(c.hits<3&&!c.auto){say(c.hits===1?'cageHit1':'cageHit2',{prio:2});return}
-  const s=c.ship,side=new V3(Math.cos(s.yaw),0,-Math.sin(s.yaw));state.captured=null;cage.visible=false;s.netT=14;
+  const s=c.ship,side=new V3(Math.cos(s.yaw),0,-Math.sin(s.yaw));state.captured=null;cage.visible=false;s.netT=14;mathEl.hidden=true;ctxKey='';VR.ctxKey='';
   if(s.kind==='kobold'){const q=s.cagePos||s.pos;player.pos.set(q.x+side.x*2.5,terrainH(q.x,q.z)+0.6,q.z+side.z*2.5);s.cagePos=null;kobolds.forEach(k=>{if(k.alive)k.flee=8})}else
-  player.pos.set(s.pos.x+side.x*8,-0.4,s.pos.z+side.z*8);player.vel.set(0,4,0);player.boostT=6;burst(player.pos.clone(),60,6);SFX.found();say(c.auto?'autoFree':s.kind==='kobold'?'freedLand':'freed',{prio:3})}
+  player.pos.set(s.pos.x+side.x*8,-0.4,s.pos.z+side.z*8);player.vel.set(0,4,0);player.boostT=6;burst(player.pos.clone(),60,6);SFX.found();say(s.kind==='kobold'?'freedLand':'freed',{prio:3})}
 const netMesh=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),new THREE.MeshBasicMaterial({color:0x8a6a3a,wireframe:true,transparent:true,opacity:0.9}));netMesh.visible=false;scene.add(netMesh);
 function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
-  if(state.captured){state.captured.t=(state.captured.t||0)+dt;if(state.captured.t>(state.ammo>0?40:10)){state.captured.auto=true;cageZap();if(!state.captured)return}}
+  if(state.captured&&VR.on&&NOW>(state.captured.subT||0)){state.captured.subT=NOW+6;mathShow()}
   if(state.captured){const s=state.captured.ship,cp=s.cagePos||s.pos;P.set(cp.x,cp.y+(s.cagePos?0.05:2.15),cp.z);player.vel.set(0,0,0);player.root.position.copy(P);cage.position.copy(P);cage.rotation.y=s.yaw;
     cage.userData.lock.scale.setScalar(lerp(cage.userData.lock.scale.x,0.7,damp(4,dt)));if(Math.random()<dt*1.5)emit(P.x,P.y+3,P.z,rnd(-0.5,0.5),0.5,rnd(-0.5,0.5),0xffd75e,0.5,1,0)}
   const inW=inLake(P.x,P.z)&&P.y<WATER_Y+0.6&&!state.captured;
@@ -1698,7 +1714,7 @@ function updateCombat(dt){const P=player.pos;zapCD-=dt;bumpCD-=dt;
   if(state.netT>0){const wig=Math.min(1,Math.hypot(joy.x||0,joy.y||0)+Math.hypot(VR.mx||0,VR.my||0)+(input.up?1:0));state.netT-=dt*(1+wig*1.5);
     netMesh.position.copy(P).add(new V3(0,1*FORM_SCALE[player.form]+(player.form==='unicorn'?1.4:0),0));netMesh.scale.setScalar(1.6*Math.max(FORM_SCALE[player.form],0.7)+Math.sin(NOW*10)*0.05);
     if(state.netT<=0){netMesh.visible=false;burst(netMesh.position.clone(),40,5);say('netFree',{prio:1})}}
-  $('#btnZap').classList.toggle('pulse',state.ammo>0&&!!state.captured||state.ammo>0&&zapTargets().some(t=>t.pos.distanceTo(P)<40))}
+  $('#btnZap').classList.toggle('pulse',!state.captured&&state.ammo>0&&zapTargets().some(t=>t.pos.distanceTo(P)<40))}
 
 const BOXG=new THREE.BoxGeometry(1,1,1);
 /* ================= Bösewichte an Land: Grummel-Rexe und Fänger-Kobolde =================
@@ -1797,6 +1813,47 @@ function villainFixed(t,p){if(t.kind==='badRex'){t.alive=false;scene.remove(t.me
     t.alive=false;t.active=false;t.poof=3.2;floatIcon('💖',t.pos.clone().add(new V3(0,2.4,0)),4,0.8,1.1);state.stars+=1+(t.stolen||0);updateStars();floatIcon('⭐',t.pos.clone().add(new V3(0,2,0)),3,0.8,1.2);
     setTimeout(()=>SFX.star(),200);say('koboldFixed',{prio:2});taskEvent('zapKobold',t.pos);save()}}
 
+/* ================= Beschützer-Rätsel: erst hilft Marie dem Tier, dann hilft es ihr =================
+   Für Kinder, die noch nicht lesen: alles wird vorgelesen, die Antworten sind Bilder (antippen). */
+const RIDDLES=[
+  {k:'rMuh',t:'Welches Tier macht Muh?',o:['🐄','🐷','🐸'],a:'🐄'},{k:'rWau',t:'Welches Tier macht Wau wau?',o:['🐱','🐶','🐔'],a:'🐶'},
+  {k:'rMiau',t:'Welches Tier macht Miau?',o:['🐱','🐮','🦆'],a:'🐱'},{k:'rQuak',t:'Welches Tier macht Quak?',o:['🐸','🐴','🐑'],a:'🐸'},
+  {k:'rFly',t:'Welches Tier kann fliegen?',o:['🐦','🐟','🐢'],a:'🐦'},{k:'rWater',t:'Wer wohnt im Wasser?',o:['🐟','🐈','🐓'],a:'🐟'},
+  {k:'rGelb',t:'Was ist gelb wie die Sonne?',o:['🍌','🍓','🥦'],a:'🍌'},{k:'rRot',t:'Was ist rot?',o:['🍓','🥒','🍇'],a:'🍓'},
+  {k:'rRegen',t:'Was brauchst du, wenn es regnet?',o:['☂️','🕶️','🧤'],a:'☂️'},{k:'rFuss',t:'Was ziehst du an die Füße?',o:['👟','🧢','🧤'],a:'👟'},
+  {k:'rHase',t:'Was frisst ein Hase am liebsten?',o:['🥕','🍕','🍦'],a:'🥕'},{k:'rGross',t:'Welches Tier ist ganz groß?',o:['🐘','🐭','🐞'],a:'🐘'},
+  {k:'rKreis',t:'Wo ist der Kreis?',o:['⚪','🔺','🟥'],a:'⚪'},{k:'rNacht',t:'Was siehst du nachts am Himmel?',o:['🌙','🌈','🌻'],a:'🌙'},
+  {k:'rOdd1',t:'Eins passt nicht dazu. Welches?',show:'🍎 🍌 🍐 🚗',o:['🍎','🍌','🚗'],a:'🚗'},{k:'rOdd2',t:'Eins passt nicht dazu. Welches?',show:'🐶 🐱 🐰 🌳',o:['🐶','🌳','🐱'],a:'🌳'},
+  {k:'rNext1',t:'Was kommt als Nächstes?',show:'🔴 🔵 🔴 🔵 ❓',o:['🔴','🟢','🔵'],a:'🔴'},{k:'rNext2',t:'Was kommt als Nächstes?',show:'⭐ 🌙 ⭐ 🌙 ❓',o:['🌙','☀️','⭐'],a:'⭐'},
+];
+const rHead=x=>x.pos.clone().add(new V3(0,(x.h||2)*(x.scale||1)+0.5,0));let RID=null;const ridEl=document.createElement('div');ridEl.id='riddle';ridEl.hidden=true;document.body.appendChild(ridEl);
+function riddleStart(x){if(RID||state.captured)return;if(guardCount()>=GUARD_MAX){say('guardFull',{prio:2});return}
+  let q;do{q=pick(RIDDLES)}while(RIDDLES.length>1&&q===riddleStart.last);riddleStart.last=q;RID={x,q,o:q.o.slice().sort(()=>Math.random()-0.5)};
+  x.jumpT=0.8;floatIcon('❓',rHead(x),2,0.4,1.2);ctxKey='';VR.ctxKey='';riddleShow();say('riddleIntro',{prio:3});setTimeout(()=>{if(RID&&RID.q===q)say(q.k,{prio:3})},4600)}
+function riddleShow(){if(!RID){ridEl.hidden=true;return}const q=RID.q;ridEl.innerHTML='<div class="who">'+RID.x.name+' 🛡️ ❓</div>'+(q.show?'<div class="q">'+q.show+'</div>':'')+'<div class="hint">'+q.t+'</div>';ridEl.hidden=false;if(VR.on)onSay((q.show?q.show+'  ':'')+q.t)}
+function riddleAnswer(v){if(!RID||RID.busy)return;const x=RID.x;
+  if(v===RID.q.a){RID.busy=true;SFX.star();burst(rHead(x),50,5,0.8,1.1);say('riddleRight',{prio:3});setTimeout(()=>{const g=RID&&RID.x;RID=null;ridEl.hidden=true;ctxKey='';VR.ctxKey='';if(!g)return;
+      g._ridOk=true;kiAction(g,'protect');g._ridOk=false;g.jumpT=1.2;floatIcon('🛡️',rHead(g),3,0.5,1.2);SFX.found()},2600)}
+  else{SFX.pop();ridEl.classList.remove('shake');void ridEl.offsetWidth;ridEl.classList.add('shake');say('riddleWrong',{prio:3});setTimeout(()=>{if(RID&&!RID.busy)say(RID.q.k,{prio:3})},2800)}}
+function updateRiddle(){if(!RID)return;if(state.captured||hd(player.pos,RID.x.pos)>16){RID=null;ridEl.hidden=true;ctxKey='';VR.ctxKey='';return}
+  if(VR.on&&NOW>(RID.subT||0)){RID.subT=NOW+6;riddleShow()}}
+/* ================= Rechnen statt Zaubern: aus dem Käfig kommt man nur mit 3 richtigen Antworten =================
+   Ganz einfache Aufgaben für den Anfang der 1. Klasse: Sterne zählen (1–6) und Plus bis 5, immer mit Sternen zum Abzählen. */
+const MATH_PLUS=[[1,1],[1,2],[2,1],[1,3],[3,1],[2,2],[1,4],[4,1],[2,3],[3,2]];
+const mathEl=document.createElement('div');mathEl.id='math';mathEl.hidden=true;document.body.appendChild(mathEl);
+const stars=n=>'⭐'.repeat(n);
+function mathNew(last){let q;for(let i=0;i<10;i++){if(Math.random()<0.35){const n=1+Math.floor(Math.random()*6);q={kind:'count',a:n,ans:n,text:stars(n),say:'mathCount'}}
+    else{const [a,b]=pick(MATH_PLUS);q={kind:'plus',a,b,ans:a+b,text:stars(a)+'  +  '+stars(b),say:'mathPlus'+a+b}}if(!last||q.text!==last.text)break}
+  const o=new Set([q.ans]);while(o.size<3){const v=q.ans+pick([-2,-1,1,2]);if(v>=1&&v<=7)o.add(v)}q.opts=[...o].sort(()=>Math.random()-0.5);return q}
+function mathShow(){const c=state.captured;if(!c||!c.math){mathEl.hidden=true;return}const m=c.math,locks='🔓'.repeat(m.solved)+'🔒'.repeat(3-m.solved);
+  mathEl.innerHTML='<div class="locks">'+locks+'</div>'+(m.q?'<div class="q">'+m.q.text+'</div><div class="hint">'+(m.q.kind==='count'?'Wie viele Sterne sind das?':'Wie viele Sterne sind das zusammen?')+'</div>':'<div class="hint">Gleich kommt die Rechenaufgabe …</div>');mathEl.hidden=false;
+  if(VR.on&&m.q)onSay((m.q.kind==='count'?'Wie viele? ':'')+m.q.text.replace(/  /g,' ')+' = ?')}
+function mathNext(){const c=state.captured;if(!c||!c.math)return;c.math.q=mathNew(c.math.q);c.math.wrong=0;ctxKey='';VR.ctxKey='';mathShow();say(c.math.q.say,{prio:3})}
+function mathAnswer(v){const c=state.captured;if(!c||!c.math||!c.math.q||c.math.busy)return;const m=c.math;
+  if(v===m.q.ans){m.solved++;m.busy=true;SFX.star();burst(cage.position.clone().add(new V3(0,1.5,0)),50,5,0.8,1.1,[0xffe680,0xff8ccf,0xffffff]);cage.userData.lock.scale.setScalar(0.85);m.q=null;ctxKey='';VR.ctxKey='';mathShow();
+    if(m.solved>=3){say('mathDone',{prio:3});setTimeout(()=>{if(!state.captured)return;state.captured.hits=2;state.captured.auto=false;mathEl.hidden=true;cageZap()},2200)}
+    else{say('mathRight',{prio:3});setTimeout(()=>{m.busy=false;mathNext()},2400)}}
+  else{m.wrong=(m.wrong||0)+1;SFX.pop();mathEl.classList.remove('shake');void mathEl.offsetWidth;mathEl.classList.add('shake');say('mathWrong',{prio:3})}}
 /* ================= Herausforderung: Herzen, Gefahrenstufen, Kobold-Überfälle, Kobold-König ================= */
 const HP_MAX=5;state.hp=HP_MAX;state.hurtT=0;state.beaten=state.beaten||0;state.danger=1;
 const hpEl=document.createElement('div');hpEl.id='hearts';document.querySelector('#hud .top-left').appendChild(hpEl);
@@ -1806,7 +1863,7 @@ function updateHP(){hpEl.textContent='❤️'.repeat(Math.max(0,state.hp))+'🤍
 const DSP=()=>1+0.07*(state.danger-1);   // Bösewichte werden pro Stufe schneller
 function hurt(n=1){if(state.hurtT>0||state.hp<=0)return;state.hp-=n;state.hurtT=1.5;updateHP();hurtEl.classList.remove('on');void hurtEl.offsetWidth;hurtEl.classList.add('on');
   if(VR.on){buzz(0,1,250);buzz(1,1,250)}if(state.hp<=0){state.faintT=0.7;return}if(state.hp===1)setTimeout(()=>say('hpLow',{prio:2}),1800)}
-function faint(){const lost=Math.min(3,state.stars);state.stars-=lost;updateStars();state.captured=null;cage.visible=false;state.netT=0;netMesh.visible=false;state.fallT=0;state.stunT=0;
+function faint(){mathEl.hidden=true;const lost=Math.min(3,state.stars);state.stars-=lost;updateStars();state.captured=null;cage.visible=false;state.netT=0;netMesh.visible=false;state.fallT=0;state.stunT=0;
   if(TAG)tagEnd();teleportHome();state.hp=HP_MAX;state.hurtT=3;updateHP();say(lost?'faint':'faintNoStar',{prio:3});save()}
 function beatOne(){state.beaten++;const d=Math.min(5,1+Math.floor(state.beaten/4));if(d>state.danger){state.danger=d;updateHP();setTimeout(()=>{say('dangerUp',{prio:2});setTimeout(()=>Voice.say(`Gefahrenstufe ${d}!`,{prio:2}),2600)},1500)}save()}
 function updateChallenge(dt){state.hurtT-=dt;if(state.faintT>0){state.faintT-=dt;if(state.faintT<=0)faint()}const P=player.pos,home=Math.hypot(P.x-SAFE[0].x,P.z-SAFE[0].z)<SAFE[0].r&&!state.captured;
@@ -1918,7 +1975,7 @@ const cmdAll=()=>[...NPCS,...pegs,trex,bra,...wildRexes,...bunnies,...sharks,...
 function cmdHome(x){if(x.kind==='trex'||x.kind==='brachio')return new V3(x.area.x,2,x.area.z);if(x.kind==='bunny')return x.home;if(!x.kind&&!x.swim)return x.home;return null}
 function kiAction(x,act){if(!x||!act)return;if(TAG&&TAG.x===x&&act!=='jump'&&act!=='dance'&&act!=='tag')tagEnd();if(x.kind==='pegasus'&&!(x.state==='home'||x.state==='follow'))return;const prev=x.cmd;
   switch(act){case 'jump':x.jumpT=1.8;break;case 'dance':x.danceT=4;break;
-    case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':if(!(prev&&prev.t==='protect')&&guardCount()>=GUARD_MAX){say('guardFull',{prio:2});break}x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
+    case 'follow':if(prev&&prev.t==='protect'){prev.until=Math.max(prev.until,NOW+300);break}x.cmd={t:'follow',until:NOW+300};break;case 'protect':if(!(prev&&prev.t==='protect')&&guardCount()>=GUARD_MAX){say('guardFull',{prio:2});break}if(!(prev&&prev.t==='protect')&&!x._ridOk){riddleStart(x);break}x.cmd={t:'protect',until:NOW+600};x.guardCD=1;x.guardSay=0;break;case 'stay':x.cmd={t:'stay',until:NOW+90};break;case 'home':x.cmd={t:'return'};break;
     case 'fly':if(!cmdCanFly(x)){x.jumpT=1.8;break}x.cmd={t:'fly',t0:NOW,base:x.pos.clone(),ang:0,after:prev&&(prev.t==='follow'||prev.t==='protect')?prev:null};break;
     case 'tag':tagStart(x);break;
     case 'hide':{const sp=hideSpot(x);if(!sp){x.jumpT=1.5;break}x.cmd={t:'hide',phase:'wait',t0:NOW,spot:sp,call:0};break}}}
@@ -1962,7 +2019,7 @@ function cmdMove(x,dt){if(x.cmd&&x.cmd.t==='tag'){const r=tagMove(x,dt);if(r)ret
 // Beschützer: begleiten Marie, verzaubern böse Haie und Piratenschiffe, fangen Netze ab und helfen aus dem Käfig
 const GUARD_L={shark:['Lass Marie in Ruhe, du böser Hai!','Weg da, böser Hai!'],ship:['Weg da, ihr Piraten!','Lasst Marie in Ruhe, ihr Piraten!'],
   kobold:['Weg da, du frecher Kobold!','Lass Marie in Ruhe, Kobold!','Hier gibt es nichts zu fangen, Kobold!'],king:['Du kriegst Marie nicht, Kobold-König!','Weg mit dir, Kobold-König!'],
-  rex:['Hör auf zu grummeln, Rex!','Lass Marie in Ruhe, du Grummel-Rex!'],ptero:['Flieg weg, du frecher Flugsaurier!','Lass Marie in Ruhe, Flugsaurier!'],net:['Das Netz kriegt dich nicht, Marie!'],cage:['Halt durch, Marie, ich hol dich da raus!']};
+  rex:['Hör auf zu grummeln, Rex!','Lass Marie in Ruhe, du Grummel-Rex!'],ptero:['Flieg weg, du frecher Flugsaurier!','Lass Marie in Ruhe, Flugsaurier!'],net:['Das Netz kriegt dich nicht, Marie!'],cage:['Du schaffst das, Marie! Rechne die Aufgabe!','Ich drück dir die Daumen, Marie!']};
 function guardSay(x,k){if(NOW<(x.guardSay||0))return;x.guardSay=NOW+18;kiSay(x,pick(GUARD_L[k]))}
 const GUARD_KINDS=new Set(['pegasus','trex','brachio','bunny','ptero']),GUARD_MAX=6;
 const guardCount=()=>cmdAll().filter(x=>x.cmd&&x.cmd.t==='protect').length;
@@ -1982,7 +2039,7 @@ function updateGuards(dt){const P=player.pos;for(const x of cmdAll()){if(!x.cmd|
     if(x.zapA>0){x.zapA-=dt;const u=(x.mesh||{}).userData;if(u&&u.arms)u.arms[1].rotation.x=-2.8}
     for(let i=NETS.length-1;i>=0;i--){const n=NETS[i];if(n.pos.distanceTo(from)<16||n.pos.distanceTo(P)<9){burst(n.pos.clone(),30,5,0.8,1,[0xff9fe0,0xffffff]);scene.remove(n.m);NETS.splice(i,1);SFX.sparkle();guardSay(x,'net')}}
     if(x.guardCD>0)continue;
-    if(state.captured){x.guardCD=2.4;x.zapA=0.5;burst(from,20,3,0.6,0.8,[0xff9fe0,0xffffff]);SFX.zap();cageZap();guardSay(x,'cage');continue}
+    if(state.captured){x.guardCD=2.4;guardSay(x,'cage');continue}
     let best=null,bd=1e9;for(const t of zapTargets()){const d=Math.min(t.pos.distanceTo(P),t.pos.distanceTo(x.pos));if(d<60&&d<bd){bd=d;best=t}}
     if(best&&best.pos.distanceTo(x.pos)<75){x.guardCD=1.2;x.zapA=0.5;if(x.kind)x.happy=0.6;burst(from.clone(),18,4,0.6,0.8,[GUARD_COL[x.kind]||0xff9fe0,0xffffff]);if(x.kind==='trex')floatIcon('🔥',from.clone(),1,0.2,1);guardShoot(from,best,x);guardSay(x,best.king?'king':{ship:'ship',badShark:'shark',kobold:'kobold',badRex:'rex',badPtero:'ptero'}[best.kind]||'shark')}}}
 // Springen / Tanzen als kleine Einlage über der normalen Bewegung
@@ -2237,7 +2294,7 @@ let last=performance.now(),uiT=0,saveT=0;
 const CAMW=new V3();  // camera position in world space (in VR the camera sits inside the rig)
 function loop(now){if(VR.on)CAMW.setFromMatrixPosition(camera.matrixWorld);else CAMW.copy(camera.position);const dt=Math.min(0.05,(now-last)/1000);last=now;NOW+=dt;
   if(VR.on)vrInput(dt);
-  if(state.started){updatePlayer(dt);updateCombat(dt);recordTrail();updateGuide(dt);updateItem(dt);updateVillains(dt);updatePteros(dt);updateAmmo(dt);updateChallenge(dt);if(VR.on)updateVR(dt);
+  if(state.started){updatePlayer(dt);updateCombat(dt);recordTrail();updateGuide(dt);updateItem(dt);updateVillains(dt);updatePteros(dt);updateAmmo(dt);updateChallenge(dt);updateRiddle();if(VR.on)updateVR(dt);
     uiT-=dt;if(uiT<=0){uiT=0.12;renderCtx(computeActions())}
     saveT-=dt;if(saveT<=0){saveT=8;save()}
     if(NOW-state.lastProgress>80&&NOW-state.lastAutoHint>80)help(false);
