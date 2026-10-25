@@ -2205,7 +2205,7 @@ const KI_REMOTE=location.protocol==='https:'&&!location.port&&location.hostname!
 if(KI_REMOTE){let pc='https://192.168.86.106:8443';try{pc=(localStorage.getItem('mz_kiPC')||pc).replace(/\/$/,'')}catch(e){}KI.base=pc;KI.inl=true}
 function kiPing(){if(KI.ok)return;try{const x=new XMLHttpRequest();x.open('GET',KI.base+'/api/ping');x.timeout=5000;
   x.onload=()=>{try{KI.ok=x.status===200&&!!JSON.parse(x.responseText).ok}catch(e){}if(KI.ok){$('#kiGo').hidden=true;if(!state.started)$('#kiMic').hidden=false}};x.send()}catch(e){}}
-if(KI_APP||location.protocol==='https:'||location.hostname==='localhost'){kiPing();if(KI_APP||KI_REMOTE){let n=0;const iv=setInterval(()=>{if(KI.ok||++n>40)clearInterval(iv);else kiPing()},15000)}}
+if(KI_APP||location.protocol==='https:'||location.hostname==='localhost'){kiPing();if(KI_APP||KI_REMOTE){setInterval(()=>{if(!KI.ok)kiPing()},10000)}}
 // Website-Version: wenn der KI-PC im Heimnetz läuft, einen Knopf dorthin anzeigen
 (()=>{if(location.protocol!=='https:'||location.port)return;let pc='https://192.168.86.106:8443/';try{pc=localStorage.getItem('mz_kiPC')||pc}catch(e){}
   const im=new Image(),t=setTimeout(()=>{im.onload=null},4000);im.onload=()=>{clearTimeout(t);if(state.started)return;if(KI.ok)return;const b=$('#kiGo');b.hidden=false;b.onclick=()=>{location.href=pc}};
@@ -2244,7 +2244,7 @@ function kiSend(blob){const n=KI.n;if(KI.cancel||blob.size<800){KI.cancel=false;
   let q=KI.base+'/api/talk?inline='+(KI.inl?1:0)+'&npc='+encodeURIComponent(n.id)+'&ctx='+encodeURIComponent(ctx);if(n.a){const d=kiAnimalInfo(n.a);q+='&art='+d.art+'&name='+encodeURIComponent(n.a.name)+'&info='+encodeURIComponent(d.info)}
   const x=new XMLHttpRequest();x.open('POST',q);x.timeout=40000;
   x.onload=()=>{KI.state='idle';let j=null;try{j=JSON.parse(x.responseText)}catch(e){}if(!j||!j.text){kiShow('Hmm, da kam keine Antwort.');return}kiAnswer(n,j)};
-  x.onerror=x.ontimeout=()=>{KI.state='idle';kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
+  x.onerror=x.ontimeout=()=>{KI.state='idle';KI.ok=false;kiPing();kiShow('Der KI-Computer antwortet gerade nicht.')};x.send(blob)}
 function kiAnswer(n,j){if(j.aktion)setTimeout(()=>kiAction(n.a||n,j.aktion),250);n.wave=2.5;if(n.a){n.a.happy=2;floatIcon('💬',headPos(n.a),3,0.8,1)}Voice.stop();kiShow((j.heard?'Du: „'+j.heard+'“\n':'')+n.name+': '+j.text);Voice.last=j.text;
   let au=j.audios&&j.audios.length?j.audios:j.audio?[j.audio]:null;if(au)au=au.map(u=>u[0]==='/'?KI.base+u:u);if(au){Voice.prio=3;Voice.queue=au.slice();Voice.playing=true;Voice.next()}else Voice.say(j.text,{prio:3,who:n.id})}
 function updateKI(dt){if(KI.hideT&&NOW>KI.hideT){KI.hideT=0;$('#kiBox').hidden=true}if(KI.state!=='rec')return;
