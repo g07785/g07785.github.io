@@ -192,7 +192,7 @@ a:hover .arrow,button:hover .arrow{transform:translateX(5px)}
   opacity:0;transform:translateY(30px);transition:opacity .6s var(--ease),transform .6s var(--ease),color .3s}
 .mmenu a:hover{color:var(--gold)}
 .menu-open .mmenu a{opacity:1;transform:none}
-.mmenu a:nth-child(2){transition-delay:.05s}.mmenu a:nth-child(3){transition-delay:.1s}.mmenu a:nth-child(4){transition-delay:.15s}.mmenu a:nth-child(5){transition-delay:.2s}.mmenu a:nth-child(6){transition-delay:.25s}
+.mmenu a:nth-child(2){transition-delay:.05s}.mmenu a:nth-child(3){transition-delay:.1s}.mmenu a:nth-child(4){transition-delay:.15s}.mmenu a:nth-child(5){transition-delay:.2s}.mmenu a:nth-child(6){transition-delay:.25s}.mmenu a:nth-child(7){transition-delay:.3s}
 .mmenu .meta{margin-top:40px;color:var(--muted);font-size:15px;opacity:0;transition:opacity .6s .35s}
 .menu-open .mmenu .meta{opacity:1}
 @media (max-width:1180px){.nav{display:none}.burger{display:block}.hdr .btn-line{display:none}}
@@ -426,6 +426,47 @@ a:hover .arrow,button:hover .arrow{transform:translateX(5px)}
   .qbox{border-radius:24px}
 }
 
+
+/* ---------- Vertrauensleiste ---------- */
+.trust{position:relative;z-index:3;margin-top:-1px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(20,20,24,.7);backdrop-filter:blur(10px)}
+.trust ul{list-style:none;margin:0 auto;padding:0;display:grid;grid-template-columns:repeat(4,1fr);max-width:var(--max)}
+.trust li{display:flex;align-items:center;gap:14px;padding:26px clamp(16px,2.4vw,30px);border-right:1px solid var(--line);font-size:15px;line-height:1.35}
+.trust li:last-child{border-right:0}
+.trust svg{flex:none;width:34px;height:34px;stroke:var(--gold);fill:none;stroke-width:1.4}
+.trust b{display:block;font-family:var(--head);font-size:15px;font-weight:700}
+.trust span{color:var(--muted);font-size:13.5px}
+@media (max-width:900px){.trust ul{grid-template-columns:1fr 1fr}.trust li:nth-child(2){border-right:0}.trust li:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+@media (max-width:480px){.trust li{flex-direction:column;align-items:flex-start;gap:8px;padding:20px 16px}}
+
+/* ---------- Vom Plan zum Ergebnis (Vergleichs-Regler) ---------- */
+.ba{background:var(--bg2)}
+.ba-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 26px}
+.ba-tabs button{all:unset;cursor:pointer;padding:12px 22px;border-radius:999px;border:1px solid var(--line);font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);transition:all .4s var(--ease)}
+.ba-tabs button:hover{color:var(--text);border-color:var(--line2)}
+.ba-tabs button[aria-selected=true]{background:var(--gold-grad);color:#15100a;border-color:transparent;box-shadow:0 10px 30px -12px rgba(217,164,91,.6)}
+.ba-tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.cmp{--pos:50%;position:relative;border-radius:28px;overflow:hidden;aspect-ratio:1536/788;background:#101116;user-select:none;-webkit-user-select:none;touch-action:pan-y;
+  box-shadow:0 50px 100px -40px rgba(0,0,0,.9);isolation:isolate}
+.cmp::after{content:"";position:absolute;inset:0;border-radius:inherit;border:1px solid var(--line2);pointer-events:none;z-index:6}
+.cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;transition:opacity .6s var(--ease)}
+.cmp .before{z-index:2;clip-path:inset(0 calc(100% - var(--pos)) 0 0)}
+.cmp.swap img{opacity:0}
+.cmp .tag{position:absolute;top:22px;z-index:4;padding:9px 16px;border-radius:999px;font-family:var(--head);font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  background:rgba(14,14,17,.66);backdrop-filter:blur(8px);border:1px solid var(--line2);transition:opacity .3s}
+.cmp .tag.l{left:22px;color:var(--gold)} .cmp .tag.r{right:22px}
+.cmp .line{position:absolute;top:0;bottom:0;left:var(--pos);width:2px;margin-left:-1px;z-index:3;background:linear-gradient(transparent,var(--gold-hi) 15%,var(--gold) 85%,transparent);box-shadow:0 0 20px rgba(217,164,91,.7)}
+.cmp .knob{position:absolute;top:50%;left:var(--pos);z-index:5;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;display:grid;place-items:center;
+  background:var(--gold-grad);color:#15100a;box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 0 8px rgba(217,164,91,.18);transition:transform .3s var(--ease)}
+.cmp .knob svg{width:30px;height:30px}
+.cmp:hover .knob,.cmp.drag .knob{transform:scale(1.08)}
+.cmp input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:7;-webkit-appearance:none;appearance:none}
+.cmp input:focus-visible ~ .knob{outline:3px solid #fff;outline-offset:4px}
+.ba-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 40px;margin-top:26px;align-items:flex-start}
+.ba-meta h3{font-family:var(--head);font-size:22px;margin:0 0 6px}
+.ba-meta p{margin:0;color:var(--muted);max-width:620px}
+.ba-note{font-size:12.5px;color:var(--dim);max-width:360px}
+@media (max-width:700px){.cmp{aspect-ratio:4/3.4;border-radius:20px}.cmp .knob{width:54px;height:54px;margin:-27px 0 0 -27px}.cmp .tag{top:14px}.cmp .tag.l{left:14px}.cmp .tag.r{right:14px}}
+
 /* ---------- Zahlen / Warum ---------- */
 .why{overflow:hidden}
 .why .diag{width:700px;left:-200px;top:50%;transform:rotate(-42deg);opacity:.25}
@@ -649,6 +690,7 @@ footer{position:relative;border-top:1px solid var(--line);padding:80px 0 40px;ov
 
 <nav class="mmenu" id="mmenu" aria-label="Mobiles Menü">
   <a href="#leistungen">Leistungen</a>
+  <a href="#projekte">Vom Plan zum Ergebnis</a>
   <a href="#anfrage">Angebot anfragen</a>
   <a href="#warum">Warum wir</a>
   <a href="#ueber-uns">Über uns</a>
@@ -688,6 +730,17 @@ footer{position:relative;border-top:1px solid var(--line);padding:80px 0 40px;ov
   </div>
   <div class="scroll-hint" aria-hidden="true">Scrollen</div>
 </section>
+
+
+<!-- ================= VERTRAUENSLEISTE ================= -->
+<div class="trust" aria-label="Unsere Versprechen">
+  <ul>
+    <li data-r><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z"/></svg><div><b>Unverbindliches Angebot</b><span>Transparent &amp; ehrlich</span></div></li>
+    <li data-r style="--d:.08s"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Termintreu</b><span>Feste Absprachen</span></div></li>
+    <li data-r style="--d:.16s"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/></svg><div><b>Alles aus einer Hand</b><span>Ein Ansprechpartner</span></div></li>
+    <li data-r style="--d:.24s"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg><div><b>Aus dem Ries</b><span>Schnell vor Ort</span></div></li>
+  </ul>
+</div>
 
 <!-- ================= LAUFBAND ================= -->
 <div class="marquee" aria-hidden="true">
@@ -769,6 +822,38 @@ footer{position:relative;border-top:1px solid var(--line);padding:80px 0 40px;ov
       </a>
     </div>
     <div class="hbar" aria-hidden="true"><span>01</span><span class="t"><i id="hprog"></i></span><span>06</span></div>
+  </div>
+</section>
+
+
+<!-- ================= VOM PLAN ZUM ERGEBNIS ================= -->
+<section class="sec ba" id="projekte" aria-labelledby="t-ba">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow" data-r>Vom Plan zum Ergebnis</span>
+        <h2 class="h2" id="t-ba"><span class="mask"><span>Aus einer Idee</span></span><span class="mask"><span class="gold-text" style="--d:.1s">wird Ihr Zuhause</span></span></h2>
+      </div>
+      <p class="lead" data-r style="--d:.2s">Ziehen Sie den Regler und sehen Sie, wie aus der Planung ein fertiger Raum wird – sauber umgesetzt bis ins Detail.</p>
+    </div>
+    <div class="ba-tabs" role="tablist" aria-label="Beispiel wählen" data-r>
+      <button type="button" role="tab" aria-selected="true" data-i="0">Trockenbau</button>
+      <button type="button" role="tab" aria-selected="false" data-i="1">Boden</button>
+      <button type="button" role="tab" aria-selected="false" data-i="2">Montage</button>
+      <button type="button" role="tab" aria-selected="false" data-i="3">Bad</button>
+    </div>
+    <div class="cmp" id="cmp" data-r="scale">
+      <img class="after" src="img/trockenbau.webp" width="1536" height="788" loading="lazy" alt="Ergebnis: Raum mit abgehängter Decke und LED-Lichtvoute">
+      <img class="before" src="img/trockenbau-plan.webp" width="1536" height="788" loading="lazy" alt="Planung: Skizze des Raums mit abgehängter Decke">
+      <span class="tag l">Planung</span><span class="tag r">Ergebnis</span>
+      <span class="line" aria-hidden="true"></span>
+      <input type="range" min="0" max="100" value="50" step="0.1" aria-label="Vergleich Planung und Ergebnis verschieben">
+      <span class="knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6"/></svg></span>
+    </div>
+    <div class="ba-meta" data-r>
+      <div><h3 id="ba-title">Abgehängte Decke mit Lichtvoute</h3><p id="ba-text">Trockenbaudecke mit indirekter LED-Beleuchtung – moderne Optik, versteckte Technik, perfekte Kanten.</p></div>
+      <p class="ba-note">Illustration aus Planskizze und Beispielbild. Echte Vorher-/Nachher-Fotos aus unseren Projekten folgen in Kürze.</p>
+    </div>
   </div>
 </section>
 
@@ -1041,7 +1126,7 @@ footer{position:relative;border-top:1px solid var(--line);padding:80px 0 40px;ov
         <li><a href="#trockenbau">Trockenbau</a></li><li><a href="#bodenverlegung">Bodenverlegung</a></li><li><a href="#montage">Montage</a></li>
         <li><a href="#hausmeisterservice">Hausmeisterservice</a></li><li><a href="#gartenpflege">Gartenpflege</a></li><li><a href="#entruempelung">Entrümpelung</a></li></ul></div>
       <div><h4>BK Bau</h4><ul>
-        <li><a href="#anfrage">Angebot anfragen</a></li><li><a href="#ueber-uns">Über uns</a></li><li><a href="#ablauf">Ablauf</a></li><li><a href="#einsatzgebiet">Einsatzgebiet</a></li><li><a href="#faq">Häufige Fragen</a></li></ul></div>
+        <li><a href="#anfrage">Angebot anfragen</a></li><li><a href="#projekte">Vom Plan zum Ergebnis</a></li><li><a href="#ueber-uns">Über uns</a></li><li><a href="#ablauf">Ablauf</a></li><li><a href="#einsatzgebiet">Einsatzgebiet</a></li><li><a href="#faq">Häufige Fragen</a></li></ul></div>
       <div><h4>Kontakt</h4><ul>
         <li><a href="tel:+491712037784">+49 171 2037784</a></li><li><a href="mailto:Anfrage.bkbau@gmail.com">Anfrage.bkbau@gmail.com</a></li>
         <li>Im Oberdorf 6 B<br>86720 Nördlingen-Löpsingen</li></ul></div>
@@ -1332,6 +1417,50 @@ footer{position:relative;border-top:1px solid var(--line);padding:80px 0 40px;ov
     const lab = inp.closest('.pick'); lab.classList.remove('pulse-in'); lab.offsetWidth; lab.classList.add('pulse-in');
   }));
   update();
+
+
+  /* ---------- Vergleichs-Regler ---------- */
+  const cmp = $('#cmp'), cin = $('input', cmp), cImgA = $('.after', cmp), cImgB = $('.before', cmp);
+  const BA = [
+    { k: 'trockenbau', t: 'Abgehängte Decke mit Lichtvoute', d: 'Trockenbaudecke mit indirekter LED-Beleuchtung – moderne Optik, versteckte Technik, perfekte Kanten.', a: 'Raum mit abgehängter Decke und LED-Lichtvoute' },
+    { k: 'boden', t: 'Neuer Holzboden im Wohnbereich', d: 'Fachgerecht verlegter Boden mit sauberen Übergängen und passenden Sockelleisten.', a: 'Wohnzimmer mit frisch verlegtem Eichenboden' },
+    { k: 'montage', t: 'Innentür mit Zarge', d: 'Präzise montierte Tür – bündig, leichtgängig und passend zum Boden.', a: 'Montierte Holztür mit Zarge' },
+    { k: 'bad', t: 'Renovierung im Bad', d: 'Vom Rückbau bis zum fertigen Raum – alles aus einer Hand koordiniert.', a: 'Modernes Bad mit Natursteinfliesen und Holzwaschtisch' }
+  ];
+  const setPos = v => cmp.style.setProperty('--pos', v + '%');
+  cin.addEventListener('input', () => setPos(cin.value));
+  cin.addEventListener('pointerdown', () => cmp.classList.add('drag'));
+  addEventListener('pointerup', () => cmp.classList.remove('drag'));
+  $$('.ba-tabs button').forEach(b => b.addEventListener('click', () => {
+    $$('.ba-tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+    const it = BA[+b.dataset.i];
+    cmp.classList.add('swap');
+    setTimeout(() => {
+      cImgA.src = 'img/' + it.k + '.webp'; cImgA.alt = 'Ergebnis: ' + it.a;
+      cImgB.src = 'img/' + it.k + '-plan.webp'; cImgB.alt = 'Planung: Skizze – ' + it.a;
+      $('#ba-title').textContent = it.t; $('#ba-text').textContent = it.d;
+      cin.value = 50; setPos(50);
+      const done = () => cmp.classList.remove('swap');
+      cImgA.decode ? cImgA.decode().then(done, done) : done();
+    }, 300);
+  }));
+  // Einmaliges „Hin-und-Her“ als Hinweis, dass man ziehen kann
+  if (!reduce) {
+    const hint = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return; hint.disconnect();
+      const keys = [[0, 50], [700, 82], [1500, 18], [2300, 50]], t0 = performance.now() + 500;
+      const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      const tick = t => {
+        const dt = t - t0; if (dt < 0) return requestAnimationFrame(tick);
+        let i = 0; while (i < keys.length - 2 && dt > keys[i + 1][0]) i++;
+        const [ta, va] = keys[i], [tb, vb] = keys[i + 1], p = Math.min(1, (dt - ta) / (tb - ta));
+        const v = va + (vb - va) * ease(p); setPos(v); cin.value = v;
+        if (dt < keys[keys.length - 1][0]) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }), { threshold: .5 });
+    hint.observe(cmp);
+  }
 
   /* ---------- Gepinnte Leistungen (Desktop) ---------- */
   const services = $('#leistungen'), track = $('#hscroll'), hprog = $('#hprog');
