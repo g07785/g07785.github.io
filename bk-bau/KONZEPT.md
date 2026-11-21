@@ -98,7 +98,7 @@ Die Bilder aus der bisherigen Seite (BK-BAU-modernisiert.html) wurden als einzel
 
 ## 7. Offene Punkte – brauche ich vom Kunden
 
-- [ ] **Vollständiger Inhabername** (Pflicht fürs Impressum, § 5 DDG) – einziger offener Platzhalter in impressum.html + datenschutz.html
+- [x] Inhaber: Bartosz Kowalsky (in Impressum + Datenschutz eingetragen)
 - [x] Rechtsform: Einzelunternehmen, Kleinunternehmer § 19 UStG
 - [ ] Wirtschafts-Identifikationsnummer, sobald vom BZSt zugeteilt
 - [ ] **Echte Fotos** von eigenen Projekten (die Flyer-Bilder sind KI-generiert – für Website/Google sind echte Vorher-Nachher-Bilder deutlich besser)
