@@ -98,11 +98,12 @@ Die Bilder aus der bisherigen Seite (BK-BAU-modernisiert.html) wurden als einzel
 
 ## 7. Offene Punkte – brauche ich vom Kunden
 
-- [ ] **Vollständiger Inhabername + Rechtsform** (Pflicht fürs Impressum, § 5 DDG)
-- [ ] USt-IdNr. bzw. Hinweis Kleinunternehmer; ggf. Handwerkskammer / Gewerbeanmeldung
+- [ ] **Vollständiger Inhabername** (Pflicht fürs Impressum, § 5 DDG) – einziger offener Platzhalter in impressum.html + datenschutz.html
+- [x] Rechtsform: Einzelunternehmen, Kleinunternehmer § 19 UStG
+- [ ] Wirtschafts-Identifikationsnummer, sobald vom BZSt zugeteilt
 - [ ] **Echte Fotos** von eigenen Projekten (die Flyer-Bilder sind KI-generiert – für Website/Google sind echte Vorher-Nachher-Bilder deutlich besser)
 - [ ] Logo als Datei (SVG/PNG in hoher Auflösung)
-- [ ] Wunsch-Domain
+- [ ] Wunsch-Domain: bkbau.de gewünscht (vermutlich vergeben) → Verfügbarkeit bei denic.de prüfen, sonst bkbau-noerdlingen.de
 - [ ] Gibt es schon ein Google-Unternehmensprofil?
 - [ ] Wofür steht „BK“? (Gründer-Initialen → persönliche „Über uns“-Geschichte wirkt vertrauensbildend)
 - [ ] Gewünschte Schwerpunkt-Leistungen (womit wird am meisten Geld verdient?)
